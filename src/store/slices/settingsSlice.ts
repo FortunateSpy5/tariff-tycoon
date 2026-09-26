@@ -3,6 +3,7 @@
  */
 
 import type { StateCreator } from 'zustand';
+import type { GameStore } from '../useGameStore';
 import { sound } from '../../audio/soundEngine';
 
 export interface SettingsSlice {
@@ -17,7 +18,7 @@ export interface SettingsSlice {
   updateLastSaved: () => void;
 }
 
-export const createSettingsSlice: StateCreator<SettingsSlice, [], [], SettingsSlice> = (set, get) => ({
+export const createSettingsSlice: StateCreator<GameStore, [], [], SettingsSlice> = (set, get) => ({
   isMuted: false,
   screenShakeEnabled: true,
   streamerMode: false,

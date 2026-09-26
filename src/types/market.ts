@@ -1,6 +1,6 @@
 /**
  * Market, Trading & BagHolder Pro Types
- * Manages parodied stock tickers, 1000x leveraged options, and regulatory heat.
+ * Manages parodied stock tickers, 1,000x leveraged options, and S.L.O.P. regulatory heat.
  */
 
 export type StockSymbol =
@@ -19,7 +19,7 @@ export type OptionType = 'PUT' | 'CALL';
 export interface StockDefinition {
   symbol: StockSymbol;
   name: string;
-  parodyOf: string;
+  sector: string;
   description: string;
   basePrice: number;
   currentPrice: number;
@@ -46,9 +46,10 @@ export interface ActiveOptionTrade {
 export interface MarketState {
   stocks: Record<StockSymbol, StockDefinition>;
   activeTrades: ActiveOptionTrade[];
-  secSuspicion: number; // 0 to 100%. At 100%, triggers Emergency House Subpoena Mini-Game
-  vixVolatility: number; // Baseline market noise
-  cronyFavor: number; // Currency used to bribe auditors and reset suspicion
+  slopSuspicion: number; // 0 to 100%. At 100%, triggers Emergency Special Counsel Raid
+  vexVolatility: number; // Baseline market volatility index ($VEX)
+  cronyFavor: number; // Currency used to bribe S.L.O.P. auditors
   isWalkBackWindowActive: boolean; // 8-second Straddle Squeeze window
   walkBackSecondsRemaining: number;
+  lastTargetStockSymbol?: StockSymbol; // Targeted stock for the walk-back squeeze
 }

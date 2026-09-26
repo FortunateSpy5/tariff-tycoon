@@ -31,7 +31,7 @@ CAPS LOCK Frenzy      S.L.O.P. Suspicion      Inflation Heat          Ontologica
   - Mexico $\to$ *The Nearshore Federation*
   - France $\to$ *The Strike Republic*
   - Germany $\to$ *Overthinker Union* *(Das Rustbelt)*
-  - China $\to$ *The Red Factory* *(Temu Prime)*
+  - China $\to$ *The Red Factory* *(BargainDrop Prime)*
   - Taiwan $\to$ *Silicon Archipelago*
   - Greenland $\to$ *Future State #52*
   - Switzerland $\to$ *The Secrecy Haven*
@@ -42,7 +42,7 @@ CAPS LOCK Frenzy      S.L.O.P. Suspicion      Inflation Heat          Ontologica
   - `$MICR` (MicroSoftness Cloud — mandatory hospital AI updates)
   - `$GUAC` (GuacSurcharge Grill — lukewarm carnitas & scale protests)
   - `$MSIL` (MicroSilicon Foundry — Leather-Jacket Larry)
-  - `$LMBR` (Canadian Maple Slurry & Timber)
+  - `$LMBR` (Great Northern Maple Slurry & Timber)
   - `$AVOC` (Nearshore Precision Avocados)
 
 ---
@@ -63,7 +63,8 @@ To optimize for AI context precision, deterministic edits, and clean builds, the
 src/
 ├── types/              # Pure TypeScript discriminated unions & domain interfaces (NO runtime logic)
 │   ├── desk.ts         # Stamp, Sharpie, Ink, Stamina, Tantrum meter
-│   ├── market.ts       # Stocks, 1000x Put/Call Options, VIX volatility, SEC suspicion
+│   ├── market.ts       # Stocks, 1000x Put/Call Options, VEX volatility, S.L.O.P. suspicion
+│   ├── nations.ts      # Parodied nations & multi-tier begging tiers
 │   ├── yap.ts          # Mad-Libs syntax tokens, comment bot feeds
 │   ├── dump.ts         # Agency liquidation cards, perks, comedic hazards
 │   ├── prestige.ts     # SIS, Sovereign Decrees, Ontological currencies

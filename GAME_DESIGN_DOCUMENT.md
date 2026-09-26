@@ -99,10 +99,10 @@
 * **Options Valuation & Volatility Spike (Vega Expansion):**
   When a YAP drops, the target stock plunges:
   $$\Delta S(\%) = -\min\left(0.92, \; \kappa \times \left(\frac{\text{YAP\_Power}}{100}\right) \times (1 + 0.5 \times \mathbb{I}_{\text{frenzy}})\right)$$
-  Volatility spikes implied volatility ($VIX$):
-  $$VIX_{\text{spike}} = VIX_0 \times \left(1 + \Delta S(\%) \times 4.0\right)^{1.5}$$
+  Volatility spikes implied volatility ($VEX$):
+  $$VEX_{\text{spike}} = VEX_0 \times \left(1 + \Delta S(\%) \times 4.0\right)^{1.5}$$
   Final Payout Formula:
-  $$\text{Payout} = \text{Collateral} \times \Lambda \times \left(\frac{\max(0, \; K - S_{\text{crash}})}{S_0}\right) \times \left(1 + \frac{VIX_{\text{spike}} - VIX_0}{100}\right)$$
+  $$\text{Payout} = \text{Collateral} \times \Lambda \times \left(\frac{\max(0, \; K - S_{\text{crash}})}{S_0}\right) \times \left(1 + \frac{VEX_{\text{spike}} - VEX_0}{100}\right)$$
 
 * **The S.L.O.P. Regulatory Suspicion Escalation ($0\text{--}100\%$):**
   1. *0–49% (Whispers on Cable News)*: Normal operations.
@@ -121,16 +121,16 @@ $$\text{YAP} = [\text{TIME\_PREFIX}] + [\text{TARGET\_ENTITY}] + [\text{BIZARRE\
 
 * **The Simulated Reply Swarm:**
   - **Hyper-Caffeinated Pundit (`@MadBagsJim`):** *"SELL THE HARVEST! THE SEED CROPS ARE GONE! Wait—he posted a thumbs-up? BUY CALLS! V-SHAPED SUPER-CYCLE! [Soundboard shatter effect]"*
-  - **Techno-Oligarch (`@ElongatedMuskrat`):** *"Concerning. Looking into replacing the entire supply chain with Optimus robots running on memes."*
-  - **Foreign Ambassadors begging in public quote-tweets.**
+  - **Techno-Oligarch (`@ElongatedMuskrat`):** *"Concerning. Looking into replacing the entire supply chain with Optimus wedge-bots running on memes."*
+  - **Foreign Ambassadors begging in public quote-yaps.**
 
 * **The "Fat-Finger Autocorrect" Mini-Event:**
-  - A late-night typo swaps a target ticker (e.g., typing `$LMT` $\to$ `$LMTD`, or "Boeing" $\to$ "Bowling" `$BOWL`).
+  - A late-night typo swaps a target ticker (e.g., typing `$DOOR` $\to$ `$DOORZ`, or "DoorPlug" $\to$ "DorkPlug" `$DORK`).
   - High-frequency trading bots misinterpret the code, triggering a **+10,000% penny stock pump**.
   - 45-second player dilemma: Issue immediate retraction, double down on 4D chess, or secretly dump personal offshore holdings on GriftBay at the peak.
 
 * **Diplomatic Hostage Begging DMs:**
-  - Foreign leaders slide into unencrypted DMs offering absurd bribes (e.g., Sweden offers lifetime SpottyFi Slopcast Platinum and free FLÅTBÄCK assembly by special forces; a Gulf monarch offers an albino hunting falcon wearing 24k gold Bolex chronometers on both talons; Denmark pleads for relief from the 850% tariff on KLLIK-BLOKS).
+  - Foreign leaders slide into unencrypted DMs offering absurd bribes (e.g., Sweden offers lifetime SpottyFi Slopcast Platinum and free FLÅTBÄCK assembly by special forces; a Gulf monarch offers an albino hunting falcon wearing 24k gold Bolex chronometers on both talons; Future State #52 pleads for relief from the 850% tariff on KLLIK-BLOKS).
 
 ---
 
@@ -145,9 +145,9 @@ $$\text{YAP} = [\text{TIME\_PREFIX}] + [\text{TARGET\_ENTITY}] + [\text{BIZARRE\
 | **5** | **S.N.A.I.L. (Postal Service)** | **+$50,000,000** | 100% margin on foreign trade parcel duties | **14% Lost Parcel Paradox**: Orders lost in mail. | Unlock **"Unclaimed Cargo Mystery Box Auctions"** under BagHolder Pro! |
 | **6** | **S.L.O.P. (Securities Comm)** | **+$180,000,000** | Suspicion accumulation -75%; 5,000x leverage | **Ponzi Cascade**: Stock rug-pulls to $0.00 every 3m. | Front-run the rug-pull with automated short puts! |
 | **7** | **S.H.A.K.E. (Tax Service)** | **+$650,000,000** | +50% Retained corporate profit growth | **Honesty Box Deficit**: Debt compounds +10%. | Blame the deficit on trading partners to justify 1,000% retaliatory tariffs! |
-| **8** | **DOE Nuclear Directorate**| **+$2,500,000,000** | +200% Executive Mansion crypto rig yield | **Geiger Counter Clicker**: 2.5% click chance to trigger mutant auto-tariffs. | Free radioactive glow doubles night-shift intern typing speed! |
-| **9** | **CDC (Disease Control)** | **+$8,000,000,000** | Manual "Health Scare" button (-60% market) | **Cabinet Super-Gout**: Intern passive click rates drop 40% on Mondays. | Sell holistic "Freedom Tonics" directly from the Oval Office! |
-| **10**| **The J-POW Basement Vault ($BRRR)** | **Scaled Dynamic Cash** | **"PRINT $BRRR"** physical desk button | **Inflation Heat Surge**: Inflation heat rises +5%. | Dynamic Scaling: Payout scales with Gross Domestic Revenue to prevent noob-traps! |
+| **8** | **D.O.E.-N.U.K.E. (Atomic)** | **+$2,500,000,000** | +200% Executive Mansion crypto rig yield | **Geiger Counter Clicker**: 2.5% click chance to trigger mutant auto-tariffs. | Free radioactive glow doubles night-shift intern typing speed! |
+| **9** | **C.O.U.G.H. (Contagion)** | **+$8,000,000,000** | Manual "Health Scare" button (-60% market) | **Cabinet Super-Gout**: Intern passive click rates drop 40% on Mondays. | Sell holistic "Freedom Tonics" directly from the Oval Office! |
+| **10**| **THE BRRR VAULT ($BRRR)** | **Scaled Dynamic Cash** | **"PRINT $BRRR"** physical desk button | **Inflation Heat Surge**: Inflation heat rises +5%. | Dynamic Scaling: Payout scales with Gross Domestic Revenue to prevent noob-traps! |
 
 ---
 

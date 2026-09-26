@@ -4,6 +4,7 @@
 
 import type { StateCreator } from 'zustand';
 import type { DumpState } from '../../types/dump';
+import type { GameStore } from '../useGameStore';
 import { INITIAL_AGENCIES } from '../../constants/agencies';
 import { sound } from '../../audio/soundEngine';
 
@@ -12,7 +13,7 @@ export interface DumpSlice extends DumpState {
   monetizeHazard: (revenue: number) => void;
 }
 
-export const createDumpSlice: StateCreator<DumpSlice, [], [], DumpSlice> = (set, get) => ({
+export const createDumpSlice: StateCreator<GameStore, [], [], DumpSlice> = (set, get) => ({
   agencies: [...INITIAL_AGENCIES],
   totalCashHarvested: 0,
   activeHazardsCount: 0,
@@ -35,7 +36,13 @@ export const createDumpSlice: StateCreator<DumpSlice, [], [], DumpSlice> = (set,
 
     sound.playChaChing();
 
+    // Multiply passive cash per second, establishing base passive cash if 0
+    const basePassive = state.passiveCashPerSecond > 0 ? state.passiveCashPerSecond : 10.0;
+    const newPassive = basePassive * targetAgency.passivePerkMultiplier;
+
     set({
+      treasuryCash: state.treasuryCash + targetAgency.liquidationCashYield,
+      passiveCashPerSecond: newPassive,
       agencies: updatedAgencies,
       totalCashHarvested: state.totalCashHarvested + targetAgency.liquidationCashYield,
       activeHazardsCount: state.activeHazardsCount + 1,
@@ -46,7 +53,9 @@ export const createDumpSlice: StateCreator<DumpSlice, [], [], DumpSlice> = (set,
 
   monetizeHazard: (revenue) => {
     const state = get();
+    sound.playChaChing();
     set({
+      treasuryCash: state.treasuryCash + revenue,
       disasterCapitalismRevenue: state.disasterCapitalismRevenue + revenue,
     });
   },

@@ -1,6 +1,7 @@
 /**
  * Procedural Web Audio API Sound Engine
  * Generates tactile audio in real time with zero external audio assets.
+ * Optimized with node disconnection cleanup to prevent Web Audio memory leaks.
  */
 
 class SoundEngine {
@@ -9,15 +10,20 @@ class SoundEngine {
   private masterGain: GainNode | null = null;
 
   private initContext() {
+    if (typeof window === 'undefined') return;
     if (!this.ctx) {
-      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      const AudioCtx =
+        window.AudioContext ||
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!AudioCtx) return;
+
       this.ctx = new AudioCtx();
       this.masterGain = this.ctx.createGain();
       this.masterGain.gain.value = 0.3;
       this.masterGain.connect(this.ctx.destination);
     }
-    if (this.ctx.state === 'suspended') {
-      this.ctx.resume();
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume().catch(() => {});
     }
   }
 
@@ -52,6 +58,11 @@ class SoundEngine {
     osc.connect(gain);
     gain.connect(this.masterGain);
 
+    osc.onended = () => {
+      osc.disconnect();
+      gain.disconnect();
+    };
+
     osc.start(now);
     osc.stop(now + 0.1);
   }
@@ -79,6 +90,11 @@ class SoundEngine {
     osc.connect(gain);
     gain.connect(this.masterGain);
 
+    osc.onended = () => {
+      osc.disconnect();
+      gain.disconnect();
+    };
+
     osc.start(now);
     osc.stop(now + 0.07);
   }
@@ -104,6 +120,11 @@ class SoundEngine {
 
     osc.connect(gain);
     gain.connect(this.masterGain);
+
+    osc.onended = () => {
+      osc.disconnect();
+      gain.disconnect();
+    };
 
     osc.start(now);
     osc.stop(now + 0.2);
@@ -131,6 +152,11 @@ class SoundEngine {
 
       osc.connect(gain);
       gain.connect(this.masterGain);
+
+      osc.onended = () => {
+        osc.disconnect();
+        gain.disconnect();
+      };
 
       osc.start(now + idx * 0.06);
       osc.stop(now + idx * 0.06 + 0.22);

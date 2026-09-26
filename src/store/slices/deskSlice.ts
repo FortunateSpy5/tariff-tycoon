@@ -4,6 +4,7 @@
 
 import type { StateCreator } from 'zustand';
 import type { DeskState, GamePhase } from '../../types/desk';
+import type { GameStore } from '../useGameStore';
 import { calculateClickValue, calculateInkRefillCost } from '../../engine/math/formulas';
 import { sound } from '../../audio/soundEngine';
 
@@ -18,7 +19,7 @@ export interface DeskSlice extends DeskState {
   setGamePhase: (phase: GamePhase) => void;
 }
 
-export const createDeskSlice: StateCreator<DeskSlice, [], [], DeskSlice> = (set, get) => ({
+export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set, get) => ({
   phase: 1,
   totalClicks: 0,
   inkLevel: 100,
@@ -45,17 +46,14 @@ export const createDeskSlice: StateCreator<DeskSlice, [], [], DeskSlice> = (set,
       sound.playSharpieSqueak();
     }
 
-    // Cash calculation
+    // Cash calculation with real SIS Sovereign Immunity Slip count for bankruptcy floor
     const earnedCash = calculateClickValue(
       state.phase,
       state.phase === 1 ? 5.0 : 50.0,
       state.isCapsFrenzy ? 100 : state.inkLevel,
       state.isCapsFrenzy,
-      0 // base SIS
+      state.sovereignImmunitySlips || 0
     );
-
-    // Ink depletion (frozen during frenzy)
-    const newInk = state.isCapsFrenzy ? state.inkLevel : Math.max(0, state.inkLevel - 2);
 
     // Tantrum gain (+1.5% normal, +3.5% dry ink slingshot)
     const tantrumDelta = isDry ? 3.5 : 1.5;
@@ -63,18 +61,23 @@ export const createDeskSlice: StateCreator<DeskSlice, [], [], DeskSlice> = (set,
     let shouldTriggerFrenzy = state.isCapsFrenzy;
     let frenzyRemaining = state.capsFrenzySecondsRemaining;
     let frenziesCount = state.totalFrenziesTriggered;
+    let nextInkLevel = state.isCapsFrenzy ? state.inkLevel : Math.max(0, state.inkLevel - 2);
+    let nextRefillCount = state.inkRefillCount;
 
     if (nextTantrum >= 100 && !state.isCapsFrenzy) {
       shouldTriggerFrenzy = true;
       nextTantrum = 0;
       frenzyRemaining = 15; // 15 seconds of pure chaos
       frenziesCount += 1;
+      nextInkLevel = state.maxInk; // Frenzy automatically refills ink to 100%!
+      nextRefillCount = Math.max(0, nextRefillCount - 2); // Resets escalation penalty
     }
 
     set({
       treasuryCash: state.treasuryCash + earnedCash,
       totalClicks: state.totalClicks + 1,
-      inkLevel: newInk,
+      inkLevel: nextInkLevel,
+      inkRefillCount: nextRefillCount,
       tantrumMeter: Math.min(100, nextTantrum),
       isCapsFrenzy: shouldTriggerFrenzy,
       capsFrenzySecondsRemaining: frenzyRemaining,

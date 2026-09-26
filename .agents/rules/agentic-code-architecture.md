@@ -63,7 +63,7 @@ src/
    ```typescript
    /**
     * INVARIANT: [The Palm-a-Grifto Golf Protocol]
-    * Freezes VIX volatility, SEC suspicion, and active margin calls while offline.
+    * Freezes VEX volatility, S.L.O.P. suspicion, and active margin calls while offline.
     * Caps passive offline treasury calculations to 48 hours max.
     */
    ```

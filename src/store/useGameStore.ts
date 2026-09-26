@@ -3,6 +3,7 @@
  * 
  * INVARIANT: [The Palm-a-Grifto Golf Protocol]
  * On storage rehydration, calculates passive treasury earnings accrued while offline (up to 48 hours).
+ * Freezes and extends all active option trade expiration timers so players are never punished for absence.
  */
 
 import { create } from 'zustand';
@@ -45,6 +46,10 @@ export const useGameStore = create<GameStore>()(
         americaLLCIncorporated: state.americaLLCIncorporated,
         cronyFavor: state.cronyFavor,
         agencies: state.agencies,
+        stocks: state.stocks,
+        activeTrades: state.activeTrades,
+        slopSuspicion: state.slopSuspicion,
+        vexVolatility: state.vexVolatility,
         isMuted: state.isMuted,
         screenShakeEnabled: state.screenShakeEnabled,
         streamerMode: state.streamerMode,
@@ -55,16 +60,31 @@ export const useGameStore = create<GameStore>()(
         const now = Date.now();
         const offlineSeconds = Math.max(0, (now - state.lastSavedTimestamp) / 1000);
 
-        if (offlineSeconds > 5 && state.passiveCashPerSecond > 0) {
-          const { cashEarned, secondsCredited } = calculateOfflineEarnings(
-            state.passiveCashPerSecond,
-            offlineSeconds
-          );
-          if (cashEarned > 0) {
-            state.treasuryCash += cashEarned;
-            console.log(
-              `[Palm-a-Grifto Protocol] Welcome back! While golfing, collected ${cashEarned} over ${secondsCredited}s.`
+        if (offlineSeconds > 5) {
+          // Calculate passive cash accrued
+          if (state.passiveCashPerSecond > 0) {
+            const { cashEarned, secondsCredited } = calculateOfflineEarnings(
+              state.passiveCashPerSecond,
+              offlineSeconds
             );
+            if (cashEarned > 0) {
+              state.treasuryCash += cashEarned;
+              console.log(
+                `[Palm-a-Grifto Protocol] Welcome back! While golfing, collected $${cashEarned.toFixed(2)} over ${secondsCredited}s.`
+              );
+            }
+          }
+
+          // Offline Crony Favor accrual (+1 per minute offline)
+          const offlineCronyBonus = Math.floor(Math.min(offlineSeconds, 48 * 3600) / 60);
+          state.cronyFavor += offlineCronyBonus;
+
+          // Extend expiration timestamp of all active trades by offlineSeconds
+          if (state.activeTrades && state.activeTrades.length > 0) {
+            state.activeTrades = state.activeTrades.map((trade) => ({
+              ...trade,
+              expiresAtTimestamp: trade.expiresAtTimestamp + offlineSeconds * 1000,
+            }));
           }
         }
       },

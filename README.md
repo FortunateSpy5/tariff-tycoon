@@ -1,7 +1,7 @@
 # 🦅 EXECUTIVE DEGEN: SHORT THE WORLD
 *(The Art of the 3:00 AM Tariff)*
 
-> *"The S&Pain 500 opens in 4 minutes. Sign an 800% tariff on Canadian maple slurry with your squeaking Golden Sharpie, short European automakers on BagHolder Pro under the Resolute Desk, and deploy D.U.M.P. auditors to balance the vibes."*
+> *"The S&Pain 500 opens in 4 minutes. Sign an 800% tariff on Great Northern maple slurry with your squeaking Golden Sharpie, short European automakers on BagHolder Pro under the Resolute Desk, and deploy D.U.M.P. auditors to balance the vibes."*
 
 ---
 
@@ -22,14 +22,14 @@ You play as **"The Dealmaker-in-Chief"**—a silhouette with a glowing aerodynam
    * Slam **[LAUNCH LETHAL YAP]** on **`YAP`** with procedurally generated 3:00 AM rants (*"FRUIT ECOSYSTEM INC. IS COOLING CHIPS WITH COMMIE TAP WATER! 400% PATRIOT TAX AT SUNRISE! SAD!"*).
    * Watch the stock plunge -40%, cash out +15,000% gains, and execute the **Straddle Squeeze**: buy Calls at the bottom and hit the 8-second **[WALK-BACK CLARIFICATION]** window to ride the recovery pump!
 3. **The D.U.M.P. Liquidation Tree (Disaster Capitalism)**:
-   * Liquidate 10 federal agencies (N.O.C.L.O.U.D., F.A.T., A.I.R., S.M.O.G., S.N.A.I.L., S.L.O.P., S.H.A.K.E., The J-POW Vault) for massive cash while monetizing the resulting catastrophes (e.g. emergency umbrella tariffs during unannounced hurricanes, selling toxic sludge as "Patriot Protein Paste").
+   * Liquidate 10 federal agencies (N.O.C.L.O.U.D., F.A.T., A.I.R., S.M.O.G., S.N.A.I.L., S.L.O.P., S.H.A.K.E., THE BRRR VAULT, D.O.E.-N.U.K.E., C.O.U.G.H.) for massive cash while monetizing the resulting catastrophes (e.g. emergency umbrella tariffs during unannounced hurricanes, selling toxic sludge as "Patriot Protein Paste").
 4. **The 4-Phase Escalation (Universal Paperclips Scale)**:
-   * **Phase 1: The Customs Desk** ($0 to $1M) — Shaking down tourists at Gate 99B Liberty International for unpasteurized French brie.
+   * **Phase 1: The Customs Desk** ($0 to $1M) — Shaking down tourists at Gate 99B Liberty International for unpasteurized Strike Republic brie.
    * **Phase 2: The Oval Syndicate** ($1M to $100B) — Front-running global markets with late-night social media decrees.
-   * **Phase 3: Fortress America** ($100B to $100Q) — Freezing maritime trade; naval container auctions; FDA reclassifying drywall as "High-Calcium Freedom Flour."
+   * **Phase 3: Fortress America** ($100B to $100Q) — Freezing maritime trade; naval container auctions; F.A.T. reclassifying drywall as "High-Calcium Freedom Flour."
    * **Phase 4: Ontological Tariffs** ($10^{18} to $10^{42}$) — Expanding the Commerce Clause into cosmic physics: 45% tariff on the Sun's photons, 900% tariff on the Future, declaring the 2nd Law of Thermodynamics unconstitutional, until the universe files for Chapter 7 bankruptcy.
 5. **The Viral 9:16 "Senate Hearing" Clip Generator**:
-   * One-click **[LEAK TO C-SNOOZE]** exports split-screen vertical video for TikTok/X: top half shows a red-faced senator holding your tweet on a foam poster board, bottom half shows *Metro Sprinter 99: Endless Slop* and ASMR soap cutting.
+   * One-click **[LEAK TO C-SNOOZE]** exports split-screen vertical video for TikTok/X: top half shows a red-faced senator holding your YAP on a foam poster board, bottom half shows *Metro Sprinter 99: Endless Slop* and ASMR soap cutting.
 6. **Streamer Mode (Twitch / Kick Integration)**:
    * Live chat spams `!YAP` to trigger tantrums, votes on international tariff targets, and buys corporate pardon plaques.
 

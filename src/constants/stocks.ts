@@ -4,7 +4,7 @@ export const INITIAL_STOCKS: Record<StockSymbol, StockDefinition> = {
   FRUT: {
     symbol: 'FRUT',
     name: 'Fruit Ecosystem Inc.',
-    parodyOf: 'Apple',
+    sector: 'Consumer Hardware & Braided Dongles',
     description: '$1,999 Titanium Rectangles & Braided Dongles',
     basePrice: 220,
     currentPrice: 220,
@@ -14,8 +14,8 @@ export const INITIAL_STOCKS: Record<StockSymbol, StockDefinition> = {
   GIGA: {
     symbol: 'GIGA',
     name: 'GigaFlex Motors',
-    parodyOf: 'Tesla',
-    description: 'Stainless Steel Wedge Trucks & CEO Shitpost Rallies',
+    sector: 'Autonomous Wedge Transport & Bot Rallies',
+    description: 'Stainless Steel Wedge Trucks & CEO Meme Rallies',
     basePrice: 180,
     currentPrice: 180,
     priceHistory: [180, 185, 175, 182, 180],
@@ -24,7 +24,7 @@ export const INITIAL_STOCKS: Record<StockSymbol, StockDefinition> = {
   DOOR: {
     symbol: 'DOOR',
     name: 'DoorPlug Dynamics',
-    parodyOf: 'Boeing',
+    sector: 'Commercial Aerospace & Structural Tape',
     description: 'Commercial Jets Held Together by Blue Tape & Prayer',
     basePrice: 145,
     currentPrice: 145,
@@ -34,7 +34,7 @@ export const INITIAL_STOCKS: Record<StockSymbol, StockDefinition> = {
   MICR: {
     symbol: 'MICR',
     name: 'MicroSoftness Cloud',
-    parodyOf: 'Microsoft',
+    sector: 'Enterprise Office Suites & Cloud Reboots',
     description: 'Mandatory 4:00 AM Hospital OS Updates & Clippy 2.0',
     basePrice: 380,
     currentPrice: 380,
@@ -44,7 +44,7 @@ export const INITIAL_STOCKS: Record<StockSymbol, StockDefinition> = {
   GUAC: {
     symbol: 'GUAC',
     name: 'GuacSurcharge Grill',
-    parodyOf: 'Chipotle',
+    sector: 'Fast Casual Burrito & Portion Disputes',
     description: 'Lukewarm Carnitas & Portion-Scale Customer Revolts',
     basePrice: 55,
     currentPrice: 55,
@@ -54,7 +54,7 @@ export const INITIAL_STOCKS: Record<StockSymbol, StockDefinition> = {
   MSIL: {
     symbol: 'MSIL',
     name: 'MicroSilicon Foundry',
-    parodyOf: 'NVIDIA',
+    sector: 'Liquid-Cooled GPU Clusters & Ray-Tracing Hype',
     description: 'Leather-Jacket Larry GPU Clusters & Pure Liquid AI Hype',
     basePrice: 125,
     currentPrice: 125,
@@ -64,7 +64,7 @@ export const INITIAL_STOCKS: Record<StockSymbol, StockDefinition> = {
   LMBR: {
     symbol: 'LMBR',
     name: 'Great Northern Timber',
-    parodyOf: 'Canadian Softwood',
+    sector: 'Boreal Softwood & Maple Slurry Extraction',
     description: 'Raw Pine Logs & Maple Slurry Barrels',
     basePrice: 42,
     currentPrice: 42,
@@ -74,7 +74,7 @@ export const INITIAL_STOCKS: Record<StockSymbol, StockDefinition> = {
   AVOC: {
     symbol: 'AVOC',
     name: 'Nearshore Agro-Futures',
-    parodyOf: 'Mexican Avocados',
+    sector: 'Perishable Produce & High-Velocity Fiesta Logistics',
     description: 'Green Gold & High-Velocity Fiesta Produce',
     basePrice: 32,
     currentPrice: 32,
@@ -84,7 +84,7 @@ export const INITIAL_STOCKS: Record<StockSymbol, StockDefinition> = {
   PAIN: {
     symbol: 'PAIN',
     name: 'The S&Pain 500 Index',
-    parodyOf: 'S&P 500',
+    sector: 'Macroeconomic Agony Benchmark',
     description: 'The Agony Benchmark of Western Capitalist Nihilism',
     basePrice: 5200,
     currentPrice: 5200,

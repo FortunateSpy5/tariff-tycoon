@@ -8,10 +8,11 @@ import type { OptionType } from '../../types/market';
 
 /**
  * Computes manual click cash yield.
- * KaTeX: V_{\text{click}} = \max\left(V_{\text{floor}}, B \times M_{\text{frenzy}} \times M_{\text{dry}}\right)
+ * KaTeX: V_{\text{click}} = \max\left(V_{\text{floor}}, B \times M_{\text{phase}} \times M_{\text{frenzy}} \times M_{\text{dry}}\right)
  * 
  * INVARIANT: [Bankruptcy Floor]
  * Ensures the player can never be permanently soft-locked after 100% options loss.
+ * Cash floor is guaranteed: max($1.00, SIS * $1,000).
  */
 export function calculateClickValue(
   phase: GamePhase,
@@ -20,16 +21,17 @@ export function calculateClickValue(
   isCapsFrenzy: boolean,
   sisCount: number
 ): number {
-  // Guaranteed bankruptcy floor: $1.00 or $1,000 per Sovereign Immunity Slip
   const cashFloor = Math.max(1.0, sisCount * 1000);
+  const phaseMultiplier = phase === 1 ? 1.0 : 10.0;
 
   if (isCapsFrenzy) {
-    return Math.max(cashFloor, baseValue * 10.0);
+    // 10x frenzy multiplier on current phase yield
+    return Math.max(cashFloor, baseValue * phaseMultiplier * 10.0);
   }
 
   // Desperation Dry Nib: 90% penalty when ink is depleted
   const inkMultiplier = inkLevel <= 0 ? 0.1 : 1.0;
-  const calculatedYield = baseValue * (phase === 1 ? 1.0 : 10.0) * inkMultiplier;
+  const calculatedYield = baseValue * phaseMultiplier * inkMultiplier;
 
   return Math.max(cashFloor, calculatedYield);
 }
@@ -37,15 +39,18 @@ export function calculateClickValue(
 /**
  * Computes the cost to refill Golden Sharpie ink.
  * GDD Formula: C(n) = C_0 \times 1.15^n
- * KaTeX: C(n) = 100 \times 1.15^n
+ * KaTeX: C(n) = \min(100 \times 1.15^n, 25000)
+ * 
+ * Capped to avoid negative-ROI traps where refills exceed a full ink tank's output.
  */
 export function calculateInkRefillCost(refillCount: number, baseCost: number = 100): number {
-  return Math.floor(baseCost * Math.pow(1.15, refillCount));
+  const exponentialCost = Math.floor(baseCost * Math.pow(1.15, refillCount));
+  return Math.min(exponentialCost, 25000);
 }
 
 /**
  * Computes the net profit or loss for an active leveraged option contract.
- * KaTeX: \text{Return} = \Delta_{\text{price}} \times \text{leverage}
+ * KaTeX: \text{Return} = \Delta_{\text{price}} \times \text{leverage} \times \left(1 + \frac{\Delta VEX}{100}\right)
  * KaTeX: \text{Profit} = \text{collateral} \times \max(-1.0, \text{Return})
  */
 export function calculateOptionReturn(
@@ -53,7 +58,8 @@ export function calculateOptionReturn(
   entryPrice: number,
   currentPrice: number,
   leverage: number,
-  collateral: number
+  collateral: number,
+  vexVolatility: number = 15.0
 ): number {
   if (entryPrice <= 0) return 0;
 
@@ -62,7 +68,10 @@ export function calculateOptionReturn(
       ? (entryPrice - currentPrice) / entryPrice
       : (currentPrice - entryPrice) / entryPrice;
 
-  const leveragedDelta = rawDelta * leverage;
+  // Vega blowout expansion factor based on VEX index volatility
+  const vegaMultiplier = 1.0 + Math.max(0, (vexVolatility - 15.0) / 100);
+  const leveragedDelta = rawDelta * leverage * vegaMultiplier;
+
   // Options cannot lose more than 100% of collateral locked
   const clampedReturn = Math.max(-1.0, leveragedDelta);
 
@@ -71,12 +80,13 @@ export function calculateOptionReturn(
 
 /**
  * Calculates Sovereign Immunity Slips earned upon Tier 1 Prestige (Flight to the Caymans).
- * KaTeX: SIS = \lfloor 10 \times \left(\frac{\text{NetWorth}}{10^6}\right)^{0.22} \rfloor
+ * Threshold: $10B Lifetime Net Worth.
+ * KaTeX: SIS = \left\lfloor \left(\frac{\text{NetWorth}}{10^{10}}\right)^{0.33} \right\rfloor
  */
 export function calculatePrestigeSIS(netWorth: number): number {
-  if (netWorth < 1_000_000) return 0;
-  const ratio = netWorth / 1_000_000;
-  return Math.floor(10 * Math.pow(ratio, 0.22));
+  if (netWorth < 10_000_000_000) return 0;
+  const ratio = netWorth / 10_000_000_000;
+  return Math.floor(Math.pow(ratio, 0.33));
 }
 
 /**

@@ -68,5 +68,5 @@ For specialized guidelines and detailed mechanics, consult:
 ## 4. Workspace Skills (`.agents/skills/`)
 
 - `procedural-yap-generator` — Generates infinite, legally safe 3:00 AM YAPs, typos, and fake comment swarms.
-- `options-trading-math` — Formulas and balance tools for BagHolder Pro leverage, VIX volatility, and SEC suspicion.
+- `options-trading-math` — Formulas and balance tools for BagHolder Pro leverage, VEX volatility, and S.L.O.P. suspicion.
 - `viral-clip-director` — Architecture and asset pipeline for the 9:16 vertical C-SNOOZE / brainrot clip generator.

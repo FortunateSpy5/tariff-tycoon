@@ -4,16 +4,18 @@
 
 import type { StateCreator } from 'zustand';
 import type { PrestigeState } from '../../types/prestige';
+import type { GameStore } from '../useGameStore';
 import { calculatePrestigeSIS } from '../../engine/math/formulas';
+import { INITIAL_AGENCIES } from '../../constants/agencies';
 import { sound } from '../../audio/soundEngine';
 
 export interface PrestigeSlice extends PrestigeState {
-  executeFlightToCaymans: (currentNetWorth: number) => number;
+  executeFlightToCaymans: () => number;
   unlockPerk: (perkId: string, cost: number) => boolean;
   incorporateAmericaLLC: () => void;
 }
 
-export const createPrestigeSlice: StateCreator<PrestigeSlice, [], [], PrestigeSlice> = (set, get) => ({
+export const createPrestigeSlice: StateCreator<GameStore, [], [], PrestigeSlice> = (set, get) => ({
   sovereignImmunitySlips: 0,
   totalSISLifetime: 0,
   flightToCaymansCount: 0,
@@ -24,14 +26,25 @@ export const createPrestigeSlice: StateCreator<PrestigeSlice, [], [], PrestigeSl
   ontologicalTariffs: [],
   entropyDeficit: 0,
 
-  executeFlightToCaymans: (currentNetWorth) => {
-    const earnedSIS = calculatePrestigeSIS(currentNetWorth);
+  executeFlightToCaymans: () => {
+    const state = get();
+    const earnedSIS = calculatePrestigeSIS(state.treasuryCash);
     if (earnedSIS <= 0) return 0;
 
-    const state = get();
     sound.playChaChing();
 
+    // Full run soft-reset (retaining lifetime SIS and permanent perks)
     set({
+      treasuryCash: 100.0,
+      passiveCashPerSecond: 0,
+      phase: 1,
+      inkLevel: 100,
+      inkRefillCount: 0,
+      tantrumMeter: 0,
+      isCapsFrenzy: false,
+      capsFrenzySecondsRemaining: 0,
+      activeTrades: [],
+      agencies: INITIAL_AGENCIES.map((a) => ({ ...a, isLiquidated: false })),
       sovereignImmunitySlips: state.sovereignImmunitySlips + earnedSIS,
       totalSISLifetime: state.totalSISLifetime + earnedSIS,
       flightToCaymansCount: state.flightToCaymansCount + 1,
@@ -57,6 +70,8 @@ export const createPrestigeSlice: StateCreator<PrestigeSlice, [], [], PrestigeSl
 
   incorporateAmericaLLC: () => {
     const state = get();
+    if (state.treasuryCash < 1e24) return; // $10^24 required for Delaware C-Corp
+
     sound.playDeskThud();
     set({
       americaLLCIncorporated: true,
