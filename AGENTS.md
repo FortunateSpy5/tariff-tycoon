@@ -22,6 +22,11 @@ Welcome, AI Agent. This repository powers **EXECUTIVE DEGEN: SHORT THE WORLD** (
   - Phase 2: *The Oval Syndicate* ($1M to $100B).
   - Phase 3: *Fortress America* ($100B to $100Q).
   - Phase 4: *Ontological Protectionism* ($10^{18} \to 10^{42}$ — Taxing the Sun, the Future, and the 2nd Law of Thermodynamics).
+- **Enforce Agentic Code Architecture & Limits:**
+  - Standard files target $\le 250$ lines; hard ceiling of $400$ lines per file.
+  - Zero monolithic god-files. Zustand store must use the slice pattern (`src/store/slices/`).
+  - Headless mathematical logic must reside in `src/engine/` and include KaTeX formula citations matching `GAME_DESIGN_DOCUMENT.md`.
+  - Invariant safety functions must include explicit docstrings.
 - **Verify Clean Builds Locally:**
   - Verify zero TypeScript/build errors before marking any feature complete.
 
@@ -54,6 +59,7 @@ For specialized guidelines and detailed mechanics, consult:
 - **Project Knowledge Base:** [.agents/PROJECT_KNOWLEDGE_BASE.md](.agents/PROJECT_KNOWLEDGE_BASE.md)
 - **Legal & Parody Rules:** [.agents/rules/legal-compliance-and-parody.md](.agents/rules/legal-compliance-and-parody.md)
 - **Incremental Design Invariants:** [.agents/rules/incremental-gameplay-invariants.md](.agents/rules/incremental-gameplay-invariants.md)
+- **Agentic Code Architecture:** [.agents/rules/agentic-code-architecture.md](.agents/rules/agentic-code-architecture.md)
 - **Satirical Voice & Tone:** [.agents/rules/satirical-voice-and-tone.md](.agents/rules/satirical-voice-and-tone.md)
 - **Feature Roadmap & SOP:** [.agents/workflows/FEATURE_ROADMAP.md](.agents/workflows/FEATURE_ROADMAP.md)
 
