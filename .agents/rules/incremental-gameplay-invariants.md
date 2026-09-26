@@ -4,14 +4,14 @@ These rules govern the mathematical balance, progression architecture, and playe
 
 ---
 
-## 1. The Offline Invariant: "The Mar-a-Lago Golf Protocol"
+## 1. The Offline Invariant: "The Palm-a-Grifto Golf Protocol"
 * **The Rule:** An incremental game must **never punish absence**. Returning to the game after 8 hours must always feel rewarding, never punishing.
 * **Implementation:**
   - When the browser tab closes or unmounts:
     1. Inflation Heat, Civil Unrest, and the SEC Suspicion Meter are **frozen**.
     2. Zero margin calls or DOJ raids can execute while offline.
     3. Passive Treasury Cash and Crony Favor accrue cleanly at 100% efficiency (up to a 48-hour cap).
-  - *Comedic Lore:* *"While the President is golfing at Mar-a-Lago, the federal government is paralyzed by executive indecision. Bureaucrats refuse to process riots or print money without a signed Sharpie directive. The economy enters a blissful coma until your return."*
+  - *Comedic Lore:* *"While the President is golfing at Palm-a-Grifto Resort & Spa, the federal government is paralyzed by executive indecision. Bureaucrats refuse to process riots or print money without a signed Sharpie directive. The economy enters a blissful coma until your return."*
 
 ---
 

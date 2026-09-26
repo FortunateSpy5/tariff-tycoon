@@ -66,7 +66,7 @@ interface YapTemplate {
 ## 2. Simulated Reply Swarm Archetypes
 
 When a YAP is generated, pick 3 to 5 automated replies:
-1. **Parody Jim Cramer (`@MadBagsJim`):** *"SELL THE CROPS! THE SEED GRAIN IS DEAD! Wait—he gave a thumbs-up? BUY THE DIP! V-SHAPED SUPER-CYCLE! [Glass shattering SFX]"*
-2. **Parody Elon (`@ElongatedMuskrat`):** *"Concerning. Looking into replacing entire supply chain with Optimus bots powered by memes."*
+1. **Hyper-Caffeinated Pundit (`@MadBagsJim`):** *"SELL THE CROPS! THE SEED GRAIN IS DEAD! Wait—he gave a thumbs-up? BUY THE DIP! V-SHAPED SUPER-CYCLE! [Glass shattering SFX]"*
+2. **Techno-Oligarch (`@ElongatedMuskrat`):** *"Concerning. Looking into replacing entire supply chain with Optimus bots powered by memes."*
 3. **Foreign Embassy (`@SwissMissionDC`):** *"Mr. Executive, we have sent a 50kg wheel of Gruyère to your Florida resort. Please revoke the chocolate embargo."*
 4. **Degen Retail Trader (`@0DTE_Ape`):** *"HE CAPITALIZED 'LARD'. That is an undeniable 7D-chess signal. Mortgaging my house to buy 1000x calls on lard futures."*

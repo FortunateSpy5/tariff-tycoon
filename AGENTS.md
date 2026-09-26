@@ -12,7 +12,7 @@ Welcome, AI Agent. This repository powers **EXECUTIVE DEGEN: SHORT THE WORLD** (
   - Always use the canonical parody roster: *"The Dealmaker-in-Chief"*, **`YAP`**, **`BagHolder Pro`**, **`D.U.M.P.`**, *The Great Northern Annex*, *The Nearshore Federation*, *The Strike Republic*, *Overthinker Union*, *The Red Factory*, *Silicon Archipelago*, *Fruit Ecosystem Inc.*, *GigaFlex Motors*, *DoorPlug Dynamics*.
   - Maintain First Amendment parody and caricature protection (*Hustler v. Falwell*, *Campbell v. Acuff-Rose*).
 - **Honor the Idle Game Invariants (The Golden Rule of Idle Economy):**
-  - **The Mar-a-Lago Golf Protocol (Offline Safety Guarantee):** Offline time must *never* ruin an active setup or punish the player. Volatility, margin-call timers, and unrest are frozen/decayed while offline; passive treasury revenue collects safely for up to 48 hours.
+  - **The Palm-a-Grifto Golf Protocol (Offline Safety Guarantee):** Offline time must *never* ruin an active setup or punish the player. Volatility, margin-call timers, and unrest are frozen/decayed while offline; passive treasury revenue collects safely for up to 48 hours.
   - **Zero Soft-Locks:** The manual click ("Executive Action / Tweet") always has a guaranteed cash floor ($ \ge \$1.00 $ or $ \text{SIS} \times \$1,000 $). If a player loses 100% of their net worth on a bad option trade, the "Too Big to Fail" bailout safety net triggers automatically.
   - **Causal Market Volatility:** Stock crashes must be causally triggered by player YAPs and tariffs, never purely passive background RNG.
 - **Maintain Tactile & Visceral Juice:**

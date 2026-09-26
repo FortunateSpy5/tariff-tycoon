@@ -24,7 +24,7 @@ This document outlines the development phases for **EXECUTIVE DEGEN: SHORT THE W
 ## Phase 3: The D.U.M.P. Liquidation Tree & Macro Chaos (Sprint 3)
 - [ ] **D.U.M.P. Guillotine UI:** 10 federal agencies to scrap with instant cash and persistent comedic hazards.
 - [ ] **Inflation Heat & Civil Unrest Loop:** Active friction balancing with stimulus checks and military flyover distractions.
-- [ ] **The Mar-a-Lago Golf Protocol:** Offline state persistence and freeze invariants.
+- [ ] **The Palm-a-Grifto Golf Protocol:** Offline state persistence and freeze invariants.
 
 ---
 
