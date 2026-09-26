@@ -27,7 +27,7 @@ export const InkMeter: React.FC = () => {
       <div className="flex items-center justify-between mb-1.5">
         <div className="flex items-center gap-1.5 text-xs font-semibold text-stone-300">
           <Droplet className={`w-3.5 h-3.5 ${isDry ? 'text-red-500 animate-bounce' : 'text-amber-400'}`} />
-          <span>Golden Sharpie Ink</span>
+          <span>Golden Sherpie Ink</span>
         </div>
         <span className={`text-xs font-mono font-bold ${isDry ? 'text-red-400' : 'text-stone-300'}`}>
           {isCapsFrenzy ? '∞ INFINITE' : `${inkPercent}%`}
@@ -51,9 +51,9 @@ export const InkMeter: React.FC = () => {
       {/* Status Warning or Refill Button */}
       <div className="flex items-center justify-between gap-2 mt-1">
         {isDry ? (
-          <div className="flex items-center gap-1 text-[11px] text-red-400 font-semibold">
+          <div className="flex items-center gap-1 text-[11px] text-red-400 font-semibold animate-pulse">
             <AlertTriangle className="w-3.5 h-3.5" />
-            <span>DRY NIB: +3.5% Tantrum Slingshot</span>
+            <span>DRY NIB: +3.5% Tantrum Slingshot (RAGE INTO FRENZY!)</span>
           </div>
         ) : (
           <span className="text-[10px] text-stone-500">

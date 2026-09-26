@@ -45,7 +45,7 @@ export const INITIAL_AGENCIES: AgencyLiquidation[] = [
     liquidationCashYield: 3000000,
     perkDescription: 'Industrial factories run 24/7; domestic manufacturing cash +35%',
     passivePerkMultiplier: 1.35,
-    hazardDescription: 'Acid rain corrodes Golden Sharpie nibs (refills cost 25% more)',
+    hazardDescription: 'Acid rain corrodes Golden Sherpie nibs (refills cost 25% more)',
     hazardPenaltyPercentage: 0.25,
     isLiquidated: false,
   },

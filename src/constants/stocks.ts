@@ -35,7 +35,7 @@ export const INITIAL_STOCKS: Record<StockSymbol, StockDefinition> = {
     symbol: 'MICR',
     name: 'MicroSoftness Cloud',
     sector: 'Enterprise Office Suites & Cloud Reboots',
-    description: 'Mandatory 4:00 AM Hospital OS Updates & Clippy 2.0',
+    description: 'Mandatory 4:00 AM Hospital OS Updates & Bippy 2.0',
     basePrice: 380,
     currentPrice: 380,
     priceHistory: [380, 382, 378, 381, 380],

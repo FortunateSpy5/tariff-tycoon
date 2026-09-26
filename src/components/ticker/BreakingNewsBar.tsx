@@ -114,30 +114,36 @@ export const BreakingNewsBar: React.FC = () => {
           <span>Breaking:</span>
         </div>
 
-        {/* Ticker items */}
-        <div className="flex items-center gap-8 overflow-x-hidden whitespace-nowrap animate-marquee">
-          {/* Stock Tickers */}
-          {(['PAIN', 'FRUT', 'GIGA', 'DOOR'] as StockSymbol[]).map((sym) => {
-            const stock = stocks[sym];
-            if (!stock) return null;
-            const delta = stock.currentPrice - stock.basePrice;
-            const isUp = delta >= 0;
-            return (
-              <span key={sym} className="font-mono flex items-center gap-1">
-                <span className="font-semibold text-stone-300">${sym}</span>
-                <span className="text-stone-400">${stock.currentPrice.toFixed(2)}</span>
-                <span className={isUp ? 'text-emerald-400' : 'text-red-400'}>
-                  {isUp ? '▲' : '▼'} {Math.abs(delta).toFixed(1)}
-                </span>
-              </span>
-            );
-          })}
+        {/* Ticker items - Duplicated for seamless -50% loop */}
+        <div className="flex overflow-x-hidden whitespace-nowrap">
+          {[0, 1].map((copyIndex) => (
+            <div
+              key={copyIndex}
+              aria-hidden={copyIndex === 1}
+              className="flex items-center gap-8 animate-marquee shrink-0 pr-8"
+            >
+              {(['PAIN', 'FRUT', 'GIGA', 'DOOR'] as StockSymbol[]).map((sym) => {
+                const stock = stocks[sym];
+                if (!stock) return null;
+                const delta = stock.currentPrice - stock.basePrice;
+                const isUp = delta >= 0;
+                return (
+                  <span key={sym} className="font-mono flex items-center gap-1">
+                    <span className="font-semibold text-stone-300">${sym}</span>
+                    <span className="text-stone-400">${stock.currentPrice.toFixed(2)}</span>
+                    <span className={isUp ? 'text-emerald-400' : 'text-red-400'}>
+                      {isUp ? '▲' : '▼'} {Math.abs(delta).toFixed(1)}
+                    </span>
+                  </span>
+                );
+              })}
 
-          {/* Satirical Crawl */}
-          {HEADLINES.map((headline, idx) => (
-            <span key={idx} className="text-stone-400 font-sans tracking-wide">
-              {headline}
-            </span>
+              {HEADLINES.map((headline, idx) => (
+                <span key={idx} className="text-stone-400 font-sans tracking-wide">
+                  {headline}
+                </span>
+              ))}
+            </div>
           ))}
         </div>
       </div>

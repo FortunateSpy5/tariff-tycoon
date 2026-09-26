@@ -1,11 +1,11 @@
 /**
  * Dual-Phase Clicker Button
  * Phase 1: Heavy Blue Rubber Stamp [CONFISCATED - BY ORDER OF AGENT 412] at Gate 99B.
- * Phase 2+: Oversized 24k Golden Sharpie signing executive orders on the Resolute blotter.
+ * Phase 2+: Oversized 24k Golden Sherpie signing executive orders on the Resolute blotter.
  */
 
-import React, { useState } from 'react';
-import { Feather, Stamp, Sparkles } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { PenTool, Stamp, Sparkles } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useGameStore } from '../../store/useGameStore';
 import { calculateClickValue } from '../../engine/math/formulas';
@@ -27,6 +27,7 @@ export const ClickerButton: React.FC = () => {
 
   const [isPressed, setIsPressed] = useState(false);
   const [floatingNumbers, setFloatingNumbers] = useState<FloatingNumber[]>([]);
+  const nextIdRef = useRef(0);
 
   // Calculate current click cash value
   const clickValue = calculateClickValue(
@@ -58,25 +59,24 @@ export const ClickerButton: React.FC = () => {
     const y = e.clientY - rect.top;
 
     const newFloater: FloatingNumber = {
-      id: Date.now() + Math.random(),
+      id: ++nextIdRef.current,
       x,
       y,
       text: `+${formatCurrency(clickValue)}`,
     };
 
-    setFloatingNumbers((prev) => [...prev.slice(-6), newFloater]);
-
-    setTimeout(() => {
-      setFloatingNumbers((prev) => prev.filter((item) => item.id !== newFloater.id));
-    }, 700);
+    setFloatingNumbers((prev) => [...prev.slice(-5), newFloater]);
   };
 
   return (
     <div className="relative flex flex-col items-center justify-center p-6 select-none">
-      {/* Floating Cash Indicators */}
+      {/* Floating Cash Indicators with pure onAnimationEnd cleanup */}
       {floatingNumbers.map((floater) => (
         <span
           key={floater.id}
+          onAnimationEnd={() => {
+            setFloatingNumbers((prev) => prev.filter((item) => item.id !== floater.id));
+          }}
           className="absolute font-black text-sm sm:text-base pointer-events-none animate-float-fade font-mono text-emerald-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] z-30"
           style={{ left: `${floater.x}px`, top: `${floater.y - 20}px` }}
         >
@@ -90,6 +90,8 @@ export const ClickerButton: React.FC = () => {
         onMouseDown={() => setIsPressed(true)}
         onMouseUp={() => setIsPressed(false)}
         onMouseLeave={() => setIsPressed(false)}
+        onTouchStart={() => setIsPressed(true)}
+        onTouchEnd={() => setIsPressed(false)}
         className={`relative group w-64 h-64 sm:w-72 sm:h-72 rounded-full flex flex-col items-center justify-center cursor-pointer transition-all duration-75 shadow-2xl ${
           isPressed ? 'scale-95' : 'hover:scale-102'
         } ${
@@ -124,7 +126,7 @@ export const ClickerButton: React.FC = () => {
             </>
           ) : (
             <>
-              <Feather className="w-16 h-16 text-stone-950 mb-2 drop-shadow group-hover:-rotate-12 transition-transform" />
+              <PenTool className="w-16 h-16 text-stone-950 mb-2 drop-shadow group-hover:-rotate-12 transition-transform" />
               <span className="font-mono text-xs font-black tracking-widest text-amber-950 uppercase">
                 Resolute Desk
               </span>
@@ -132,7 +134,7 @@ export const ClickerButton: React.FC = () => {
                 {isDry ? 'DRY SCRATCH' : 'SIGN TARIFF'}
               </span>
               <span className="text-[11px] font-mono text-amber-950/80 mt-1">
-                24k Golden Sharpie
+                24k Golden Sherpie
               </span>
             </>
           )}
@@ -148,10 +150,10 @@ export const ClickerButton: React.FC = () => {
       {/* Helper caption */}
       <span className="mt-4 text-xs font-mono text-stone-400">
         {phase === 1
-          ? 'Slam stamp to seize contraband & seed initial treasury ($1M to Oval Office)'
+          ? 'Slam stamp to seize contraband & seed initial treasury ($10k to Oval Office)'
           : isCapsFrenzy
           ? '🚨 FRENZY: 10x REVENUE // CLICK AS FAST AS HUMANLY POSSIBLE'
-          : 'Slam Sharpie to issue executive trade orders & build tantrum'}
+          : 'Slam Sherpie to issue executive trade orders & build tantrum'}
       </span>
     </div>
   );

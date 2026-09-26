@@ -42,7 +42,7 @@ const PUNITIVE_DECREES = [
   'Canceling their export licenses until their CEO apologizes on live television wearing a dunce cap!',
   'Their sovereign wealth fund is now legally reclassified as an unlicensed offshore slot machine!',
   'Levying an emergency 1,200% Patriot Duty collected at gunpoint by Florida park rangers!',
-  'All their container ships will be permanently anchored off Long Beach and converted into Spirit Halloween stores!',
+  'All their container ships will be permanently anchored off Long Beach and converted into Spirit All-Hallows pop-up stores!',
   'Ordering the Treasury to mint a $10 Trillion coin with my face on both sides to buy their entire coastline!',
   'Taxing every photon that reflects off their foreign titanium gadgets at an emergency 400% rate!',
 ];
@@ -80,7 +80,7 @@ const BOT_ARCHETYPES = [
     authorHandle: '@ElongatedMuskrat',
     authorName: 'Chief Meme Officer',
     isVerified: true,
-    text: 'Concerning. Looking into replacing our entire international logistics division with Optimus wedge-bots running on pure memes.',
+    text: 'Concerning. Looking into replacing our entire international logistics division with Opti-meme wedge-bots running on pure memes.',
   },
   {
     authorHandle: '@IronJacketLarry',
@@ -113,7 +113,7 @@ const BOT_ARCHETYPES = [
     text: 'Bro please walk this back my portfolio is shaped like a vertical cliff and my wife just took the kids to her mother\'s.',
   },
   {
-    authorHandle: '@CitadelHFT_Bot',
+    authorHandle: '@CitadullHFT_Bot',
     authorName: 'LiquidityHarvester_v4',
     isVerified: true,
     text: '[AUTOMATED ARBITRAGE]: Executed 4,200,000 short contracts in 0.0004ms across 14 dark pools. Thank you for your service.',

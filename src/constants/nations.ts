@@ -34,7 +34,7 @@ export const PARODY_NATIONS: ParodyNation[] = [
     beggingTiers: {
       mild: 'Our train conductors are already on strike; taxing our red wine is a breach of existential hygiene.',
       desperate: 'Our philosophers have drafted a 600-page treatise proving your tweets are postmodern conceptual art!',
-      surrender: 'We will dismantle the Eiffel Tower and reassemble it at Palm-a-Grifto as a 300-foot Golden Sharpie!',
+      surrender: 'We will dismantle the Eiffel Tower and reassemble it at Palm-a-Grifto as a 300-foot Golden Sherpie!',
     },
   },
   {

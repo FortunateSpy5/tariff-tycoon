@@ -24,6 +24,14 @@ export const BagHolderProPreview: React.FC = () => {
     const newYap = generateProceduralYap(preferredStock);
     setActiveYap(newYap);
     triggerYapMarketShock(newYap);
+
+    // Immediate insider trading profit from shorting before the YAP
+    const targetSym = newYap.targetSymbol || 'PAIN';
+    const targetPrice = stocks[targetSym]?.currentPrice || 100;
+    const insiderProfit = Math.round(targetPrice * 2.5);
+    useGameStore.setState((state) => ({
+      treasuryCash: state.treasuryCash + insiderProfit,
+    }));
   };
 
   return (

@@ -14,14 +14,12 @@ import { formatCurrency } from '../../engine/math/bigNumber';
 export const ExecutiveDesk: React.FC = () => {
   const phase = useGameStore((s) => s.phase);
   const setGamePhase = useGameStore((s) => s.setGamePhase);
-  const treasuryCash = useGameStore((s) => s.treasuryCash);
   const totalClicks = useGameStore((s) => s.totalClicks);
-
-  const canAdvanceToPhase2 = phase === 1 && treasuryCash >= 1_000_000;
+  const canAdvanceToPhase2 = useGameStore((s) => s.phase === 1 && s.treasuryCash >= 10_000);
 
   return (
     <div className="w-full max-w-4xl mx-auto flex flex-col items-center gap-6">
-      {/* Phase Advancement Banner (Airport -> Oval Office at $1M) */}
+      {/* Phase Advancement Banner (Airport -> Oval Office at $10k) */}
       {phase === 1 && (
         <div className="w-full bg-stone-900 border border-blue-900/60 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg">
           <div className="flex items-center gap-3">
@@ -33,7 +31,7 @@ export const ExecutiveDesk: React.FC = () => {
                 Phase 1: Gate 99B Liberty International
               </h3>
               <p className="text-xs text-stone-400">
-                Accumulate <span className="text-emerald-400 font-mono font-semibold">{formatCurrency(1000000)}</span> to seize the Oval Office desk!
+                Accumulate <span className="text-emerald-400 font-mono font-semibold">{formatCurrency(10000)}</span> to seize the Oval Office desk!
               </p>
             </div>
           </div>
