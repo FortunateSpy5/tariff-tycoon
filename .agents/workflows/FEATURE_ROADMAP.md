@@ -37,5 +37,5 @@ This document outlines the development phases for **EXECUTIVE DEGEN: SHORT THE W
 ---
 
 ## Phase 5: Viral Distribution & Streamer Mode (Sprint 5)
-- [ ] **The 9:16 Vertical Senate Hearing Clip Generator:** Split-screen C-SPAN / brainrot MP4 renderer.
+- [ ] **The 9:16 Vertical Senate Hearing Clip Generator:** Split-screen C-SNOOZE / brainrot MP4 renderer.
 - [ ] **Twitch/Kick Live Integration:** Chat polling, `!YAP` tantrum meter, and bit pardon auctions.

@@ -15,8 +15,12 @@ To preserve absolute legal immunity:
    - Boeing $\to$ **DoorPlug Dynamics**
    - Microsoft $\to$ **MicroSoftness Cloud**
    - Chipotle $\to$ **GuacSurcharge Grill**
+   - Nvidia $\to$ **MicroSilicon Foundry**
+   - S&P 500 $\to$ **The S&Pain 500 (`$PAIN`)**
    - Robinhood $\to$ **BagHolder Pro**
    - Truth Social $\to$ **`YAP`**
+   - C-SPAN $\to$ **C-SNOOZE**
+   - Subway Surfers $\to$ **Metro Sprinter 99: Endless Slop**
 3. **Never use official government seals or verbatim agency acronyms:**
    - Do not use the real Department of Government Efficiency (DOGE).
    - Use **`D.U.M.P.`** (*Department of Unilateral Market Pruning*) or **`C.H.O.P.`** (*Chainsaw Harvesting of Outlay Programs*).

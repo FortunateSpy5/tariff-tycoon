@@ -43,7 +43,7 @@ Welcome, AI Agent. This repository powers **EXECUTIVE DEGEN: SHORT THE WORLD** (
 - **Styling & UI:** Tailwind CSS v4 + Lucide Icons + Canvas/Framer Motion physics
 - **Audio Synthesis:** Web Audio API procedural synthesis (marker squeaks, screen thuds, cash chimes, soundboard vine-booms)
 - **State Architecture:** Zustand with persistent local storage & automated offline delta calculation
-- **Export Pipeline:** HTML Canvas / WebCodecs 9:16 vertical MP4 generator for TikTok/X Senate hearing clips
+- **Export Pipeline:** HTML Canvas / WebCodecs 9:16 vertical MP4 generator for TikTok/X C-SNOOZE Senate hearing clips
 
 ---
 
@@ -63,4 +63,4 @@ For specialized guidelines and detailed mechanics, consult:
 
 - `procedural-yap-generator` — Generates infinite, legally safe 3:00 AM YAPs, typos, and fake comment swarms.
 - `options-trading-math` — Formulas and balance tools for BagHolder Pro leverage, VIX volatility, and SEC suspicion.
-- `viral-clip-director` — Architecture and asset pipeline for the 9:16 vertical C-SPAN / brainrot clip generator.
+- `viral-clip-director` — Architecture and asset pipeline for the 9:16 vertical C-SNOOZE / brainrot clip generator.

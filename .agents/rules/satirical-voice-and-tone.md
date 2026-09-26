@@ -21,7 +21,7 @@ These rules govern the comedic style, dialogue generation, and narrative flavor 
 ## 2. Syntax & Cadence Rules for 3:00 AM YAPs
 1. **Sleep-Deprived Certainty:** Always project 100% unwavering confidence regardless of factual absurdity.
 2. **Aggressive Punctuation & ALL-CAPS:** Capitalize key nouns and adjectives (*"TOTALLY FRAUDULENT AVOCADOS"*, *"UNPATRIOTIC COMPUTE CLUSTERS"*).
-3. **Absurd Minor Grievance:** Link massive macroeconomic shocks to trivial personal inconveniences (e.g. banning French cheese because a sommelier looked at you funny; tariffing Danish LEGOs because they hurt to step on).
+3. **Absurd Minor Grievance:** Link massive macroeconomic shocks to trivial personal inconveniences (e.g. banning French cheese because a sommelier looked at you funny; tariffing Danish KLLIK-BLOKS because they hurt to step on).
 4. **Device Outros:** Always end with an absurd mobile dictation tag:
    - *(Dictated via Smart Microwave)*
    - *(Sent from Oval Smart Toilet)*

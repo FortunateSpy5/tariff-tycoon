@@ -26,7 +26,7 @@ interface YapTemplate {
 * "Terrible sources telling me at 3:14 AM..."
 * "Just woke up from a very powerful dream about..."
 * "Nobody in the history of our great country has suffered more than me at the hands of..."
-* "IT HAS COME TO MY ATTENTION WHILE EATING A QUARTER POUNDER THAT..."
+* "IT HAS COME TO MY ATTENTION WHILE EATING A 113-GRAM FREEDOM PATTY THAT..."
 
 ### Stage 2: `TARGET_ENTITY`
 * "Little Tim at Fruit Ecosystem Inc."

@@ -1,11 +1,11 @@
 ---
 name: viral-clip-director
-description: Technical architecture and asset pipeline for rendering 9:16 vertical C-SPAN / brainrot split-screen MP4 exports for TikTok and X.
+description: Technical architecture and asset pipeline for rendering 9:16 vertical C-SNOOZE / brainrot split-screen MP4 exports for TikTok and X.
 ---
 
 # Viral Clip Director Skill
 
-This skill defines the technical specification for the automated **[LEAK TO C-SPAN / EXPORT SHORT]** viral generator in **EXECUTIVE DEGEN: SHORT THE WORLD**.
+This skill defines the technical specification for the automated **[LEAK TO C-SNOOZE / EXPORT SHORT]** viral generator in **EXECUTIVE DEGEN: SHORT THE WORLD**.
 
 ---
 
@@ -15,7 +15,7 @@ This skill defines the technical specification for the automated **[LEAK TO C-SP
 ┌───────────────────────────────────────────────┐
 │              1080 x 1920 (9:16)               │
 ├───────────────────────────────────────────────┤
-│ [TOP WINDOW (50%): C-SPAN SENATE HEARING]     │
+│ [TOP WINDOW (50%): C-SNOOZE SENATE HEARING]   │
 │  - Stylized 3D Senator slamming wooden gavel  │
 │  - Easel holding player's actual in-game Yap  │
 │    printed on giant foam core poster board    │
@@ -24,8 +24,8 @@ This skill defines the technical specification for the automated **[LEAK TO C-SP
 ├───────────────────────────────────────────────┤
 │ [BOTTOM WINDOW (50%): HYPNOTIC BRAINROT]      │
 │  - High-FPS gameplay canvas:                  │
-│    (Subway Surfers loop / Kinetic sand /      │
-│     Soap-cutting ASMR / Hydraulic press)      │
+│    (Metro Sprinter 99: Endless Slop /         │
+│     Kinetic sand slicing / ASMR soap-cutting) │
 │  - Top overlay: "Wait till the end 💀"        │
 └───────────────────────────────────────────────┘
 ```
@@ -36,7 +36,7 @@ This skill defines the technical specification for the automated **[LEAK TO C-SP
 * **Track 1 (Voiceover):** Automated rasping, dry geriatric boomer text-to-speech reading the player's 3:00 AM Yap verbatim:  
   *"Can the Executive explain to this committee why on Tuesday at 3:14 AM, you posted, and I quote: 'Shorting European timber so I can buy Lake Como for 400 bucks lmao get rekt'? Director, what does 'get rekt' mean for the American worker?"*
 * **Track 2 (Punctuation SFX):** Bass-boosted Vine Boom (`.ogg`) on every exclamation mark and capitalized word.
-* **Track 3 (Sub-Audio):** Quiet ambient Subway Surfers coin collection and skateboard grinding SFX.
+* **Track 3 (Sub-Audio):** Quiet ambient *Metro Sprinter 99* coin collection and skateboard grinding SFX.
 
 ---
 
