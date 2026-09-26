@@ -1,122 +1,54 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+/**
+ * App.tsx: Root Layout Coordinator
+ * Orchestrates the Breaking News header, Executive Desk, and BagHolder Pro terminal.
+ * Follows agentic architecture rule: strictly under 120 lines.
+ */
 
-function App() {
-  const [count, setCount] = useState(0)
+import React from 'react';
+import { useGameLoop } from './hooks/useGameLoop';
+import { useGameStore } from './store/useGameStore';
+import { BreakingNewsBar } from './components/ticker/BreakingNewsBar';
+import { ExecutiveDesk } from './components/desk/ExecutiveDesk';
+import { BagHolderProPreview } from './components/terminal/BagHolderProPreview';
+
+export const App: React.FC = () => {
+  // Initialize the real-time tick loop
+  useGameLoop();
+
+  const isCapsFrenzy = useGameStore((s) => s.isCapsFrenzy);
+  const screenShakeEnabled = useGameStore((s) => s.screenShakeEnabled);
+  const tantrumMeter = useGameStore((s) => s.tantrumMeter);
+
+  // Dynamic screen shake intensity when approaching frenzy
+  const shakeClass =
+    screenShakeEnabled && tantrumMeter > 85 && !isCapsFrenzy
+      ? 'animate-shake'
+      : '';
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <div
+      className={`min-h-screen bg-stone-950 text-stone-100 flex flex-col font-sans transition-all duration-300 selection:bg-amber-500 selection:text-stone-950 ${
+        isCapsFrenzy ? 'ring-8 ring-inset ring-red-600/80' : ''
+      } ${shakeClass}`}
+    >
+      {/* Top Header & Real-Time Breaking Ticker */}
+      <BreakingNewsBar />
 
-      <div className="ticks"></div>
+      {/* Main Game Surface */}
+      <main className="flex-1 w-full max-w-7xl mx-auto px-4 py-6 flex flex-col items-center gap-8 justify-between">
+        {/* The Executive Blotter Desk */}
+        <ExecutiveDesk />
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+        {/* BagHolder Pro Terminal (Under the Desk) */}
+        <BagHolderProPreview />
+      </main>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
-}
+      {/* Ambient Footer */}
+      <footer className="w-full py-2 bg-stone-950 border-t border-stone-900 text-center text-[10px] text-stone-600 font-mono">
+        EXECUTIVE DEGEN: SHORT THE WORLD // 100% TRANSFORMATIVE SATIRE // ALL RIGHTS SHORTED
+      </footer>
+    </div>
+  );
+};
 
-export default App
+export default App;
