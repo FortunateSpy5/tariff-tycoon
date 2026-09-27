@@ -1,0 +1,95 @@
+/**
+ * S.L.O.P. Radar Tab
+ * Tracks regulatory heat, grand jury countdowns, and crony auditor bribes.
+ */
+
+import React from 'react';
+import { ShieldAlert, Award, FileX2 } from 'lucide-react';
+import { useGameStore } from '../../../store/useGameStore';
+
+export const SlopRadarTab: React.FC = () => {
+  const slopSuspicion = useGameStore((s) => s.slopSuspicion);
+  const vexVolatility = useGameStore((s) => s.vexVolatility);
+  const cronyFavor = useGameStore((s) => s.cronyFavor);
+  const bribeSlopAuditors = useGameStore((s) => s.bribeSlopAuditors);
+  const shredSubpoenas = useGameStore((s) => s.shredSubpoenas);
+
+  const isCritical = slopSuspicion >= 75;
+  const isDangerous = slopSuspicion >= 50;
+
+  return (
+    <div className="space-y-3 flex-1 flex flex-col justify-between select-none">
+      <div className="space-y-3">
+        {/* Header */}
+        <div className="flex items-center justify-between text-[10px] font-mono text-stone-400 border-b border-stone-800 pb-1.5">
+          <div className="flex items-center gap-1.5 text-red-400 font-bold">
+            <ShieldAlert className="w-3.5 h-3.5" />
+            <span>S.L.O.P. INQUEST RADAR</span>
+          </div>
+          <span>Status: {isCritical ? 'CRITICAL' : isDangerous ? 'ELEVATED' : 'DOCILE'}</span>
+        </div>
+
+        {/* Suspicion Heat Gauge */}
+        <div className="bg-stone-950 border border-stone-800 rounded-lg p-2.5 space-y-1.5">
+          <div className="flex justify-between items-center text-[10px] font-mono">
+            <span className="text-stone-400">Grand Jury Heat:</span>
+            <span
+              className={`font-bold ${
+                isCritical ? 'text-red-400 animate-pulse' : isDangerous ? 'text-amber-400' : 'text-emerald-400'
+              }`}
+            >
+              {slopSuspicion.toFixed(1)}% / 100%
+            </span>
+          </div>
+          <div className="w-full h-2.5 bg-stone-900 rounded-full overflow-hidden border border-stone-800">
+            <div
+              className={`h-full transition-all duration-300 ${
+                isCritical
+                  ? 'bg-gradient-to-r from-amber-500 via-red-500 to-red-600'
+                  : 'bg-gradient-to-r from-emerald-500 to-amber-500'
+              }`}
+              style={{ width: `${Math.min(100, Math.max(0, slopSuspicion))}%` }}
+            />
+          </div>
+          <span className="text-[9px] text-stone-500 font-mono block">
+            Accumulates on 1,000x trades and state secret sales; decays -0.2%/sec passively.
+          </span>
+        </div>
+
+        {/* VEX Volatility Metric */}
+        <div className="bg-stone-950 border border-stone-800 rounded-lg p-2 flex justify-between items-center font-mono text-[10px]">
+          <span className="text-stone-400">VEX Volatility Index:</span>
+          <span className="text-amber-400 font-bold">{vexVolatility.toFixed(1)} pts</span>
+        </div>
+
+        {/* Tactical Defense Tools */}
+        <div className="space-y-1.5">
+          <button
+            onClick={() => bribeSlopAuditors(20)}
+            disabled={cronyFavor < 20}
+            className={`w-full py-2 rounded-lg font-mono text-[10px] font-bold flex items-center justify-center gap-1.5 transition-all ${
+              cronyFavor >= 20
+                ? 'bg-amber-500 hover:bg-amber-400 text-stone-950 shadow-md active:scale-95 cursor-pointer'
+                : 'bg-stone-800 text-stone-500 cursor-not-allowed'
+            }`}
+          >
+            <Award className="w-3.5 h-3.5" />
+            <span>Bribe Inquest Lead (Costs 🤝 20 Favor // -16% Heat)</span>
+          </button>
+
+          <button
+            onClick={shredSubpoenas}
+            className="w-full py-2 rounded-lg bg-stone-950 border border-stone-800 hover:border-emerald-600/80 text-emerald-400 font-mono text-[10px] font-bold flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer"
+          >
+            <FileX2 className="w-3.5 h-3.5" />
+            <span>Emergency Shredder (-25% Heat) [Hotkey: S]</span>
+          </button>
+        </div>
+      </div>
+
+      <div className="p-2 bg-stone-950/80 border border-stone-800 rounded text-[9px] text-stone-500 italic mt-auto">
+        "Special Counsel audits trigger full asset freezes at 100% heat unless averted via bribes or document shredding."
+      </div>
+    </div>
+  );
+};

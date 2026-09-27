@@ -1,15 +1,22 @@
 @import "tailwindcss";
 
 @layer base {
-  body {
+  html,
+  body,
+  #root {
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
     margin: 0;
     padding: 0;
+    user-select: none;
+    overscroll-behavior: none;
     background-color: #0c0a09;
     color: #f5f5f4;
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    overflow-x: hidden;
   }
 
   ::selection {
@@ -18,16 +25,38 @@
   }
 }
 
+/* Custom Slim Scrollbars for Internal Panels */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(245, 158, 11, 0.35);
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(245, 158, 11, 0.6);
+}
+
 @keyframes marquee {
   0% { transform: translateX(0%); }
   100% { transform: translateX(-50%); }
 }
 
-@keyframes shake {
-  0%, 100% { transform: translate(0, 0); }
-  25% { transform: translate(-2px, 2px); }
-  50% { transform: translate(2px, -2px); }
-  75% { transform: translate(-2px, -1px); }
+@keyframes tactical-recoil {
+  0% { transform: translate3d(0, 0, 0); }
+  25% { transform: translate3d(-3px, 2px, 0) rotate(-0.5deg); }
+  50% { transform: translate3d(3px, -2px, 0) rotate(0.5deg); }
+  75% { transform: translate3d(-2px, -1px, 0); }
+  100% { transform: translate3d(0, 0, 0); }
+}
+
+@keyframes ring-shake {
+  0%, 100% { transform: rotate(0deg); }
+  20%, 60% { transform: rotate(-10deg); }
+  40%, 80% { transform: rotate(10deg); }
 }
 
 @keyframes float-fade {
@@ -40,10 +69,22 @@
   animation: marquee 35s linear infinite;
 }
 
-.animate-shake {
-  animation: shake 0.15s linear infinite;
+.animate-recoil {
+  animation: tactical-recoil 0.12s ease-in-out infinite;
+}
+
+.animate-ring {
+  animation: ring-shake 0.4s infinite ease-in-out;
 }
 
 .animate-float-fade {
   animation: float-fade 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-recoil,
+  .animate-ring,
+  .animate-marquee {
+    animation: none !important;
+  }
 }

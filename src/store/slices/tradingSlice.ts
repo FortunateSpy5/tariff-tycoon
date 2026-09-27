@@ -7,6 +7,7 @@ import type { MarketState, StockSymbol, OptionType, ActiveOptionTrade, StockDefi
 import type { YapPost } from '../../types/yap';
 import type { GameStore } from '../useGameStore';
 import { INITIAL_STOCKS } from '../../constants/stocks';
+import { INITIAL_POLYGRIFT_BETS } from '../../constants/unlocks';
 import { calculateOptionReturn } from '../../engine/math/formulas';
 import { sound } from '../../audio/soundEngine';
 
@@ -16,6 +17,7 @@ export interface TradingSlice extends MarketState {
   triggerYapMarketShock: (yap: YapPost) => void;
   executeWalkBack: () => void;
   bribeSlopAuditors: (bribeAmount: number) => boolean;
+  wagerPolyGrift: (betId: string, choice: 'YES' | 'NO', amount: number) => { success: boolean; won?: boolean; payout?: number };
   tickMarket: (deltaSeconds: number) => void;
 }
 
@@ -161,6 +163,33 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
       slopSuspicion: Math.max(0, state.slopSuspicion - bribeAmount * 0.8),
     });
     return true;
+  },
+
+  wagerPolyGrift: (betId, choice, amount) => {
+    const state = get();
+    if (state.treasuryCash < amount || amount <= 0) return { success: false };
+
+    const bet = INITIAL_POLYGRIFT_BETS.find((b) => b.id === betId);
+    if (!bet) return { success: false };
+
+    const odds = choice === 'YES' ? bet.oddsYes : bet.oddsNo;
+    const winProb = choice === 'YES' ? bet.probYes / 100 : (100 - bet.probYes) / 100;
+    const won = Math.random() < winProb;
+    const payout = won ? Math.round(amount * odds) : 0;
+    const netCash = won ? state.treasuryCash - amount + payout : state.treasuryCash - amount;
+
+    if (won) {
+      sound.playChaChing();
+    } else {
+      sound.playDryScratch();
+    }
+
+    set({
+      treasuryCash: netCash,
+      slopSuspicion: Math.min(100, state.slopSuspicion + (won ? 3 : 1)),
+    });
+
+    return { success: true, won, payout };
   },
 
   tickMarket: (deltaSeconds) => {

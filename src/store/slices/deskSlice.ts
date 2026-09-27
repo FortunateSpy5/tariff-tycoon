@@ -1,17 +1,35 @@
 /**
- * Desk Slice: Manages manual clicker, ink stamina, tantrum meter, and CAPS LOCK frenzy.
+ * Desk Slice: Manages manual clicker, ink stamina, tantrum meter, CAPS LOCK frenzy,
+ * interactive desk props (Red Phone, Gold Box, Shredder), and Crony Tech Tree upgrades.
  */
 
 import type { StateCreator } from 'zustand';
 import type { DeskState, GamePhase } from '../../types/desk';
+import type { LeftChannelTab, RightChannelTab } from '../../types/unlocks';
 import type { GameStore } from '../useGameStore';
 import { calculateClickValue, calculateInkRefillCost } from '../../engine/math/formulas';
+import { INITIAL_CRONY_UPGRADES } from '../../constants/unlocks';
 import { sound } from '../../audio/soundEngine';
 
 export interface DeskSlice extends DeskState {
   treasuryCash: number;
   passiveCashPerSecond: number;
   lastTickTimestamp: number;
+
+  // Active Channel Tabs
+  activeLeftTab: LeftChannelTab;
+  activeRightTab: RightChannelTab;
+  setActiveLeftTab: (tab: LeftChannelTab) => void;
+  setActiveRightTab: (tab: RightChannelTab) => void;
+
+  // Upgrades
+  activeUpgrades: string[];
+  buyUpgrade: (upgradeId: string) => boolean;
+
+  // Interactive Desk Props
+  triggerRedPhoneBailout: () => boolean;
+  sellClassifiedSecrets: () => void;
+  shredSubpoenas: () => void;
 
   clickDesk: () => void;
   refillInk: () => boolean;
@@ -33,6 +51,58 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
   passiveCashPerSecond: 0,
   lastTickTimestamp: Date.now(),
 
+  activeLeftTab: 'stocks',
+  activeRightTab: 'dump',
+  setActiveLeftTab: (tab) => set({ activeLeftTab: tab }),
+  setActiveRightTab: (tab) => set({ activeRightTab: tab }),
+
+  activeUpgrades: [],
+
+  buyUpgrade: (upgradeId: string) => {
+    const state = get();
+    if (state.activeUpgrades.includes(upgradeId)) return false;
+
+    const def = INITIAL_CRONY_UPGRADES.find((u) => u.id === upgradeId);
+    if (!def || state.treasuryCash < def.cost) return false;
+
+    sound.playChaChing();
+    set({
+      treasuryCash: state.treasuryCash - def.cost,
+      activeUpgrades: [...state.activeUpgrades, upgradeId],
+    });
+    return true;
+  },
+
+  triggerRedPhoneBailout: () => {
+    const state = get();
+    // Only available when broke (< $10)
+    if (state.treasuryCash >= 10) return false;
+
+    const bailoutAmount = 5000 * (1 + state.phase);
+    sound.playChaChing();
+    set({
+      treasuryCash: state.treasuryCash + bailoutAmount,
+    });
+    return true;
+  },
+
+  sellClassifiedSecrets: () => {
+    const state = get();
+    sound.playChaChing();
+    set({
+      treasuryCash: state.treasuryCash + 500,
+      slopSuspicion: Math.min(100, state.slopSuspicion + 8),
+    });
+  },
+
+  shredSubpoenas: () => {
+    const state = get();
+    sound.playDeskThud();
+    set({
+      slopSuspicion: Math.max(0, state.slopSuspicion - 25),
+    });
+  },
+
   clickDesk: () => {
     const state = get();
     const isDry = state.inkLevel <= 0 && !state.isCapsFrenzy;
@@ -47,7 +117,7 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
     }
 
     // Cash calculation with real SIS Sovereign Immunity Slip count for bankruptcy floor
-    const earnedCash = calculateClickValue(
+    let earnedCash = calculateClickValue(
       state.phase,
       state.phase === 1 ? 5.0 : 50.0,
       state.isCapsFrenzy ? 100 : state.inkLevel,
@@ -55,8 +125,17 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
       state.sovereignImmunitySlips || 0
     );
 
+    // Apply Heavy Tungsten Nib multiplier (+100%)
+    if (state.activeUpgrades.includes('heavy_tungsten_nib')) {
+      earnedCash *= 2;
+    }
+
     // Tantrum gain (+1.5% normal, +3.5% dry ink slingshot)
-    const tantrumDelta = isDry ? 3.5 : 1.5;
+    let tantrumDelta = isDry ? 3.5 : 1.5;
+    if (state.activeUpgrades.includes('diet_soda_drip')) {
+      tantrumDelta *= 1.5;
+    }
+
     let nextTantrum = state.tantrumMeter + tantrumDelta;
     let shouldTriggerFrenzy = state.isCapsFrenzy;
     let frenzyRemaining = state.capsFrenzySecondsRemaining;
@@ -106,7 +185,14 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
     const state = get();
 
     // Passive cash accrual
-    const passiveGain = state.passiveCashPerSecond * deltaSeconds;
+    let passiveGain = state.passiveCashPerSecond * deltaSeconds;
+
+    // AI Autopen Interns passive clicks (5 taps/sec)
+    if (state.activeUpgrades.includes('autopen_army')) {
+      const autopenBase = state.phase === 1 ? 5.0 : 50.0;
+      const autopenPerSec = autopenBase * 5;
+      passiveGain += autopenPerSec * deltaSeconds;
+    }
 
     // Frenzy timer countdown
     let isFrenzy = state.isCapsFrenzy;

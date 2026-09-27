@@ -8,3 +8,4 @@ export * from './yap';
 export * from './dump';
 export * from './prestige';
 export * from './nations';
+export * from './unlocks';
