@@ -36,7 +36,10 @@ export const useGameStore = create<GameStore>()(
         phase: state.phase,
         treasuryCash: state.treasuryCash,
         passiveCashPerSecond: state.passiveCashPerSecond,
+        tariffRevenuePerSecond: state.tariffRevenuePerSecond,
         totalClicks: state.totalClicks,
+        inkLevel: state.inkLevel,
+        dryClicksCount: state.dryClicksCount,
         inkRefillCount: state.inkRefillCount,
         sovereignImmunitySlips: state.sovereignImmunitySlips,
         totalSISLifetime: state.totalSISLifetime,
@@ -52,6 +55,12 @@ export const useGameStore = create<GameStore>()(
         vexVolatility: state.vexVolatility,
         activeUpgrades: state.activeUpgrades,
         tariffRates: state.tariffRates,
+        yapTargetMode: state.yapTargetMode,
+        selectedStock: state.selectedStock,
+        lastYapTimestamp: state.lastYapTimestamp,
+        lastRaidTimestamp: state.lastRaidTimestamp,
+        lastShredTimestamp: state.lastShredTimestamp,
+        lastSecretSaleTimestamp: state.lastSecretSaleTimestamp,
         activeLeftTab: state.activeLeftTab,
         activeRightTab: state.activeRightTab,
         isMuted: state.isMuted,
@@ -65,10 +74,11 @@ export const useGameStore = create<GameStore>()(
         const offlineSeconds = Math.max(0, (now - state.lastSavedTimestamp) / 1000);
 
         if (offlineSeconds > 5) {
-          // Calculate passive cash accrued
-          if (state.passiveCashPerSecond > 0) {
+          // Calculate passive cash accrued (agency passive yields + bilateral tariff export duties)
+          const totalPassiveRate = (state.passiveCashPerSecond || 0) + (state.tariffRevenuePerSecond || 0);
+          if (totalPassiveRate > 0) {
             const { cashEarned, secondsCredited } = calculateOfflineEarnings(
-              state.passiveCashPerSecond,
+              totalPassiveRate,
               offlineSeconds
             );
             if (cashEarned > 0) {

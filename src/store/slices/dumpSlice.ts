@@ -27,6 +27,12 @@ export const createDumpSlice: StateCreator<GameStore, [], [], DumpSlice> = (set,
     const targetAgency = state.agencies[agencyIndex];
     if (targetAgency.isLiquidated) return 0;
 
+    // INVARIANT: Anti-Exploit Gate — Must have political capital (Crony Favor)
+    if (state.cronyFavor < targetAgency.cronyFavorCost) return 0;
+
+    // INVARIANT: Progression Gate — Must meet minimum net worth
+    if (state.treasuryCash < targetAgency.minNetWorthRequired) return 0;
+
     const updatedAgencies = [...state.agencies];
     updatedAgencies[agencyIndex] = {
       ...targetAgency,
@@ -42,6 +48,8 @@ export const createDumpSlice: StateCreator<GameStore, [], [], DumpSlice> = (set,
 
     set({
       treasuryCash: state.treasuryCash + targetAgency.liquidationCashYield,
+      cronyFavor: state.cronyFavor - targetAgency.cronyFavorCost,
+      slopSuspicion: Math.min(100, state.slopSuspicion + 15),
       passiveCashPerSecond: newPassive,
       agencies: updatedAgencies,
       totalCashHarvested: state.totalCashHarvested + targetAgency.liquidationCashYield,

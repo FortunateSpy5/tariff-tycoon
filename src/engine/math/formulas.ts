@@ -19,19 +19,33 @@ export function calculateClickValue(
   baseValue: number,
   inkLevel: number,
   isCapsFrenzy: boolean,
-  sisCount: number
+  sisCount: number,
+  dryClicksCount: number = 0
 ): number {
   const cashFloor = Math.max(1.0, sisCount * 1000);
-  const phaseMultiplier = phase === 1 ? 1.0 : 10.0;
+
+  // Phase progression scaling: Phase 1: 1x, Phase 2: 10x, Phase 3: 100x, Phase 4: 1000x
+  const phaseMultipliers: Record<GamePhase, number> = {
+    1: 1.0,
+    2: 10.0,
+    3: 100.0,
+    4: 1000.0,
+  };
+  const phaseMultiplier = phaseMultipliers[phase] || 1.0;
+
+  // Sovereign Immunity Slips grant +10% click yield boost per slip
+  const sisMultiplier = 1.0 + sisCount * 0.1;
 
   if (isCapsFrenzy) {
     // 10x frenzy multiplier on current phase yield
-    return Math.max(cashFloor, baseValue * phaseMultiplier * 10.0);
+    return Math.max(cashFloor, baseValue * phaseMultiplier * 10.0 * sisMultiplier);
   }
 
-  // Desperation Dry Nib: 90% penalty when ink is depleted
-  const inkMultiplier = inkLevel <= 0 ? 0.1 : 1.0;
-  const calculatedYield = baseValue * phaseMultiplier * inkMultiplier;
+  // Jammed Nib: if player scratches 25+ times without refilling, output drops to 1% salvage
+  // INVARIANT: [Bankruptcy Floor] Jammed state degrades calculated yield, NEVER the guaranteed cash floor.
+  const isJammed = inkLevel <= 0 && dryClicksCount >= 25;
+  const inkMultiplier = isJammed ? 0.01 : inkLevel <= 0 ? 0.05 : 1.0;
+  const calculatedYield = baseValue * phaseMultiplier * inkMultiplier * sisMultiplier;
 
   return Math.max(cashFloor, calculatedYield);
 }

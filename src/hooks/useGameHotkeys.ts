@@ -16,6 +16,11 @@ export function useGameHotkeys() {
         return;
       }
 
+      // INVARIANT: Prevent holding down keys from auto-firing repeat events
+      if (e.repeat) {
+        return;
+      }
+
       const store = useGameStore.getState();
 
       if (e.code === 'Space' || e.key === 'Enter') {
@@ -48,6 +53,8 @@ export function useGameHotkeys() {
         }
       } else if (e.key === 's' || e.key === 'S') {
         store.shredSubpoenas();
+      } else if (e.key === 'r' || e.key === 'R') {
+        store.refillInk();
       } else if (e.key === 'm' || e.key === 'M') {
         store.toggleMute();
       } else if (e.key === 'z' || e.key === 'Z') {

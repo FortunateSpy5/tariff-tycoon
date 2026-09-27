@@ -1,6 +1,4 @@
-/**
- * Parodied Foreign Nations Types
- */
+import type { StockSymbol } from './market';
 
 export interface BeggingTiers {
   mild: string; // Tariff < 100%
@@ -15,4 +13,6 @@ export interface ParodyNation {
   chiefExports: string[];
   beggingTiers: BeggingTiers;
   defaultTariffRate: number;
+  linkedStocks: StockSymbol[];
+  baseExportYield: number; // Base $/sec yielded per 100% tariff
 }

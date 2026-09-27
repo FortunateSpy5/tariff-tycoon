@@ -4,10 +4,11 @@
  * treasury cash & favor counters, and audio/shake quick toggles.
  */
 
-import React from 'react';
-import { Volume2, VolumeX, ShieldAlert, Zap, Radio } from 'lucide-react';
+import React, { useState } from 'react';
+import { Volume2, VolumeX, ShieldAlert, Zap, Radio, RotateCcw } from 'lucide-react';
 import { useGameStore } from '../../store/useGameStore';
 import { formatCurrency } from '../../engine/math/bigNumber';
+import { ResetGameModal } from '../dialogs/ResetGameModal';
 import type { StockSymbol } from '../../types/market';
 
 const HEADLINES = [
@@ -32,6 +33,7 @@ export const BreakingNewsBar: React.FC = () => {
   const stocks = useGameStore((s) => s.stocks);
   const isCapsFrenzy = useGameStore((s) => s.isCapsFrenzy);
   const phase = useGameStore((s) => s.phase);
+  const [isResetOpen, setIsResetOpen] = useState(false);
 
   return (
     <div className="w-full h-12 bg-stone-900/95 border-b border-stone-800 text-stone-200 select-none shadow-md px-3 flex items-center justify-between gap-3 overflow-hidden">
@@ -122,7 +124,7 @@ export const BreakingNewsBar: React.FC = () => {
           </div>
         )}
 
-        {/* Audio & Shake Toggles */}
+        {/* Audio, Shake & Reset Controls */}
         <div className="flex items-center gap-0.5 border-l border-stone-800 pl-2">
           <button
             onClick={toggleMute}
@@ -138,8 +140,17 @@ export const BreakingNewsBar: React.FC = () => {
           >
             {screenShakeEnabled ? <Zap className="w-3.5 h-3.5 text-amber-400" /> : <ShieldAlert className="w-3.5 h-3.5 text-stone-500" />}
           </button>
+          <button
+            onClick={() => setIsResetOpen(true)}
+            title="Reset Game / Wipe Local Save"
+            className="p-1 rounded hover:bg-red-950/80 text-stone-400 hover:text-red-400 transition-colors cursor-pointer ml-0.5"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+          </button>
         </div>
       </div>
+
+      <ResetGameModal isOpen={isResetOpen} onClose={() => setIsResetOpen(false)} />
     </div>
   );
 };

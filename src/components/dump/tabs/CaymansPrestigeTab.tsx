@@ -6,16 +6,21 @@
 import React, { useState } from 'react';
 import { Palmtree, ShieldCheck, RefreshCw } from 'lucide-react';
 import { useGameStore } from '../../../store/useGameStore';
+import { calculatePrestigeSIS } from '../../../engine/math/formulas';
 
 export const CaymansPrestigeTab: React.FC = () => {
   const treasuryCash = useGameStore((s) => s.treasuryCash);
+  const activeTrades = useGameStore((s) => s.activeTrades);
   const sovereignImmunitySlips = useGameStore((s) => s.sovereignImmunitySlips);
   const executeFlightToCaymans = useGameStore((s) => s.executeFlightToCaymans);
   const [feedback, setFeedback] = useState<string | null>(null);
 
+  const lockedCollateral = (activeTrades || []).reduce((sum, t) => sum + (t.collateralLocked || 0), 0);
+  const totalNetWorth = treasuryCash + lockedCollateral;
+
   // Minimum $1M to prestige
-  const canPrestige = treasuryCash >= 1000000;
-  const potentialSIS = Math.max(1, Math.floor(Math.pow(treasuryCash / 1000000, 0.33)));
+  const canPrestige = totalNetWorth >= 1000000;
+  const potentialSIS = calculatePrestigeSIS(totalNetWorth);
 
   const handlePrestige = () => {
     if (!canPrestige) {

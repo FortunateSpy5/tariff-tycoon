@@ -9,6 +9,7 @@ import type { LeftChannelTab, RightChannelTab } from '../../types/unlocks';
 import type { GameStore } from '../useGameStore';
 import { calculateClickValue, calculateInkRefillCost } from '../../engine/math/formulas';
 import { INITIAL_CRONY_UPGRADES } from '../../constants/unlocks';
+import { PARODY_NATIONS } from '../../constants/nations';
 import { sound } from '../../audio/soundEngine';
 
 export interface DeskSlice extends DeskState {
@@ -28,8 +29,8 @@ export interface DeskSlice extends DeskState {
 
   // Interactive Desk Props
   triggerRedPhoneBailout: () => boolean;
-  sellClassifiedSecrets: () => void;
-  shredSubpoenas: () => void;
+  sellClassifiedSecrets: () => boolean;
+  shredSubpoenas: () => boolean;
   printEmergencyCash: () => boolean;
 
   // Bilateral Tariffs state
@@ -52,6 +53,11 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
   isCapsFrenzy: false,
   capsFrenzySecondsRemaining: 0,
   totalFrenziesTriggered: 0,
+  dryClicksCount: 0,
+  lastClickTimestamp: 0,
+  lastShredTimestamp: 0,
+  lastSecretSaleTimestamp: 0,
+  tariffRevenuePerSecond: 0,
   treasuryCash: 100.0, // Starting seed cash
   passiveCashPerSecond: 0,
   lastTickTimestamp: Date.now(),
@@ -63,10 +69,12 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
 
   activeUpgrades: [],
   tariffRates: {
-    can: 125,
-    fra: 200,
-    che: 100,
-    mex: 150,
+    north_annex: 125,
+    nearshore_fed: 150,
+    strike_republic: 200,
+    overthinker_union: 100,
+    red_factory: 175,
+    silicon_archipelago: 75,
   },
   setTariffRate: (nationId, rate) =>
     set((state) => ({
@@ -103,19 +111,40 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
 
   sellClassifiedSecrets: () => {
     const state = get();
+    const now = Date.now();
+    // Cooldown check: max 1 sale every 8 seconds, unless broke (< $50) emergency bailout
+    const elapsed = now - (state.lastSecretSaleTimestamp || 0);
+    if (elapsed < 8000 && state.treasuryCash >= 50) return false;
+
     sound.playChaChing();
     set({
       treasuryCash: state.treasuryCash + 500,
       slopSuspicion: Math.min(100, state.slopSuspicion + 8),
+      lastSecretSaleTimestamp: now,
     });
+    return true;
   },
 
   shredSubpoenas: () => {
     const state = get();
+    const now = Date.now();
+
+    // INVARIANT: Phase gate — shredder only available in Oval Office (Phase >= 2)
+    if (state.phase < 2) return false;
+
+    // INVARIANT: Cooldown enforcement (5-second shredder cooldown)
+    if (now - (state.lastShredTimestamp || 0) < 5000) return false;
+
+    // INVARIANT: Cost gate — Requires 10 Crony Favor (political capital to shred federal subpoenas)
+    if (state.cronyFavor < 10) return false;
+
     sound.playDeskThud();
     set({
+      cronyFavor: state.cronyFavor - 10,
       slopSuspicion: Math.max(0, state.slopSuspicion - 25),
+      lastShredTimestamp: now,
     });
+    return true;
   },
 
   printEmergencyCash: () => {
@@ -125,14 +154,22 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
     sound.playChaChing();
     set({
       treasuryCash: state.treasuryCash + 100000,
-      slopSuspicion: Math.min(100, state.slopSuspicion + 10),
+      slopSuspicion: Math.min(100, state.slopSuspicion + 15),
     });
     return true;
   },
 
   clickDesk: () => {
     const state = get();
+    const now = Date.now();
+
+    // INVARIANT: Rate-limit manual clicks to max ~20 clicks/sec to prevent autoclicker exploits
+    if (now - (state.lastClickTimestamp || 0) < 45) {
+      return;
+    }
+
     const isDry = state.inkLevel <= 0 && !state.isCapsFrenzy;
+    const currentDryClicks = isDry ? (state.dryClicksCount || 0) + 1 : 0;
 
     // Sound feedback
     if (state.phase === 1) {
@@ -143,13 +180,14 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
       sound.playSharpieSqueak();
     }
 
-    // Cash calculation: base $5.00 * phaseMultiplier (1x at P1 = $5, 10x at P2 = $50)
+    // Cash calculation with dry clicks penalty
     let earnedCash = calculateClickValue(
       state.phase,
       5.0,
       state.isCapsFrenzy ? 100 : state.inkLevel,
       state.isCapsFrenzy,
-      state.sovereignImmunitySlips || 0
+      state.sovereignImmunitySlips || 0,
+      currentDryClicks
     );
 
     // Apply Heavy Tungsten Nib multiplier (+100%)
@@ -157,26 +195,32 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
       earnedCash *= 2;
     }
 
-    // Tantrum gain (+1.5% normal, +3.5% dry ink slingshot)
-    let tantrumDelta = isDry ? 3.5 : 1.5;
-    if (state.activeUpgrades.includes('diet_soda_drip')) {
-      tantrumDelta *= 1.5;
+    // Tantrum gain:
+    // INVARIANT: Dry scratches enrage the Dealmaker (+3.0% per click), but CANNOT push Tantrum above 50%!
+    let tantrumDelta = 0;
+    if (isDry) {
+      tantrumDelta = state.tantrumMeter < 50 ? 3.0 : 0;
+    } else {
+      tantrumDelta = state.activeUpgrades.includes('diet_soda_drip') ? 2.25 : 1.5;
     }
 
     let nextTantrum = state.tantrumMeter + tantrumDelta;
     let shouldTriggerFrenzy = state.isCapsFrenzy;
     let frenzyRemaining = state.capsFrenzySecondsRemaining;
     let frenziesCount = state.totalFrenziesTriggered;
+    // Ink consumption: normal clicks consume 2 ink; during frenzy ink is infinite
     let nextInkLevel = state.isCapsFrenzy ? state.inkLevel : Math.max(0, state.inkLevel - 2);
     let nextRefillCount = state.inkRefillCount;
 
-    if (nextTantrum >= 100 && !state.isCapsFrenzy) {
+    // Trigger CAPS LOCK FRENZY only when legitimate ink was used
+    if (nextTantrum >= 100 && !state.isCapsFrenzy && !isDry) {
       shouldTriggerFrenzy = true;
       nextTantrum = 0;
-      frenzyRemaining = 15; // 15 seconds of pure chaos
+      frenzyRemaining = 15; // 15 seconds of chaos
       frenziesCount += 1;
-      nextInkLevel = state.maxInk; // Frenzy automatically refills ink to 100%!
-      nextRefillCount = Math.max(0, nextRefillCount - 2); // Resets escalation penalty
+      // INVARIANT: Frenzy does NOT grant free 100% ink refills. Current ink is preserved.
+      nextInkLevel = state.inkLevel;
+      nextRefillCount = Math.max(0, nextRefillCount - 1);
     }
 
     const nextCash = state.treasuryCash + earnedCash;
@@ -194,11 +238,13 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
       phase: nextPhase,
       totalClicks: state.totalClicks + 1,
       inkLevel: nextInkLevel,
+      dryClicksCount: currentDryClicks,
       inkRefillCount: nextRefillCount,
       tantrumMeter: Math.min(100, nextTantrum),
       isCapsFrenzy: shouldTriggerFrenzy,
       capsFrenzySecondsRemaining: frenzyRemaining,
       totalFrenziesTriggered: frenziesCount,
+      lastClickTimestamp: now,
     });
   },
 
@@ -214,6 +260,7 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
     set({
       treasuryCash: state.treasuryCash - cost,
       inkLevel: state.maxInk,
+      dryClicksCount: 0,
       inkRefillCount: state.inkRefillCount + 1,
     });
     return true;
@@ -222,7 +269,7 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
   tickDesk: (deltaSeconds: number) => {
     const state = get();
 
-    // Passive cash accrual
+    // 1. Passive agency cash accrual
     let passiveGain = state.passiveCashPerSecond * deltaSeconds;
 
     // AI Autopen Interns passive clicks (5 taps/sec)
@@ -231,6 +278,30 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
       const autopenPerSec = autopenBase * 5;
       passiveGain += autopenPerSec * deltaSeconds;
     }
+
+    // 2. Bilateral Tariffs passive export duties (Laffer curve with diminishing returns above 250%)
+    let calculatedTariffRev = 0;
+    let retaliatoryHeat = 0;
+
+    PARODY_NATIONS.forEach((nation) => {
+      const rate = state.tariffRates[nation.id] ?? nation.defaultTariffRate;
+      let rateMultiplier = 0;
+
+      if (rate <= 250) {
+        // Linear export revenue up to 250% tariff
+        rateMultiplier = rate / 100;
+      } else {
+        // Diminishing returns & smuggling above 250%
+        rateMultiplier = Math.max(0.3, 2.5 - ((rate - 250) / 100) * 0.4);
+        // Extreme trade war sanctions generate Inflation Heat
+        retaliatoryHeat += 0.08 * deltaSeconds;
+      }
+
+      const baseDuty = nation.baseExportYield || 10.0;
+      calculatedTariffRev += baseDuty * rateMultiplier * (state.phase === 1 ? 0.3 : state.phase * 0.9);
+    });
+
+    const totalTariffIncome = calculatedTariffRev * deltaSeconds;
 
     // Frenzy timer countdown
     let isFrenzy = state.isCapsFrenzy;
@@ -249,7 +320,7 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
       ? state.inkLevel
       : Math.min(state.maxInk, state.inkLevel + 0.5 * deltaSeconds);
 
-    const nextCash = state.treasuryCash + passiveGain;
+    const nextCash = state.treasuryCash + passiveGain + totalTariffIncome;
     let nextPhase = state.phase;
     if (state.phase === 1 && nextCash >= 10000) {
       nextPhase = 2;
@@ -263,6 +334,8 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
       treasuryCash: nextCash,
       phase: nextPhase,
       inkLevel: regeneratedInk,
+      tariffRevenuePerSecond: calculatedTariffRev,
+      slopSuspicion: Math.min(100, state.slopSuspicion + retaliatoryHeat),
       isCapsFrenzy: isFrenzy,
       capsFrenzySecondsRemaining: Math.max(0, frenzyRemaining),
       lastTickTimestamp: Date.now(),

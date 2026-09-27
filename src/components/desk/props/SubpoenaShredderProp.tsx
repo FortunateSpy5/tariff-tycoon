@@ -10,30 +10,44 @@ import { useGameStore } from '../../../store/useGameStore';
 
 export const SubpoenaShredderProp: React.FC = () => {
   const isHighHeat = useGameStore((s) => s.slopSuspicion > 70);
+  const cronyFavor = useGameStore((s) => s.cronyFavor);
   const shredSubpoenas = useGameStore((s) => s.shredSubpoenas);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(false);
 
   const handleClick = () => {
     if (cooldown) {
-      setFeedback('JAMMED (Cooling Down)');
+      setFeedback('COOLING DOWN (5s)');
       setTimeout(() => setFeedback(null), 1000);
       return;
     }
-    shredSubpoenas();
-    setCooldown(true);
-    setFeedback('WHIRRR! -25% HEAT');
-    setTimeout(() => setFeedback(null), 1800);
-    setTimeout(() => setCooldown(false), 3000);
+    if (cronyFavor < 10) {
+      setFeedback('NEED 10 FAVOR 🤝');
+      setTimeout(() => setFeedback(null), 1500);
+      return;
+    }
+
+    const success = shredSubpoenas();
+    if (success) {
+      setCooldown(true);
+      setFeedback('WHIRRR! -25% HEAT (-10 🤝)');
+      setTimeout(() => setFeedback(null), 2000);
+      setTimeout(() => setCooldown(false), 5000);
+    } else {
+      setFeedback('COOLDOWN ACTIVE');
+      setTimeout(() => setFeedback(null), 1200);
+    }
   };
+
+  const hasEnoughFavor = cronyFavor >= 10;
 
   return (
     <button
       onClick={handleClick}
-      disabled={cooldown}
-      title="Shred incriminating trade documents (-25% S.L.O.P. Suspicion) [Hotkey: S]"
+      disabled={cooldown || !hasEnoughFavor}
+      title="Shred incriminating trade documents (-25% S.L.O.P. Suspicion, costs 10 Favor) [Hotkey: S]"
       className={`p-2 rounded-lg border transition-all flex items-center gap-2 text-left cursor-pointer group relative overflow-hidden select-none active:scale-95 ${
-        cooldown
+        cooldown || !hasEnoughFavor
           ? 'opacity-60 cursor-not-allowed bg-stone-900 border-stone-800 text-stone-500'
           : isHighHeat
           ? 'bg-amber-950/80 border-amber-500/80 text-amber-200 shadow-md shadow-amber-950/40'
@@ -48,7 +62,7 @@ export const SubpoenaShredderProp: React.FC = () => {
           SHREDDER
         </span>
         <span className="text-[9px] text-stone-500 font-mono block">
-          {isHighHeat ? 'PURGE HEAT NOW!' : 'Purge -25% [S]'}
+          {!hasEnoughFavor ? 'Need 10 Favor [S]' : isHighHeat ? 'PURGE HEAT NOW!' : '-25% (10 🤝) [S]'}
         </span>
       </div>
 

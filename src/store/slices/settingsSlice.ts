@@ -16,6 +16,7 @@ export interface SettingsSlice {
   toggleScreenShake: () => void;
   toggleStreamerMode: () => void;
   updateLastSaved: () => void;
+  hardResetGame: () => void;
 }
 
 export const createSettingsSlice: StateCreator<GameStore, [], [], SettingsSlice> = (set, get) => ({
@@ -40,5 +41,14 @@ export const createSettingsSlice: StateCreator<GameStore, [], [], SettingsSlice>
 
   updateLastSaved: () => {
     set({ lastSavedTimestamp: Date.now() });
+  },
+
+  hardResetGame: () => {
+    try {
+      localStorage.removeItem('executive_degen_save_v1');
+    } catch {
+      // ignore
+    }
+    window.location.reload();
   },
 });

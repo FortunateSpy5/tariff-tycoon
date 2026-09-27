@@ -7,6 +7,7 @@ import type { PrestigeState } from '../../types/prestige';
 import type { GameStore } from '../useGameStore';
 import { calculatePrestigeSIS } from '../../engine/math/formulas';
 import { INITIAL_AGENCIES } from '../../constants/agencies';
+import { INITIAL_STOCKS } from '../../constants/stocks';
 import { sound } from '../../audio/soundEngine';
 
 export interface PrestigeSlice extends PrestigeState {
@@ -28,7 +29,9 @@ export const createPrestigeSlice: StateCreator<GameStore, [], [], PrestigeSlice>
 
   executeFlightToCaymans: () => {
     const state = get();
-    const earnedSIS = calculatePrestigeSIS(state.treasuryCash);
+    // Credit locked trade collateral into effective net worth so players are never penalized for open positions
+    const tradeCollateral = (state.activeTrades || []).reduce((sum, t) => sum + (t.collateralLocked || 0), 0);
+    const earnedSIS = calculatePrestigeSIS(state.treasuryCash + tradeCollateral);
     if (earnedSIS <= 0) return 0;
 
     sound.playChaChing();
@@ -37,13 +40,31 @@ export const createPrestigeSlice: StateCreator<GameStore, [], [], PrestigeSlice>
     set({
       treasuryCash: 100.0,
       passiveCashPerSecond: 0,
+      tariffRevenuePerSecond: 0,
       phase: 1,
       inkLevel: 100,
       inkRefillCount: 0,
       tantrumMeter: 0,
       isCapsFrenzy: false,
       capsFrenzySecondsRemaining: 0,
+      dryClicksCount: 0,
+      activeUpgrades: [],
+      slopSuspicion: 0,
+      cronyFavor: 30,
+      vexVolatility: 15.0,
+      tariffRates: {
+        north_annex: 125,
+        nearshore_fed: 150,
+        strike_republic: 200,
+        overthinker_union: 100,
+        red_factory: 175,
+        silicon_archipelago: 75,
+      },
+      stocks: { ...INITIAL_STOCKS },
       activeTrades: [],
+      isWalkBackWindowActive: false,
+      walkBackSecondsRemaining: 0,
+      lastRaidMessage: undefined,
       agencies: INITIAL_AGENCIES.map((a) => ({ ...a, isLiquidated: false })),
       sovereignImmunitySlips: state.sovereignImmunitySlips + earnedSIS,
       totalSISLifetime: state.totalSISLifetime + earnedSIS,

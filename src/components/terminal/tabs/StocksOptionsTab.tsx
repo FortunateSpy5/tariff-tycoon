@@ -16,8 +16,9 @@ export const StocksOptionsTab: React.FC = () => {
   const settleOptionTrade = useGameStore((s) => s.settleOptionTrade);
   const activeTrades = useGameStore((s) => s.activeTrades);
   const activeUpgrades = useGameStore((s) => s.activeUpgrades);
+  const selectedStock = useGameStore((s) => s.selectedStock);
+  const setSelectedStock = useGameStore((s) => s.setSelectedStock);
 
-  const [selectedStock, setSelectedStock] = useState<StockSymbol>('DOOR');
   const [leverage, setLeverage] = useState<number>(100);
   const [collateralAmount, setCollateralAmount] = useState<number>(1000);
   const [tradeStatus, setTradeStatus] = useState<string | null>(null);

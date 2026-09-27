@@ -11,13 +11,26 @@ import { formatCurrency } from '../../../engine/math/bigNumber';
 
 export const DumpAgenciesTab: React.FC = () => {
   const agencies = useGameStore((s) => s.agencies);
+  const cronyFavor = useGameStore((s) => s.cronyFavor);
+  const treasuryCash = useGameStore((s) => s.treasuryCash);
   const liquidateAgency = useGameStore((s) => s.liquidateAgency);
   const [alertMsg, setAlertMsg] = useState<string | null>(null);
 
-  const handleLiquidate = (agencyId: string, name: string, yieldAmt: number) => {
+  const handleLiquidate = (agencyId: string, name: string, yieldAmt: number, favorCost: number, minCash: number) => {
+    if (cronyFavor < favorCost) {
+      setAlertMsg(`Needs 🤝 ${favorCost} Crony Favor to bribe liquidation committee!`);
+      setTimeout(() => setAlertMsg(null), 2500);
+      return;
+    }
+    if (treasuryCash < minCash) {
+      setAlertMsg(`Needs ${formatCurrency(minCash)} Treasury cash to unlock!`);
+      setTimeout(() => setAlertMsg(null), 2500);
+      return;
+    }
+
     const cash = liquidateAgency(agencyId);
     if (cash > 0) {
-      setAlertMsg(`🪓 SCRAPPED ${name}! Injected +${formatCurrency(yieldAmt)}!`);
+      setAlertMsg(`🪓 SCRAPPED ${name}! Injected +${formatCurrency(yieldAmt)} (+15% Heat)!`);
       setTimeout(() => setAlertMsg(null), 2500);
     }
   };
@@ -30,7 +43,7 @@ export const DumpAgenciesTab: React.FC = () => {
             <Scissors className="w-3.5 h-3.5" />
             <span>FEDERAL AGENCY GUILLOTINE</span>
           </div>
-          <span>SEQUENTIAL TARGETS</span>
+          <span className="text-amber-400 font-bold">🤝 {cronyFavor} FAVOR AVAILABLE</span>
         </div>
 
         {/* Agency List */}
@@ -39,6 +52,9 @@ export const DumpAgenciesTab: React.FC = () => {
             const isScrapped = agency.isLiquidated;
             const isUnlocked = index === 0 || agencies[index - 1].isLiquidated;
             const previousAgency = index > 0 ? agencies[index - 1] : null;
+            const hasFavor = cronyFavor >= agency.cronyFavorCost;
+            const hasCash = treasuryCash >= agency.minNetWorthRequired;
+            const canAfford = hasFavor && hasCash;
 
             return (
               <div
@@ -62,7 +78,7 @@ export const DumpAgenciesTab: React.FC = () => {
                     </p>
                     <p className="text-[9px] text-amber-500/90 font-mono flex items-center gap-1 mt-0.5">
                       <AlertTriangle className="w-2.5 h-2.5" />
-                      Hazard: {agency.hazardDescription}
+                      Cost: 🤝 {agency.cronyFavorCost} Favor // Req: {formatCurrency(agency.minNetWorthRequired)}
                     </p>
                   </div>
 
@@ -74,8 +90,12 @@ export const DumpAgenciesTab: React.FC = () => {
                       </span>
                     ) : isUnlocked ? (
                       <button
-                        onClick={() => handleLiquidate(agency.id, agency.acronym, agency.liquidationCashYield)}
-                        className="px-2.5 py-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-stone-950 font-black rounded font-mono text-[10px] active:scale-95 transition-all shadow cursor-pointer"
+                        onClick={() => handleLiquidate(agency.id, agency.acronym, agency.liquidationCashYield, agency.cronyFavorCost, agency.minNetWorthRequired)}
+                        className={`px-2.5 py-1 rounded font-mono text-[10px] font-bold transition-all shadow ${
+                          canAfford
+                            ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-stone-950 font-black active:scale-95 cursor-pointer'
+                            : 'bg-stone-800 text-stone-500 cursor-not-allowed'
+                        }`}
                       >
                         🪓 +{formatCurrency(agency.liquidationCashYield)}
                       </button>

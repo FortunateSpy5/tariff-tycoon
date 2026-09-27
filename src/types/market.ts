@@ -52,4 +52,10 @@ export interface MarketState {
   isWalkBackWindowActive: boolean; // 8-second Straddle Squeeze window
   walkBackSecondsRemaining: number;
   lastTargetStockSymbol?: StockSymbol; // Targeted stock for the walk-back squeeze
+  yapTargetMode: 'selected' | 'shotgun'; // Toggle: targeted insider short vs unhinged shotgun
+  selectedStock: StockSymbol; // Currently selected stock on BagHolder Pro
+  lastYapTimestamp: number; // For YAP cooldown enforcement
+  yapCooldownSeconds: number; // Cooldown duration (default 10s)
+  lastRaidMessage?: string; // Feedback from Special Counsel raid/asset seizure
+  lastRaidTimestamp: number;
 }

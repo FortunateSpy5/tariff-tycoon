@@ -51,13 +51,13 @@ export const InkMeter: React.FC = () => {
       {/* Status Warning or Refill Button */}
       <div className="flex items-center justify-between gap-2 mt-1">
         {isDry ? (
-          <div className="flex items-center gap-1 text-[11px] text-red-400 font-semibold animate-pulse">
-            <AlertTriangle className="w-3.5 h-3.5" />
-            <span>DRY NIB: +3.5% Tantrum Slingshot (RAGE INTO FRENZY!)</span>
+          <div className="flex items-center gap-1 text-[10px] text-red-400 font-semibold animate-pulse">
+            <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+            <span>DRY NIB: -95% Yield (Refill required to sign decrees)</span>
           </div>
         ) : (
           <span className="text-[10px] text-stone-500">
-            {isCapsFrenzy ? 'Infinite ink during Frenzy' : 'Consumes 2 units per signature'}
+            {isCapsFrenzy ? 'No ink consumed during Frenzy' : 'Consumes 2 ink per signature'}
           </span>
         )}
 

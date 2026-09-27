@@ -29,7 +29,7 @@ export function useGameLoop() {
       }
     };
 
-    // Catch up passive earnings when tab returns from background
+    // Catch up passive earnings and market status when tab returns from background
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         const now = Date.now();
@@ -37,6 +37,8 @@ export function useGameLoop() {
         if (elapsedSeconds > 2) {
           const store = useGameStore.getState();
           store.tickDesk(elapsedSeconds);
+          // Catch up market and auto-settle expired option contracts (bounded to 5s per catch-up burst)
+          store.tickMarket(Math.min(5.0, elapsedSeconds));
         }
         lastTickRef.current = now;
       }

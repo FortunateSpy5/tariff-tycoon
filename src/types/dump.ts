@@ -15,6 +15,8 @@ export interface AgencyLiquidation {
   hazardPenaltyPercentage: number;
   isLiquidated: boolean;
   liquidatedAtTimestamp?: number;
+  cronyFavorCost: number; // Political capital required to dismantle agency
+  minNetWorthRequired: number; // Minimum liquid treasury required to unlock liquidation
 }
 
 export interface DumpState {

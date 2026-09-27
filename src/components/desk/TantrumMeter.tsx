@@ -50,7 +50,7 @@ export const TantrumMeter: React.FC = () => {
 
       {/* Footer Info */}
       <div className="flex items-center justify-between text-[10px] text-stone-500 mt-1.5">
-        <span>{isCapsFrenzy ? '💥 10x CASH MULTIPLIER & ZERO INK CONSUMPTION' : 'Clicks build tantrum (+3.5% dry)'}</span>
+        <span>{isCapsFrenzy ? '💥 10x CASH MULTIPLIER & ZERO INK CONSUMPTION' : 'Clicks build tantrum (Requires ink for >50%)'}</span>
         <span>{isCapsFrenzy ? 'PURE DEGEN ENERGY' : 'Frenzy triggers at 100%'}</span>
       </div>
     </div>
