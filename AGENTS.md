@@ -56,6 +56,8 @@ Welcome, AI Agent. This repository powers **EXECUTIVE DEGEN: SHORT THE WORLD** (
 
 For specialized guidelines and detailed mechanics, consult:
 - **Master Game Design Document:** [GAME_DESIGN_DOCUMENT.md](GAME_DESIGN_DOCUMENT.md)
+- **UI Design Specification:** [UI_DESIGN_SPECIFICATION.md](UI_DESIGN_SPECIFICATION.md)
+- **Desktop UI & Layout Invariants:** [.agents/rules/desktop-ui-and-layout-invariants.md](.agents/rules/desktop-ui-and-layout-invariants.md)
 - **Project Knowledge Base:** [.agents/PROJECT_KNOWLEDGE_BASE.md](.agents/PROJECT_KNOWLEDGE_BASE.md)
 - **Legal & Parody Rules:** [.agents/rules/legal-compliance-and-parody.md](.agents/rules/legal-compliance-and-parody.md)
 - **Incremental Design Invariants:** [.agents/rules/incremental-gameplay-invariants.md](.agents/rules/incremental-gameplay-invariants.md)

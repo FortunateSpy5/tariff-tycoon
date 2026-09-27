@@ -12,17 +12,19 @@ This document outlines the development phases for **EXECUTIVE DEGEN: SHORT THE W
 
 ---
 
-## Phase 2: BagHolder Pro & The 3:00 AM YAP Engine (Sprint 2)
-- [ ] **BagHolder Pro UI:** Neon-fintech interface sliding out from under the Resolute Desk.
-- [ ] **Live Options Chart:** Dynamic red/green candlestick charts for parodied tickers (`$FRUT`, `$GIGA`, `$DOOR`, `$AVOC`, `$LMBR`).
-- [ ] **0DTE Leverage Engine:** 10x to 1,000x Put/Call contract purchasing with IV volatility spikes.
-- [ ] **Procedural YAP Generator:** 7-stage stochastic Mad-Libs generator with simulated reply swarms from `@MadBagsJim` and `@ElongatedMuskrat`.
-- [ ] **SEC Suspicion & DOJ Raid System:** Regulatory heat accumulation and Crony Favor pardon mechanics.
+## Phase 2: The Hybrid Resolute Cockpit & 0DTE Options Suite (Sprint 2)
+- [ ] **Zero-Scroll Viewport Shell:** Hard-lock `100dvh` CSS Grid shell with sub-1080p scale clamp (`useDesktopViewport`).
+- [ ] **Center Stage Tactile Desk Props:** Red Rotary Phone (bailout), Gold Box (secret cash), Subpoena Shredder (heat purge QTE).
+- [ ] **Left Wing Telemetry Console (Tabs 1-3):** BagHolder Pro 0DTE options ladder, live candlestick chart, PolyGrift prediction bets, S.L.O.P. radar.
+- [ ] **Right Wing Expansion Deck (Tabs D/U/T/C):** D.U.M.P. agency guillotine, Crony Unlocks (Oligarch Tech Tree), Bilateral Tariffs map, Caymans prestige preview.
+- [ ] **Procedural YAP & Straddle Squeeze:** 7-stage Mad-Libs tweet engine with 8-second Walk-Back Clarification pump button (+35%).
+- [ ] **Desktop Keyboard Ergonomics:** Global hotkey bindings (`Space`, `1-3`, `D/U/T/C`, `Y`, `W`, `S`, `F`).
 
 ---
 
 ## Phase 3: The D.U.M.P. Liquidation Tree & Macro Chaos (Sprint 3)
-- [ ] **D.U.M.P. Guillotine UI:** 10 federal agencies to scrap with instant cash and persistent comedic hazards.
+- [ ] **D.U.M.P. Chainsaw Engine:** 10 federal agencies to scrap with instant cash payouts and active comedic hazards.
+- [ ] **Oligarch Lobbying Tech Tree:** Permanent unlockable perks (Tungsten Nib, AI Autopen, Diet Soda Drip, Dark Pool Fiber).
 - [ ] **Inflation Heat & Civil Unrest Loop:** Active friction balancing with stimulus checks and military flyover distractions.
 - [ ] **The Palm-a-Grifto Golf Protocol:** Offline state persistence and freeze invariants.
 
