@@ -13,24 +13,32 @@ import { PolyGriftTab } from './tabs/PolyGriftTab';
 import { SlopRadarTab } from './tabs/SlopRadarTab';
 
 export const TelemetryConsolePane: React.FC = () => {
-  const phase = useGameStore((s) => s.phase);
+  const hasMarketAccess = useGameStore((s) => s.hasMarketAccess);
+  const hasRadarAccess = useGameStore((s) => s.hasRadarAccess);
+  const hasPolyGriftAccess = useGameStore((s) => s.hasPolyGriftAccess);
   const activeLeftTab = useGameStore((s) => s.activeLeftTab);
   const setActiveLeftTab = useGameStore((s) => s.setActiveLeftTab);
 
-  const isLocked = phase < 2;
+  const isLocked = !hasMarketAccess;
 
   const tabs: { id: LeftChannelTab; label: string; shortcut: string }[] = [
     { id: 'stocks', label: 'STOCKS', shortcut: '1' },
-    { id: 'polygrift', label: 'POLY-GRIFT', shortcut: '2' },
-    { id: 'radar', label: 'S.L.O.P.', shortcut: '3' },
+    { id: 'radar', label: 'S.L.O.P.', shortcut: '2' },
+    { id: 'polygrift', label: 'POLY-GRIFT', shortcut: '3' },
   ];
+  const availableTabs = tabs.filter((tab) =>
+    (tab.id === 'stocks' && hasMarketAccess) ||
+    (tab.id === 'polygrift' && hasPolyGriftAccess) ||
+    (tab.id === 'radar' && hasRadarAccess)
+  );
 
   return (
     <div className="h-full bg-stone-900/95 border border-stone-800 rounded-xl flex flex-col justify-between shadow-2xl relative overflow-hidden select-none">
       
       {/* Channel Selector Header */}
-      <div className="flex items-center bg-stone-950 border-b border-stone-800 p-1 gap-1 shrink-0">
-        {tabs.map((tab) => {
+      {availableTabs.length > 0 && (
+        <div className="flex items-center bg-stone-950 border-b border-stone-800 p-1 gap-1 shrink-0">
+        {availableTabs.map((tab) => {
           const isActive = activeLeftTab === tab.id;
           return (
             <button
@@ -48,7 +56,8 @@ export const TelemetryConsolePane: React.FC = () => {
             </button>
           );
         })}
-      </div>
+        </div>
+      )}
 
       {/* Main Tab Surface */}
       <div className="flex-1 min-h-0 p-2.5 overflow-hidden flex flex-col justify-between relative">
@@ -66,7 +75,7 @@ export const TelemetryConsolePane: React.FC = () => {
               RESTRICTED SECURITY ZONE
             </h4>
             <p className="text-[10px] text-stone-400 mt-1 max-w-[200px] leading-relaxed">
-              BagHolder Pro & Telemetry unlock at Phase 2 ($10,000 seed cash).
+              BagHolder Pro unlocks at $10,000 seed cash. The Oval Office opens at $1,000,000.
             </p>
           </div>
         )}

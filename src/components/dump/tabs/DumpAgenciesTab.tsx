@@ -13,7 +13,13 @@ export const DumpAgenciesTab: React.FC = () => {
   const agencies = useGameStore((s) => s.agencies);
   const cronyFavor = useGameStore((s) => s.cronyFavor);
   const treasuryCash = useGameStore((s) => s.treasuryCash);
+  const hasCronyUnlocksAccess = useGameStore((s) => s.hasCronyUnlocksAccess);
+  const hasTariffAccess = useGameStore((s) => s.hasTariffAccess);
+  const hasPrestigeAccess = useGameStore((s) => s.hasPrestigeAccess);
   const liquidateAgency = useGameStore((s) => s.liquidateAgency);
+  const totalCashHarvested = useGameStore((s) => s.totalCashHarvested);
+  const activeHazardsCount = useGameStore((s) => s.activeHazardsCount);
+  const disasterCapitalismRevenue = useGameStore((s) => s.disasterCapitalismRevenue);
   const [alertMsg, setAlertMsg] = useState<string | null>(null);
 
   const handleLiquidate = (agencyId: string, name: string, yieldAmt: number, favorCost: number, minCash: number) => {
@@ -45,6 +51,39 @@ export const DumpAgenciesTab: React.FC = () => {
           </div>
           <span className="text-amber-400 font-bold">🤝 {cronyFavor} FAVOR AVAILABLE</span>
         </div>
+
+        {(totalCashHarvested > 0 || activeHazardsCount > 0) && (
+          <div className="mb-2 grid grid-cols-3 gap-1 text-[9px] font-mono text-center">
+            <div className="bg-stone-900/80 border border-stone-800 rounded px-1 py-0.5">
+              <span className="block text-stone-500 uppercase">Harvested</span>
+              <span className="text-emerald-400 font-bold">{formatCurrency(totalCashHarvested)}</span>
+            </div>
+            <div className="bg-stone-900/80 border border-stone-800 rounded px-1 py-0.5">
+              <span className="block text-stone-500 uppercase">Hazards</span>
+              <span className="text-amber-400 font-bold">{activeHazardsCount}</span>
+            </div>
+            <div className="bg-stone-900/80 border border-stone-800 rounded px-1 py-0.5">
+              <span className="block text-stone-500 uppercase">Disaster Rev</span>
+              <span className="text-emerald-400 font-bold">{formatCurrency(disasterCapitalismRevenue)}</span>
+            </div>
+          </div>
+        )}
+
+        {!hasCronyUnlocksAccess && (
+          <p className="mb-2 border-l-2 border-amber-500/70 bg-amber-950/20 px-2 py-1 text-[10px] text-stone-300">
+            First liquidation opens the Crony lobbying shop.
+          </p>
+        )}
+        {hasCronyUnlocksAccess && !hasTariffAccess && (
+          <p className="mb-2 border-l-2 border-emerald-500/70 bg-emerald-950/20 px-2 py-1 text-[10px] text-stone-300">
+            Buy your first upgrade to gain authority over bilateral tariffs.
+          </p>
+        )}
+        {hasTariffAccess && !hasPrestigeAccess && (
+          <p className="mb-2 border-l-2 border-amber-500/70 bg-amber-950/20 px-2 py-1 text-[10px] text-stone-300">
+            Adjust a tariff dial to unlock the Cayman reorganization.
+          </p>
+        )}
 
         {/* Agency List */}
         <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-0.5">

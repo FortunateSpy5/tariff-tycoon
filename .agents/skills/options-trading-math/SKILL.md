@@ -9,33 +9,33 @@ This skill documents the quantitative models powering the causal insider trading
 
 ---
 
-## 1. Options Settlement & Volatility Payout Formula
+## 1. Implemented Arcade Options Model
 
-### 1.1 The Crash Severity Function
-When the player fires an active 3:00 AM YAP or signs a tariff decree, the target ticker price drops:
-$$\Delta S(\%) = -\min\left(0.92, \; \kappa \times \left(\frac{\text{YAP\_Power}}{100}\right) \times (1 + 0.5 \times \mathbb{I}_{\text{frenzy}})\right)$$
-* $\kappa \approx 0.75$ (Baseline market shock constant).
-* $\mathbb{I}_{\text{frenzy}} = 1$ if launched during *CAPS LOCK FRENZY*, else $0$.
-* Crashed Price: $S_{\text{crash}} = S_0 \times (1 - \Delta S(\%))$.
+The game uses an arcade directional-return model, not Black-Scholes. A YAP shock has a positive crash severity capped at 92%:
+$$d = \min\left(0.92, \left(0.25 + \frac{\text{YAP tariff percentage}}{1000}\right) M_{\text{frenzy}} M_{\text{shotgun}}\right)$$
+* $M_{\text{frenzy}}=1.4$ during CAPS LOCK FRENZY, otherwise $1$.
+* $M_{\text{shotgun}}=1.25$ in shotgun mode, otherwise $1$.
+* Crashed price: $S_1=\max(1, S_0(1-d))$.
 
-### 1.2 The Implied Volatility ($VIX$) Expansion (Vega Blowout)
-$$VIX_{\text{spike}} = VIX_0 \times \left(1 + \Delta S(\%) \times 4.0\right)^{1.5}$$
+### 1.2 VEX Index
+* A selected-target YAP adds 25 VEX points; shotgun adds 35. VEX is capped at 80 and decays toward 15 at 0.5 points/second.
+* $M_{\text{VEX}}=1+\max(0,(VEX-15)/100)$.
 
-### 1.3 Total Payout Formula
-$$\text{Payout} = C \times \Lambda \times \left(\frac{\max(0, \; K - S_{\text{crash}})}{S_0}\right) \times \left(1 + \frac{VIX_{\text{spike}} - VIX_0}{100}\right)$$
-* $C$: Collateral cash invested.
-* $\Lambda$: Leverage multiplier ($\Lambda \in \{10\times, 50\times, 200\times, 500\times, 1000\times\}$).
-* $K$: Put strike price ($K = S_0 \times (1 - \text{OTM}\%)$).
+### 1.3 Position Settlement
+$$r = \begin{cases}(S_0-S_1)/S_0 & \text{PUT} \\ (S_1-S_0)/S_0 & \text{CALL}\end{cases}$$
+$$\text{Net P\&L}=C\max(-1,r\Lambda M_{\text{VEX}})M_{\text{fiber}},\quad \text{Payout}=C+\text{Net P\&L}$$
+* $C$: collateral cash locked in the trade. $\Lambda$: selected leverage (10x, 100x, or 1000x).
+* $M_{\text{fiber}}=1.5$ for profitable trades with Dark Pool Fiber; otherwise it is $1$.
+* Loss is capped at 100% of locked collateral. Contracts expire after 60 seconds and can be settled early.
 
 ---
 
 ## 2. SEC Grand Jury Suspicion Accumulation
 
-$$\Delta S_{\text{suspicion}} = \beta \times \log_{10}\left(1 + \frac{\text{Net Profit}}{\$10,000}\right) \times \sqrt{\frac{\Lambda}{10}} \times (1 - \theta_{\text{shell\_co}})$$
-* $\beta = 3.50$ (Base regulatory sensitivity).
-* $\theta_{\text{shell\_co}} \in [0, 0.80]$ (Mitigated by Delaware Shell LLC upgrades).
+* Opening a trade adds 1 suspicion point, or 5 when leverage is above 100x.
+* A selected-target YAP adds 12 points; shotgun adds 16.
+* Suspicion decays at 0.2 points/second. At 100, a raid is resolved on a 15-second cadence.
 
 ### Threshold Events:
-* **$S \ge 50\%$ ("Congressional Subpoena")**: Order fill latency $+400\text{ms}$; legal defense fees auto-drain $1.5\%$ liquid cash/sec.
-* **$S = 100\%$ ("DOJ Special Counsel Raid")**: BagHolder Pro frozen for $45 \text{s}$; $30\%$ of liquid cash locked in escrow.
-* **Clearing Suspicion:** Spend **Crony Favor (🤝)** to appoint compromised judges or fire the special prosecutor.
+* At 100 suspicion, spend 50 Crony Favor to avert the raid if available; otherwise 35% of treasury is seized (minimum $5,000).
+* Spend Crony Favor through the S.L.O.P. Radar to reduce suspicion. Walk-backs do not grant Crony Favor.

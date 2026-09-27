@@ -45,7 +45,7 @@ export const ClickerButton: React.FC = () => {
   const isRecoilActive = screenShakeEnabled && (isCapsFrenzy || isHighTantrum);
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
-    clickDesk();
+    if (!clickDesk()) return;
 
     // Trigger celebratory confetti burst during Frenzy
     if (isCapsFrenzy) {
@@ -98,7 +98,7 @@ export const ClickerButton: React.FC = () => {
         onTouchEnd={() => setIsPressed(false)}
         className={`relative group w-44 h-44 sm:w-52 sm:h-52 md:w-60 md:h-60 rounded-full flex flex-col items-center justify-center cursor-pointer transition-all duration-75 shadow-2xl ${
           isPressed ? 'scale-95' : 'hover:scale-102'
-        } ${isRecoilActive ? 'animate-recoil' : ''} ${
+        } ${
           isCapsFrenzy
             ? 'bg-gradient-to-br from-red-600 via-amber-600 to-red-700 ring-6 ring-red-500/50 animate-pulse'
             : phase === 1
@@ -117,7 +117,7 @@ export const ClickerButton: React.FC = () => {
         <div className="relative z-10 flex flex-col items-center text-center p-2">
           {phase === 1 ? (
             <>
-              <Stamp className="w-10 h-10 sm:w-12 sm:h-12 text-blue-200 mb-1 drop-shadow-md group-hover:rotate-6 transition-transform" />
+              <Stamp className={`w-10 h-10 sm:w-12 sm:h-12 text-blue-200 mb-1 drop-shadow-md group-hover:rotate-6 transition-transform ${isRecoilActive ? 'animate-recoil' : ''}`} />
               <span className="font-mono text-[10px] font-black tracking-widest text-blue-300 uppercase">
                 Gate 99B Customs
               </span>
@@ -130,7 +130,7 @@ export const ClickerButton: React.FC = () => {
             </>
           ) : (
             <>
-              <PenTool className="w-10 h-10 sm:w-12 sm:h-12 text-stone-950 mb-1 drop-shadow group-hover:-rotate-12 transition-transform" />
+              <PenTool className={`w-10 h-10 sm:w-12 sm:h-12 text-stone-950 mb-1 drop-shadow group-hover:-rotate-12 transition-transform ${isRecoilActive ? 'animate-recoil' : ''}`} />
               <span className="font-mono text-[10px] font-black tracking-widest text-amber-950 uppercase">
                 Resolute Desk
               </span>
@@ -154,7 +154,7 @@ export const ClickerButton: React.FC = () => {
       {/* Helper caption */}
       <span className="mt-1.5 text-[10px] font-mono text-stone-400 text-center">
         {phase === 1
-          ? 'Slam stamp to seize contraband & seed treasury ($10k unlocks Oval Office)'
+          ? 'Slam stamp to seize contraband. BagHolder Pro opens at $10k; the Oval Office opens at $1M.'
           : isCapsFrenzy
           ? '🚨 FRENZY: 10x REVENUE // CLICK AS FAST AS POSSIBLE'
           : 'Slam Sherpie to issue executive orders & build tantrum'}

@@ -5,6 +5,13 @@
 
 import type { GamePhase } from '../../types/desk';
 import type { OptionType } from '../../types/market';
+import {
+  PRESTIGE_CASH_DIVISOR,
+  PRESTIGE_CASH_EXPONENT,
+  PRESTIGE_OPTIONS_DIVISOR,
+  PRESTIGE_OPTIONS_EXPONENT,
+  PRESTIGE_OPTIONS_WEIGHT,
+} from '../../constants/balance';
 
 /**
  * Computes manual click cash yield.
@@ -13,6 +20,9 @@ import type { OptionType } from '../../types/market';
  * INVARIANT: [Bankruptcy Floor]
  * Ensures the player can never be permanently soft-locked after 100% options loss.
  * Cash floor is guaranteed: max($1.00, SIS * $1,000).
+ *
+ * @param isJammed When the nib has jammed after DRY_CLICK_JAM_THRESHOLD consecutive dry
+ *   clicks, dry yield collapses further (but never below the bankruptcy floor).
  */
 export function calculateClickValue(
   phase: GamePhase,
@@ -20,7 +30,7 @@ export function calculateClickValue(
   inkLevel: number,
   isCapsFrenzy: boolean,
   sisCount: number,
-  dryClicksCount: number = 0
+  isJammed: boolean = false
 ): number {
   const cashFloor = Math.max(1.0, sisCount * 1000);
 
@@ -41,10 +51,8 @@ export function calculateClickValue(
     return Math.max(cashFloor, baseValue * phaseMultiplier * 10.0 * sisMultiplier);
   }
 
-  // Jammed Nib: if player scratches 25+ times without refilling, output drops to 1% salvage
-  // INVARIANT: [Bankruptcy Floor] Jammed state degrades calculated yield, NEVER the guaranteed cash floor.
-  const isJammed = inkLevel <= 0 && dryClicksCount >= 25;
-  const inkMultiplier = isJammed ? 0.01 : inkLevel <= 0 ? 0.05 : 1.0;
+  // Dry clicks retain 10% yield (2% when jammed), while the bankruptcy floor remains guaranteed.
+  const inkMultiplier = inkLevel <= 0 ? (isJammed ? 0.02 : 0.1) : 1.0;
   const calculatedYield = baseValue * phaseMultiplier * inkMultiplier * sisMultiplier;
 
   return Math.max(cashFloor, calculatedYield);
@@ -53,11 +61,11 @@ export function calculateClickValue(
 /**
  * Computes the cost to refill Golden Sharpie ink.
  * GDD Formula: C(n) = C_0 \times 1.15^n
- * KaTeX: C(n) = \min(100 \times 1.15^n, 25000)
+ * KaTeX: C(n) = \min(25 \times 1.15^n, 25000)
  * 
  * Capped to avoid negative-ROI traps where refills exceed a full ink tank's output.
  */
-export function calculateInkRefillCost(refillCount: number, baseCost: number = 100): number {
+export function calculateInkRefillCost(refillCount: number, baseCost: number = 25): number {
   const exponentialCost = Math.floor(baseCost * Math.pow(1.15, refillCount));
   return Math.min(exponentialCost, 25000);
 }
@@ -98,13 +106,20 @@ export function calculateOptionReturn(
 
 /**
  * Calculates Sovereign Immunity Slips earned upon Tier 1 Prestige (Flight to the Caymans).
- * Threshold: $1M Net Worth.
- * KaTeX: SIS = \left\lfloor \left(\frac{\text{NetWorth}}{10^6}\right)^{0.33} \right\rfloor
+ * GDD §5 two-term formula. Threshold: $10^10 Lifetime Treasury Cash.
+ * KaTeX: SIS = \left\lfloor \left(\frac{\text{LifetimeCash}}{10^{10}}\right)^{0.32} + 3 \times \left(\frac{\text{OptionsProfit}}{10^9}\right)^{0.38} \right\rfloor
+ *
+ * @param lifetimeCash Total treasury cash accumulated this run (including locked collateral).
+ * @param optionsProfit Cumulative realized profit from settled option trades this run.
  */
-export function calculatePrestigeSIS(netWorth: number): number {
-  if (netWorth < 1_000_000) return 0;
-  const ratio = netWorth / 1_000_000;
-  return Math.max(1, Math.floor(Math.pow(ratio, 0.33)));
+export function calculatePrestigeSIS(lifetimeCash: number, optionsProfit: number = 0): number {
+  const cashTerm = Math.pow(Math.max(0, lifetimeCash) / PRESTIGE_CASH_DIVISOR, PRESTIGE_CASH_EXPONENT);
+  const optionsTerm =
+    PRESTIGE_OPTIONS_WEIGHT *
+    Math.pow(Math.max(0, optionsProfit) / PRESTIGE_OPTIONS_DIVISOR, PRESTIGE_OPTIONS_EXPONENT);
+  const total = cashTerm + optionsTerm;
+  if (total < 1) return 0;
+  return Math.floor(total);
 }
 
 /**

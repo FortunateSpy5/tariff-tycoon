@@ -23,6 +23,31 @@
     background-color: #f59e0b;
     color: #0c0a09;
   }
+
+  :focus-visible {
+    outline: 2px solid #fbbf24;
+    outline-offset: 2px;
+  }
+
+  button {
+    min-width: calc(28px / var(--viewport-scale, 1));
+    min-height: calc(28px / var(--viewport-scale, 1));
+  }
+}
+
+@layer utilities {
+  .text-stone-500,
+  .text-stone-600 {
+    color: #a8a29e;
+  }
+
+  [class*="text-[9px]"] {
+    font-size: calc(10px / var(--viewport-scale, 1));
+  }
+
+  [class*="text-[10px]"] {
+    font-size: calc(11px / var(--viewport-scale, 1));
+  }
 }
 
 /* Custom Slim Scrollbars for Internal Panels */
@@ -82,9 +107,12 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .animate-recoil,
-  .animate-ring,
-  .animate-marquee {
-    animation: none !important;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }

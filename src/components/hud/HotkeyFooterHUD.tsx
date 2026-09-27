@@ -12,6 +12,14 @@ export const HotkeyFooterHUD: React.FC = () => {
   const toggleMute = useGameStore((s) => s.toggleMute);
   const screenShakeEnabled = useGameStore((s) => s.screenShakeEnabled);
   const toggleScreenShake = useGameStore((s) => s.toggleScreenShake);
+  const phase = useGameStore((s) => s.phase);
+  const hasMarketAccess = useGameStore((s) => s.hasMarketAccess);
+  const hasPolyGriftAccess = useGameStore((s) => s.hasPolyGriftAccess);
+  const hasRadarAccess = useGameStore((s) => s.hasRadarAccess);
+  const hasCronyUnlocksAccess = useGameStore((s) => s.hasCronyUnlocksAccess);
+  const hasTariffAccess = useGameStore((s) => s.hasTariffAccess);
+  const hasPrestigeAccess = useGameStore((s) => s.hasPrestigeAccess);
+  const isWalkBackWindowActive = useGameStore((s) => s.isWalkBackWindowActive);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -30,22 +38,15 @@ export const HotkeyFooterHUD: React.FC = () => {
           <kbd className="px-1.5 py-0.5 rounded bg-stone-900 border border-stone-700 text-stone-200 font-bold">SPACE</kbd>
           <span>Stamp</span>
         </span>
-        <span className="flex items-center gap-1">
-          <kbd className="px-1.5 py-0.5 rounded bg-stone-900 border border-stone-700 text-stone-200 font-bold">1-3</kbd>
-          <span>Left Channels</span>
-        </span>
-        <span className="flex items-center gap-1">
-          <kbd className="px-1.5 py-0.5 rounded bg-stone-900 border border-stone-700 text-stone-200 font-bold">D/U/T/C</kbd>
-          <span>Right Channels</span>
-        </span>
-        <span className="flex items-center gap-1">
-          <kbd className="px-1.5 py-0.5 rounded bg-stone-900 border border-stone-700 text-stone-200 font-bold">Y</kbd>
-          <span>YAP</span>
-        </span>
-        <span className="flex items-center gap-1">
-          <kbd className="px-1.5 py-0.5 rounded bg-stone-900 border border-stone-700 text-stone-200 font-bold">W</kbd>
-          <span>Walk-Back</span>
-        </span>
+        {hasMarketAccess && <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 rounded bg-stone-900 border border-stone-700 text-stone-200 font-bold">1</kbd><span>Stocks</span></span>}
+        {hasRadarAccess && <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 rounded bg-stone-900 border border-stone-700 text-stone-200 font-bold">2</kbd><span>S.L.O.P.</span></span>}
+        {hasPolyGriftAccess && <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 rounded bg-stone-900 border border-stone-700 text-stone-200 font-bold">3</kbd><span>PolyGrift</span></span>}
+        {phase >= 2 && <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 rounded bg-stone-900 border border-stone-700 text-stone-200 font-bold">D</kbd><span>D.U.M.P.</span></span>}
+        {hasCronyUnlocksAccess && <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 rounded bg-stone-900 border border-stone-700 text-stone-200 font-bold">U</kbd><span>Upgrades</span></span>}
+        {hasTariffAccess && <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 rounded bg-stone-900 border border-stone-700 text-stone-200 font-bold">T</kbd><span>Tariffs</span></span>}
+        {hasPrestigeAccess && <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 rounded bg-stone-900 border border-stone-700 text-stone-200 font-bold">C</kbd><span>Caymans</span></span>}
+        {hasMarketAccess && <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 rounded bg-stone-900 border border-stone-700 text-stone-200 font-bold">Y</kbd><span>YAP</span></span>}
+        {isWalkBackWindowActive && <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 rounded bg-stone-900 border border-stone-700 text-stone-200 font-bold">W</kbd><span>Walk-Back</span></span>}
       </div>
 
       {/* Right Controls & Tagline */}

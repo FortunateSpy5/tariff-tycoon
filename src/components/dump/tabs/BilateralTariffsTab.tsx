@@ -9,6 +9,7 @@ export const BilateralTariffsTab: React.FC = () => {
   const tariffRates = useGameStore((s) => s.tariffRates);
   const setTariffRate = useGameStore((s) => s.setTariffRate);
   const tariffRevenuePerSecond = useGameStore((s) => s.tariffRevenuePerSecond || 0);
+  const hasPrestigeAccess = useGameStore((s) => s.hasPrestigeAccess);
 
   const handleAdjustTariff = (nationId: string, delta: number) => {
     const current = tariffRates[nationId] ?? 100;
@@ -34,6 +35,12 @@ export const BilateralTariffsTab: React.FC = () => {
             <span>Total Duties: +{formatCurrency(tariffRevenuePerSecond)}/s</span>
           </div>
         </div>
+
+        {!hasPrestigeAccess && (
+          <p className="mb-2 border-l-2 border-amber-500/70 bg-amber-950/20 px-2 py-1 text-[10px] text-stone-300">
+            Change a dial to qualify for the Cayman reorganization.
+          </p>
+        )}
 
         {/* Nations List */}
         <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-0.5">

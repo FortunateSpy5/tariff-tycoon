@@ -15,18 +15,19 @@ You play as **"The Dealmaker-in-Chief"**—a silhouette with a glowing aerodynam
 ## 🕹️ Core Gameplay Loops
 1. **Two-Phase Tactile Clicker Progression**:
    * **Phase 1: Gate 99B Liberty International**: Slam a heavy blue rubber stamp **[CONFISCATED - BY ORDER OF AGENT 412]** onto tourist declarations and foreign brie, flipping contraband on **GriftBay Underground** for seed cash.
-   * **Phase 2+ Oval Office Resolute Desk**: Slam the oversized 24k Golden Sharpie. When ink runs out, the **"Desperation Dry Nib"** scratch doubles your Tantrum gain, slingshotting you into **CAPS LOCK FRENZY** (10x tap multiplier, infinite ink, flashing neon-red screen).
+   * At **$10,000**, BagHolder Pro, PolyGrift, S.L.O.P. Radar, and YAP unlock while the player remains at Customs. At **$1,000,000**, the Oval Office opens and the Golden Sharpie replaces the customs stamp.
+   * When ink runs out, the **"Desperation Dry Nib"** scratch adds 3.5% Tantrum per click and pays 10% yield, building toward **CAPS LOCK FRENZY** (20 seconds, 10x click multiplier, ink restored on activation).
 2. **The 3:00 AM Lethal YAP & Causal Insider Shorting**:
-   * Pull out **BagHolder Pro** (the bootleg terminal under the desk).
+   * Use **BagHolder Pro** (the bootleg terminal under the desk), unlocked at $10,000. Your first YAP opens S.L.O.P.; settling the PUT opened before that YAP brings in PolyGrift and its pundit bets.
    * Buy 1,000x leveraged Put options on a target sector.
    * Slam **[LAUNCH LETHAL YAP]** on **`YAP`** with procedurally generated 3:00 AM rants (*"FRUIT ECOSYSTEM INC. IS COOLING CHIPS WITH COMMIE TAP WATER! 400% PATRIOT TAX AT SUNRISE! SAD!"*).
-   * Watch the stock plunge -40%, cash out +15,000% gains, and execute the **Straddle Squeeze**: buy Calls at the bottom and hit the 8-second **[WALK-BACK CLARIFICATION]** window to ride the recovery pump!
+   * Settle the PUT to bank its result. For the optional **Straddle Squeeze**, arm a CALL on the crashed ticker and hit **[WALK-BACK CLARIFICATION]** within 8 seconds. The CALL settles with the rally; if time runs out, its combo collateral is returned and settled PUT proceeds stay safe.
 3. **The D.U.M.P. Liquidation Tree (Disaster Capitalism)**:
    * Liquidate 10 federal agencies (N.O.C.L.O.U.D., F.A.T., A.I.R., S.M.O.G., S.N.A.I.L., S.L.O.P., S.H.A.K.E., THE BRRR VAULT, D.O.E.-N.U.K.E., C.O.U.G.H.) for massive cash while monetizing the resulting catastrophes (e.g. emergency umbrella tariffs during unannounced hurricanes, selling toxic sludge as "Patriot Protein Paste").
 4. **The 4-Phase Escalation (Universal Paperclips Scale)**:
-   * **Phase 1: The Customs Desk** ($0 to $1M) — Shaking down tourists at Gate 99B Liberty International for unpasteurized Strike Republic brie.
-   * **Phase 2: The Oval Syndicate** ($1M to $100B) — Front-running global markets with late-night social media decrees.
-   * **Phase 3: Fortress America** ($100B to $100Q) — Freezing maritime trade; naval container auctions; F.A.T. reclassifying drywall as "High-Calcium Freedom Flour."
+   * **Phase 1: The Customs Desk** ($0 to $1M) — Shaking down tourists at Gate 99B Liberty International for unpasteurized Strike Republic brie. Market access begins at $10,000.
+   * **Phase 2: The Oval Syndicate** ($1M to $100B) — D.U.M.P. opens first; liquidations reveal upgrades, upgrades reveal tariff controls, and changing a tariff reveals Caymans prestige.
+   * **Phase 3: Fortress America** ($100B to $10^18) — Freezing maritime trade; naval container auctions; F.A.T. reclassifying drywall as "High-Calcium Freedom Flour."
    * **Phase 4: Ontological Tariffs** ($10^{18} to $10^{42}$) — Expanding the Commerce Clause into cosmic physics: 45% tariff on the Sun's photons, 900% tariff on the Future, declaring the 2nd Law of Thermodynamics unconstitutional, until the universe files for Chapter 7 bankruptcy.
 5. **The Viral 9:16 "Senate Hearing" Clip Generator**:
    * One-click **[LEAK TO C-SNOOZE]** exports split-screen vertical video for TikTok/X: top half shows a red-faced senator holding your YAP on a foam poster board, bottom half shows *Metro Sprinter 99: Endless Slop* and ASMR soap cutting.

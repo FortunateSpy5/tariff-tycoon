@@ -6,6 +6,7 @@ import type { StateCreator } from 'zustand';
 import type { DumpState } from '../../types/dump';
 import type { GameStore } from '../useGameStore';
 import { INITIAL_AGENCIES } from '../../constants/agencies';
+import { CRONY_FAVOR_LIQUIDATION_KICKBACK_RATIO, CRONY_FAVOR_MAX } from '../../constants/balance';
 import { sound } from '../../audio/soundEngine';
 
 export interface DumpSlice extends DumpState {
@@ -21,6 +22,7 @@ export const createDumpSlice: StateCreator<GameStore, [], [], DumpSlice> = (set,
 
   liquidateAgency: (agencyId) => {
     const state = get();
+    if (state.phase < 2) return 0;
     const agencyIndex = state.agencies.findIndex((a) => a.id === agencyId);
     if (agencyIndex === -1) return 0;
 
@@ -46,12 +48,17 @@ export const createDumpSlice: StateCreator<GameStore, [], [], DumpSlice> = (set,
     const basePassive = state.passiveCashPerSecond > 0 ? state.passiveCashPerSecond : 10.0;
     const newPassive = basePassive * targetAgency.passivePerkMultiplier;
 
+    // Crony Favor faucet: disaster-capitalism kickback — liquidating an agency returns
+    // a fraction of its favor cost as fresh political capital.
+    const favorKickback = Math.floor(targetAgency.cronyFavorCost * CRONY_FAVOR_LIQUIDATION_KICKBACK_RATIO);
+
     set({
       treasuryCash: state.treasuryCash + targetAgency.liquidationCashYield,
-      cronyFavor: state.cronyFavor - targetAgency.cronyFavorCost,
+      cronyFavor: Math.min(CRONY_FAVOR_MAX, state.cronyFavor - targetAgency.cronyFavorCost + favorKickback),
       slopSuspicion: Math.min(100, state.slopSuspicion + 15),
       passiveCashPerSecond: newPassive,
       agencies: updatedAgencies,
+      hasCronyUnlocksAccess: true,
       totalCashHarvested: state.totalCashHarvested + targetAgency.liquidationCashYield,
       activeHazardsCount: state.activeHazardsCount + 1,
     });

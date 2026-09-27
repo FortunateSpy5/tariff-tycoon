@@ -20,7 +20,7 @@ Welcome, AI Agent. This repository powers **EXECUTIVE DEGEN: SHORT THE WORLD** (
 - **Adhere to the 4-Phase Evolutionary Arc:**
   - Phase 1: *The Customs Desk* ($0 to $1M).
   - Phase 2: *The Oval Syndicate* ($1M to $100B).
-  - Phase 3: *Fortress America* ($100B to $100Q).
+  - Phase 3: *Fortress America* ($100B to $10^{18}$).
   - Phase 4: *Ontological Protectionism* ($10^{18} \to 10^{42}$ — Taxing the Sun, the Future, and the 2nd Law of Thermodynamics).
 - **Enforce Agentic Code Architecture & Limits:**
   - Standard files target $\le 250$ lines; hard ceiling of $400$ lines per file.
@@ -64,6 +64,7 @@ For specialized guidelines and detailed mechanics, consult:
 - **Agentic Code Architecture:** [.agents/rules/agentic-code-architecture.md](.agents/rules/agentic-code-architecture.md)
 - **Satirical Voice & Tone:** [.agents/rules/satirical-voice-and-tone.md](.agents/rules/satirical-voice-and-tone.md)
 - **Feature Roadmap & SOP:** [.agents/workflows/FEATURE_ROADMAP.md](.agents/workflows/FEATURE_ROADMAP.md)
+- **Codebase Audit Report:** [.agents/AUDIT_REPORT.md](.agents/AUDIT_REPORT.md)
 
 ---
 

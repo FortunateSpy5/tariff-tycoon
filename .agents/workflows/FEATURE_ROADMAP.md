@@ -2,6 +2,8 @@
 
 This document outlines the development phases for **EXECUTIVE DEGEN: SHORT THE WORLD**.
 
+> ⚠️ **Status note:** Phase 1 & 2 are marked complete below, but a full code audit (see [`.agents/AUDIT_REPORT.md`](../AUDIT_REPORT.md)) found doc↔code drift, an economy dead-end (Crony Favor has no faucet), and several cosmetic-only systems. Treat the checkmarks as "shipped in some form," not "matches spec."
+
 ---
 
 ## Phase 1: The Core Clicker & Tactile Blotter (Sprint 1)

@@ -48,9 +48,11 @@ CAPS LOCK Frenzy      S.L.O.P. Suspicion      Inflation Heat          Ontologica
 ---
 
 ## The 4 Evolutionary Phases
+* BagHolder Pro stocks/options and YAP unlock at $10,000 during Phase 1. First YAP reveals S.L.O.P.; settling a YAP-targeted PUT reveals PolyGrift.
+* Phase 2 at $1,000,000 reveals D.U.M.P.; liquidation reveals Crony upgrades; the first upgrade reveals tariff controls; changing a tariff reveals Caymans prestige.
 1. **Phase 1: The Customs Desk ($0 to $1M):** Airport confiscation arbitrage at Gate 99B Liberty International.
 2. **Phase 2: The Oval Syndicate ($1M to $100B):** Front-running markets with 3:00 AM YAPs on BagHolder Pro.
-3. **Phase 3: Fortress America ($100B to $100Q):** Naval container auctions & domestic drywall substitution.
+3. **Phase 3: Fortress America ($100B to $10^18):** Naval container auctions & domestic drywall substitution.
 4. **Phase 4: Ontological Protectionism ($10^{18} \to 10^{42}$):** 45% solar photon duty on the Sun, taxing future knowledge, nullifying the 2nd Law of Thermodynamics.
 
 ---

@@ -8,12 +8,15 @@ import { useGameStore } from '../store/useGameStore';
 
 export function useGameLoop() {
   const lastTickRef = useRef<number>(0);
+  const hiddenAtRef = useRef<number | null>(null);
   const saveCounterRef = useRef<number>(0);
 
   useEffect(() => {
     lastTickRef.current = Date.now();
+    if (document.visibilityState === 'hidden') hiddenAtRef.current = lastTickRef.current;
 
     const handleTick = () => {
+      if (document.visibilityState !== 'visible') return;
       const now = Date.now();
       const deltaSeconds = Math.min(2.0, (now - lastTickRef.current) / 1000);
       lastTickRef.current = now;
@@ -31,17 +34,23 @@ export function useGameLoop() {
 
     // Catch up passive earnings and market status when tab returns from background
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        const now = Date.now();
-        const elapsedSeconds = (now - lastTickRef.current) / 1000;
-        if (elapsedSeconds > 2) {
-          const store = useGameStore.getState();
-          store.tickDesk(elapsedSeconds);
-          // Catch up market and auto-settle expired option contracts (bounded to 5s per catch-up burst)
-          store.tickMarket(Math.min(5.0, elapsedSeconds));
-        }
-        lastTickRef.current = now;
+      const now = Date.now();
+      if (document.visibilityState === 'hidden') {
+        hiddenAtRef.current = now;
+        return;
       }
+
+      const hiddenAt = hiddenAtRef.current;
+      if (hiddenAt === null) return;
+
+      const elapsedSeconds = (now - hiddenAt) / 1000;
+      const store = useGameStore.getState();
+      store.creditOfflineEarnings(elapsedSeconds);
+      store.extendActiveTradesForOffline(elapsedSeconds);
+      store.updateLastSaved();
+      lastTickRef.current = now;
+      saveCounterRef.current = 0;
+      hiddenAtRef.current = null;
     };
 
     const interval = setInterval(handleTick, 100);

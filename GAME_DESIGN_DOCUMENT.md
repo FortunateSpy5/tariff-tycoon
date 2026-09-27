@@ -57,25 +57,26 @@
 * **The Interaction:** A heavy, ink-stained blue rubber stamp: **[CONFISCATED - BY ORDER OF AGENT 412]** slamming down onto tourist baggage declarations and wheels of foreign brie on a scuffed laminate TSA counter.
 * **The Side-Hustle:** Confiscated goods are tossed into the desk mini-fridge and flipped on **GriftBay Underground** for seed capital.
 * **The Milestone ($1M):** Sirens wail, screen fades to black, and an armored motorcade whisks the player directly to the Oval Office!
+* **Early Market Unlock ($10K):** BagHolder Pro's stock console and YAP open while the player remains at Customs. The connected mechanics then unfold from player actions: the first YAP opens S.L.O.P. Radar; settling a PUT opened before that YAP opens PolyGrift.
 
 #### Phase 2+ Clicker: The Golden Squeak & Tantrum System ($1M+)
 * **Setting:** The Resolute Desk in the Oval Office.
 * **The Interaction:** Clicking slams an oversized 24k Golden Sharpie onto an official Executive Order parchment with physical screen shake, ink splatter particles, and procedural squeaks ($200\text{Hz} \to 850\text{Hz}$).
 * **Stamina & "The Desperation Dry Nib Squeak":**
-  * Base Ink: $I_{\max} = 100 \text{ Units}$. Consumption: $1.25 \text{ Units/click}$.
-  * When $I > 0$: Normal high cash yields, golden ink trails, $+1.5\%$ Tantrum/click.
-  * When $I = 0$: **The Nib Goes Dry!** Cash per click drops by 90%, but the horrific chalk-on-blackboard dry scratch **enrages the Dealmaker**, doubling Tantrum gain to **+3.5% per click**!
-  * **Result:** Running out of ink is never a roadblock; it's an aggressive slingshot directly into **CAPS LOCK FRENZY**!
+  * Base Ink: $I_{\max} = 100 \text{ Units}$. Consumption: $1.25 \text{ Units/click}$; passive recovery is $0.5$ units/second.
+  * When $I > 0$: normal yield and $+1.5\%$ Tantrum/click ($+2.25\%$ with Diet Soda Desk Drip).
+  * When $I = 0$: click yield drops by 90%, but dry scratches add $+3.5\%$ Tantrum/click. Dry clicks can fill the meter to 100%.
+  * Frenzy lasts 20 seconds, multiplies click yield by $10$, pauses ink consumption, and restores the tank to 100% on activation.
 * **CAPS LOCK FRENZY:**
-  * Triggered at $100\%$ Tantrum (lasts 15–25s).
-  * $10\times$ Click Multiplier, $C_{\text{click}} = 0$ (Infinite Ink; automatically recharges ink to 100%).
+  * Triggered at $100\%$ Tantrum (lasts 20s).
+  * $10\times$ Click Multiplier with no ink consumption for the duration.
   * Screen borders flash violently in neon red; news ticker scrolls unhinged headlines (*"WALL STREET PARALYZED BY EXECUTIVE COVFEFE"*, *"TARIFF ON INCOMING METEORS DECLARED"*).
 
 ---
 
 ### 3.2 The Causal Insider Shorting Loop & "The Straddle Squeeze"
 ```
-[Select Target Sector] ──> [Buy 10x-1000x Put Options ($)] 
+[Select Target Ticker] ──> [Buy PUT ($)]
                                    │
                                    ▼
                        [Launch 3:00 AM Lethal YAP]
@@ -84,25 +85,25 @@
                      [Sector Crashes -20% to -80%]
                                    │
                                    ▼
-                       [Cash Out 500% - 25,000% Gain]
-                                   │
-                                   ▼ (8-Second Window!)
-               [Buy 1,000x Calls & Hit WALK-BACK CLARIFICATION]
-                                   │
-                                   ▼
-              [Ride Market Relief Rally (+10,000% Call Gains)]
+                         [Settle PUT to Bank Result]
+                                │
+                                ▼ (8-Second Skill Window)
+                  [Buy Matching CALL, then WALK-BACK CLARIFICATION]
                                    │
                                    ▼
-               [Combo Bonus: "Puppet Master" Multiplier Active!]
+                    [35% Recovery Pump; CALL Settles]
 ```
 
+        The walk-back is an optional skill bonus. Only a CALL opened on the crashed ticker during the 8-second window qualifies. Activating WALK-BACK applies the recovery pump and settles that CALL. If the window expires, the combo CALL collateral is returned; an already settled PUT payout is unchanged.
+
 * **Options Valuation & Volatility Spike (Vega Expansion):**
-  When a YAP drops, the target stock plunges:
-  $$\Delta S(\%) = -\min\left(0.92, \; \kappa \times \left(\frac{\text{YAP\_Power}}{100}\right) \times (1 + 0.5 \times \mathbb{I}_{\text{frenzy}})\right)$$
-  Volatility spikes implied volatility ($VEX$):
-  $$VEX_{\text{spike}} = VEX_0 \times \left(1 + \Delta S(\%) \times 4.0\right)^{1.5}$$
-  Final Payout Formula:
-  $$\text{Payout} = \text{Collateral} \times \Lambda \times \left(\frac{\max(0, \; K - S_{\text{crash}})}{S_0}\right) \times \left(1 + \frac{VEX_{\text{spike}} - VEX_0}{100}\right)$$
+  A YAP applies a bounded, positive crash severity. Frenzy and shotgun mode increase the severity, but never beyond 92%:
+  $$d = \min\left(0.92, \left(0.25 + \frac{\text{YAP tariff percentage}}{1000}\right) M_{\text{frenzy}} M_{\text{shotgun}}\right)$$
+  $$S_{\text{crash}} = \max\left(1, S_0(1-d)\right)$$
+  $VEX$ rises by 25 points for a selected-target YAP or 35 in shotgun mode, capped at 80, then decays toward 15 at 0.5 points/second. The implemented arcade payout uses directional price change rather than a Black-Scholes option model:
+  $$M_{\text{VEX}} = 1 + \max\left(0, \frac{VEX - 15}{100}\right)$$
+  $$r = \begin{cases}(S_0-S_1)/S_0 & \text{PUT} \\ (S_1-S_0)/S_0 & \text{CALL}\end{cases},\quad P = C + C\max(-1, r\Lambda M_{\text{VEX}})M_{\text{fiber}}$$
+  Loss is capped at the collateral; profitable Dark Pool Fiber trades use $M_{\text{fiber}}=1.5$, otherwise $M_{\text{fiber}}=1$. Trades expire after 60 seconds unless settled early.
 
 * **The S.L.O.P. Regulatory Suspicion Escalation ($0\text{--}100\%$):**
   1. *0–49% (Whispers on Cable News)*: Normal operations.
@@ -147,7 +148,7 @@ $$\text{YAP} = [\text{TIME\_PREFIX}] + [\text{TARGET\_ENTITY}] + [\text{BIZARRE\
 | **7** | **S.H.A.K.E. (Tax Service)** | **+$650,000,000** | +50% Retained corporate profit growth | **Honesty Box Deficit**: Debt compounds +10%. | Blame the deficit on trading partners to justify 1,000% retaliatory tariffs! |
 | **8** | **D.O.E.-N.U.K.E. (Atomic)** | **+$2,500,000,000** | +200% Executive Mansion crypto rig yield | **Geiger Counter Clicker**: 2.5% click chance to trigger mutant auto-tariffs. | Free radioactive glow doubles night-shift intern typing speed! |
 | **9** | **C.O.U.G.H. (Contagion)** | **+$8,000,000,000** | Manual "Health Scare" button (-60% market) | **Cabinet Super-Gout**: Intern passive click rates drop 40% on Mondays. | Sell holistic "Freedom Tonics" directly from the Oval Office! |
-| **10**| **THE BRRR VAULT ($BRRR)** | **Scaled Dynamic Cash** | **"PRINT $BRRR"** physical desk button | **Inflation Heat Surge**: Inflation heat rises +5%. | Dynamic Scaling: Payout scales with Gross Domestic Revenue to prevent noob-traps! |
+| **10**| **THE BRRR VAULT ($BRRR)** | **+$100,000 per print** | **"PRINT $BRRR"** physical desk button; 60-second cooldown | **S.L.O.P. Heat Surge**: Suspicion rises +15 per print. | Deliberate liquidity injection with a visible raid risk. |
 
 ---
 
@@ -163,14 +164,23 @@ $$\text{YAP} = [\text{TIME\_PREFIX}] + [\text{TARGET\_ENTITY}] + [\text{BIZARRE\
   2. **"Bathroom Chandelier Classified Document Sale":** Gold box on desk lets you sell state secrets to offshore buyers for $\$500$ (zero cooldown if cash $< \$50$).
   3. **The Desperation Dry Nib:** Dry clicks always yield at least $\$0.10 \times \text{Tap Multiplier}$ and double Tantrum generation.
 
+### 3.6 First-Hour Progression Contract
+* At $10,000 current treasury cash, BagHolder Pro's stocks/options console and YAP unlock while the player remains in Phase 1.
+* The first successful YAP reveals S.L.O.P. Radar. Settling a PUT opened before a YAP reveals PolyGrift.
+* At $1,000,000, the player enters Phase 2 and unlocks D.U.M.P. liquidations. The first liquidation unlocks Crony upgrades; the first upgrade unlocks tariff controls; the first tariff change unlocks Caymans prestige.
+* Phase transitions are Phase 1 at $0–$1M, Phase 2 at $1M–$100B, Phase 3 at $100B–$10^{18}$, and Phase 4 at $10^{18}$ and beyond.
+* The first market tutorial teaches: select a ticker, open a PUT, target it with YAP, settle the PUT to protect its payout, then optionally arm a matching CALL and hit WALK-BACK before the 8-second window closes.
+
 ---
 
 ## 4. The 4-Phase Evolutionary Arc (Universal Paperclips Phase Shift)
 
 ```
 [Phase 1: Customs Desk] ──> [Phase 2: Oval Syndicate] ──> [Phase 3: Fortress America] ──> [Phase 4: Ontological Tariffs]
-    $0 -> $1,000,000            $1M -> $100 Billion         $100B -> $100 Quadrillion        $10^18 -> $10^42 (Singularity)
+  $0 -> $1,000,000            $1M -> $100 Billion         $100B -> $10^18               $10^18 -> $10^42 (Singularity)
 ```
+
+BagHolder Pro and YAP unlock at $10,000 as a Phase 1 milestone; this does not advance the formal phase.
 
 1. **Phase 1: The Customs Desk ("Confiscation Arbitrage")**: Shaking down tourists at Gate 99B Liberty International for unpasteurized French brie, fine cigars, and luxury cosmetics. Stashing contraband in the desk mini-fridge and flipping it on GriftBay Underground.
 2. **Phase 2: The Oval Syndicate ("The BagHolder Pro Era")**: Controlling global trade policy from the Resolute Desk. Front-running the S&Pain 500 with unhinged 3:00 AM YAPs, buying 1,000x leveraged options, and cashing in billions.

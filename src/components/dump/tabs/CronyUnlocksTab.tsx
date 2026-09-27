@@ -12,6 +12,7 @@ import { formatCurrency } from '../../../engine/math/bigNumber';
 export const CronyUnlocksTab: React.FC = () => {
   const treasuryCash = useGameStore((s) => s.treasuryCash);
   const activeUpgrades = useGameStore((s) => s.activeUpgrades);
+  const hasTariffAccess = useGameStore((s) => s.hasTariffAccess);
   const buyUpgrade = useGameStore((s) => s.buyUpgrade);
   const [feedback, setFeedback] = useState<string | null>(null);
 
@@ -39,6 +40,12 @@ export const CronyUnlocksTab: React.FC = () => {
           </div>
           <span>PERMANENT MULTIPLIERS</span>
         </div>
+
+        {!hasTariffAccess && (
+          <p className="mb-2 border-l-2 border-amber-500/70 bg-amber-950/20 px-2 py-1 text-[10px] text-stone-300">
+            Your first purchase gets you a seat at the tariff dials.
+          </p>
+        )}
 
         {/* Upgrades List */}
         <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-0.5">

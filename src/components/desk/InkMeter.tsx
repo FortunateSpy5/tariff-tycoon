@@ -8,8 +8,10 @@ import { Droplet, RefreshCw, AlertTriangle } from 'lucide-react';
 import { useGameStore } from '../../store/useGameStore';
 import { calculateInkRefillCost } from '../../engine/math/formulas';
 import { formatCurrency } from '../../engine/math/bigNumber';
+import { INK_PER_CLICK } from '../../constants/balance';
 
 export const InkMeter: React.FC = () => {
+  const phase = useGameStore((s) => s.phase);
   const inkLevel = useGameStore((s) => s.inkLevel);
   const maxInk = useGameStore((s) => s.maxInk);
   const inkRefillCount = useGameStore((s) => s.inkRefillCount);
@@ -21,13 +23,14 @@ export const InkMeter: React.FC = () => {
   const canAfford = treasuryCash >= refillCost;
   const isDry = inkLevel <= 0 && !isCapsFrenzy;
   const inkPercent = Math.round((inkLevel / maxInk) * 100);
+  const inkLabel = phase === 1 ? 'Customs Stamp Ink' : 'Golden Sherpie Ink';
 
   return (
     <div className="w-full bg-stone-900/90 border border-stone-800 rounded-lg p-3 shadow-sm select-none">
       <div className="flex items-center justify-between mb-1.5">
         <div className="flex items-center gap-1.5 text-xs font-semibold text-stone-300">
           <Droplet className={`w-3.5 h-3.5 ${isDry ? 'text-red-500 animate-bounce' : 'text-amber-400'}`} />
-          <span>Golden Sherpie Ink</span>
+          <span>{inkLabel}</span>
         </div>
         <span className={`text-xs font-mono font-bold ${isDry ? 'text-red-400' : 'text-stone-300'}`}>
           {isCapsFrenzy ? '∞ INFINITE' : `${inkPercent}%`}
@@ -53,11 +56,13 @@ export const InkMeter: React.FC = () => {
         {isDry ? (
           <div className="flex items-center gap-1 text-[10px] text-red-400 font-semibold animate-pulse">
             <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
-            <span>DRY NIB: -95% Yield (Refill required to sign decrees)</span>
+            <span>DRY NIB: -90% yield; dry clicks still build Tantrum</span>
           </div>
         ) : (
           <span className="text-[10px] text-stone-500">
-            {isCapsFrenzy ? 'No ink consumed during Frenzy' : 'Consumes 2 ink per signature'}
+            {isCapsFrenzy
+              ? 'Ink restored; none consumed during Frenzy'
+              : `Consumes ${INK_PER_CLICK} ink per ${phase === 1 ? 'stamp' : 'signature'}`}
           </span>
         )}
 

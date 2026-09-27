@@ -7,24 +7,27 @@ import React, { useState } from 'react';
 import { Palmtree, ShieldCheck, RefreshCw } from 'lucide-react';
 import { useGameStore } from '../../../store/useGameStore';
 import { calculatePrestigeSIS } from '../../../engine/math/formulas';
+import { formatCurrency } from '../../../engine/math/bigNumber';
+import { PRESTIGE_CASH_DIVISOR } from '../../../constants/balance';
 
 export const CaymansPrestigeTab: React.FC = () => {
-  const treasuryCash = useGameStore((s) => s.treasuryCash);
   const activeTrades = useGameStore((s) => s.activeTrades);
+  const lifetimeCashEarned = useGameStore((s) => s.lifetimeCashEarned);
+  const lifetimeOptionsProfit = useGameStore((s) => s.lifetimeOptionsProfit);
   const sovereignImmunitySlips = useGameStore((s) => s.sovereignImmunitySlips);
   const executeFlightToCaymans = useGameStore((s) => s.executeFlightToCaymans);
   const [feedback, setFeedback] = useState<string | null>(null);
 
   const lockedCollateral = (activeTrades || []).reduce((sum, t) => sum + (t.collateralLocked || 0), 0);
-  const totalNetWorth = treasuryCash + lockedCollateral;
+  const effectiveLifetimeCash = (lifetimeCashEarned || 0) + lockedCollateral;
 
-  // Minimum $1M to prestige
-  const canPrestige = totalNetWorth >= 1000000;
-  const potentialSIS = calculatePrestigeSIS(totalNetWorth);
+  // Minimum $10^10 lifetime treasury cash to prestige (GDD §5)
+  const canPrestige = effectiveLifetimeCash >= PRESTIGE_CASH_DIVISOR;
+  const potentialSIS = calculatePrestigeSIS(effectiveLifetimeCash, lifetimeOptionsProfit || 0);
 
   const handlePrestige = () => {
     if (!canPrestige) {
-      setFeedback('Need at least $1,000,000 to file Chapter 11 Reorganization!');
+      setFeedback(`Need at least ${formatCurrency(PRESTIGE_CASH_DIVISOR)} lifetime cash to file Chapter 11 Reorganization!`);
       setTimeout(() => setFeedback(null), 2500);
       return;
     }
@@ -86,7 +89,7 @@ export const CaymansPrestigeTab: React.FC = () => {
             }`}
           >
             <RefreshCw className="w-3.5 h-3.5" />
-            <span>Flee to the Caymans (Need $1.0M)</span>
+            <span>Flee to the Caymans (Need {formatCurrency(PRESTIGE_CASH_DIVISOR)} Lifetime)</span>
           </button>
         </div>
       </div>

@@ -5,17 +5,31 @@ import type { GameStore } from '../useGameStore';
 import { INITIAL_STOCKS } from '../../constants/stocks';
 import { INITIAL_POLYGRIFT_BETS } from '../../constants/unlocks';
 import { PARODY_NATIONS } from '../../constants/nations';
+import {
+  MAX_CRASH_SEVERITY,
+  VEX_BASELINE,
+  VEX_CAP,
+  VEX_DECAY_PER_SECOND,
+  VEX_GAIN_SELECTED,
+  VEX_GAIN_SHOTGUN,
+  CRONY_FAVOR_PER_YAP,
+  CRONY_FAVOR_MAX,
+} from '../../constants/balance';
 import { calculateOptionReturn } from '../../engine/math/formulas';
 import { sound } from '../../audio/soundEngine';
 
 export interface TradingSlice extends MarketState {
+  lastYapPost: YapPost | undefined;
+  /** Cumulative realized profit from settled option trades this run (drives the prestige SIS formula). */
+  lifetimeOptionsProfit: number;
   openOptionTrade: (symbol: StockSymbol, type: OptionType, leverage: number, collateral: number) => boolean;
   settleOptionTrade: (tradeId: string) => number;
   triggerYapMarketShock: (yap: YapPost) => { success: boolean; reason?: string; targetSymbol?: StockSymbol; combo?: boolean };
-  executeWalkBack: () => void;
+  executeWalkBack: () => boolean;
   bribeSlopAuditors: (bribeAmount: number) => boolean;
   wagerPolyGrift: (betId: string, choice: 'YES' | 'NO', amount: number) => { success: boolean; won?: boolean; payout?: number };
   tickMarket: (deltaSeconds: number) => void;
+  extendActiveTradesForOffline: (elapsedSeconds: number) => void;
   setYapTargetMode: (mode: 'selected' | 'shotgun') => void;
   setSelectedStock: (symbol: StockSymbol) => void;
   dismissRaidAlert: () => void;
@@ -24,12 +38,16 @@ export interface TradingSlice extends MarketState {
 export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> = (set, get) => ({
   stocks: { ...INITIAL_STOCKS },
   activeTrades: [],
+  hasSettledYapTrade: false,
   slopSuspicion: 5.0,
   vexVolatility: 15.0,
   cronyFavor: 30,
+  lifetimeOptionsProfit: 0,
   isWalkBackWindowActive: false,
   walkBackSecondsRemaining: 0,
+  lastWalkBackNotice: undefined,
   lastTargetStockSymbol: undefined,
+  lastYapPost: undefined,
   yapTargetMode: 'selected',
   selectedStock: 'DOOR',
   lastYapTimestamp: 0,
@@ -44,15 +62,25 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
   openOptionTrade: (symbol, type, leverage, collateral) => {
     const state = get();
     const stock = state.stocks[symbol];
-    if (!stock || collateral <= 0 || state.treasuryCash < collateral) return false;
+    if (!state.hasMarketAccess || !stock || collateral <= 0 || state.treasuryCash < collateral) return false;
+
+    const isWalkBackCombo =
+      state.isWalkBackWindowActive && type === 'CALL' && symbol === state.lastTargetStockSymbol;
+
+    // Strike is the price the contract bets on: PUTs profit below entry, CALLs above.
+    // Target is the 5% move the degen is praying for.
+    const strikePrice =
+      type === 'PUT' ? stock.currentPrice * 0.95 : stock.currentPrice * 1.05;
+    const targetPrice =
+      type === 'PUT' ? stock.currentPrice * 0.9 : stock.currentPrice * 1.1;
 
     const newTrade: ActiveOptionTrade = {
       id: `trade-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
       symbol,
       type,
       entryPrice: stock.currentPrice,
-      targetPrice: stock.currentPrice,
-      strikePrice: stock.currentPrice,
+      targetPrice,
+      strikePrice,
       leverage,
       contractsCount: Math.floor(collateral / 10),
       collateralLocked: collateral,
@@ -60,6 +88,7 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
       expiresAtTimestamp: Date.now() + 60000, // 60-second contracts
       isSettled: false,
       profitOrLoss: 0,
+      isWalkBackCombo,
     };
 
     sound.playChaChing();
@@ -93,9 +122,16 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
     const totalPayout = Math.max(0, trade.collateralLocked + netProfit);
 
     // Credit proceeds back to treasuryCash
+    const settledYapPut =
+      trade.type === 'PUT' &&
+      trade.symbol === state.lastTargetStockSymbol &&
+      state.lastYapTimestamp > trade.openedAtTimestamp;
     set({
       treasuryCash: state.treasuryCash + totalPayout,
+      lifetimeOptionsProfit: state.lifetimeOptionsProfit + Math.max(0, netProfit),
       activeTrades: state.activeTrades.filter((t) => t.id !== tradeId),
+      hasSettledYapTrade: state.hasSettledYapTrade || settledYapPut,
+      hasPolyGriftAccess: state.hasPolyGriftAccess || settledYapPut,
     });
 
     if (netProfit > 0) {
@@ -107,6 +143,10 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
   triggerYapMarketShock: (yap) => {
     const state = get();
     const now = Date.now();
+
+    if (!state.hasMarketAccess) {
+      return { success: false, reason: 'BagHolder Pro access is required to launch a market YAP.' };
+    }
 
     // 1. INVARIANT: Cooldown enforcement (10s base cooldown)
     const elapsed = (now - state.lastYapTimestamp) / 1000;
@@ -132,11 +172,16 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
     const targetStock = state.stocks[target];
     if (!targetStock) return { success: false, reason: 'Target stock not found' };
 
-    // Causal flash crash tied to tariff percentage, Frenzy mode, and Shotgun bonus
+    // Causal flash crash tied to tariff percentage, Frenzy mode, and Shotgun bonus.
+    // GDD §3.2: d = min(0.92, (0.25 + tariff/1000) * M_frenzy * M_shotgun); S_crash = max(1, S0 * (1 - d))
     const frenzyBonus = state.isCapsFrenzy ? 1.4 : 1.0;
     const shotgunBonus = isShotgun ? 1.25 : 1.0; // +25% severity for unhinged shotgun
     const tariffMagnitude = (yap.tariffPercentage || 100) / 1000;
-    const crashMultiplier = Math.max(0.08, 1.0 - (0.25 + tariffMagnitude) * frenzyBonus * shotgunBonus);
+    const crashSeverity = Math.min(
+      MAX_CRASH_SEVERITY,
+      (0.25 + tariffMagnitude) * frenzyBonus * shotgunBonus
+    );
+    const crashMultiplier = 1.0 - crashSeverity;
 
     const newPrice = Math.max(1.0, +(targetStock.currentPrice * crashMultiplier).toFixed(2));
     const newHistory = [...targetStock.priceHistory.slice(1), newPrice];
@@ -160,11 +205,19 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
       },
       inkLevel: Math.max(0, state.inkLevel - 20),
       lastTargetStockSymbol: target,
+      lastYapPost: yap,
       isWalkBackWindowActive: true,
       walkBackSecondsRemaining: 8, // 8-second Straddle Squeeze window
+      lastWalkBackNotice: undefined,
       lastYapTimestamp: now,
+      hasRadarAccess: true,
       slopSuspicion: Math.min(100, state.slopSuspicion + (isShotgun ? 16 : 12)),
-      vexVolatility: Math.min(80, state.vexVolatility + (isShotgun ? 35 : 25)),
+      // Crony Favor faucet: landing a YAP earns political capital.
+      cronyFavor: Math.min(CRONY_FAVOR_MAX, state.cronyFavor + CRONY_FAVOR_PER_YAP),
+      vexVolatility: Math.min(
+        VEX_CAP,
+        state.vexVolatility + (isShotgun ? VEX_GAIN_SHOTGUN : VEX_GAIN_SELECTED)
+      ),
     });
 
     return { success: true, targetSymbol: target, combo: hasActivePut };
@@ -172,15 +225,33 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
 
   executeWalkBack: () => {
     const state = get();
-    if (!state.isWalkBackWindowActive) return;
+    if (!state.isWalkBackWindowActive) return false;
 
     const target = state.lastTargetStockSymbol;
-    if (!target || !state.stocks[target]) return;
+    if (!target || !state.stocks[target]) return false;
+
+    const comboCalls = state.activeTrades.filter(
+      (trade) => trade.isWalkBackCombo && trade.symbol === target && trade.type === 'CALL'
+    );
+    if (comboCalls.length === 0) return false;
 
     const targetStock = state.stocks[target];
     // Pump ONLY the previously crashed target stock back up (+35%)
     const pumpPrice = +(targetStock.currentPrice * 1.35).toFixed(2);
     const newHistory = [...targetStock.priceHistory.slice(1), pumpPrice];
+    const hasDarkPoolFiber = state.activeUpgrades.includes('darkpool_fiber');
+    const comboPayout = comboCalls.reduce((total, trade) => {
+      const netProfit = calculateOptionReturn(
+        trade.type,
+        trade.entryPrice,
+        pumpPrice,
+        trade.leverage,
+        trade.collateralLocked,
+        state.vexVolatility,
+        hasDarkPoolFiber
+      );
+      return total + Math.max(0, trade.collateralLocked + netProfit);
+    }, 0);
 
     sound.playChaChing();
 
@@ -193,15 +264,18 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
           priceHistory: newHistory,
         },
       },
+      treasuryCash: state.treasuryCash + comboPayout,
+      activeTrades: state.activeTrades.filter((trade) => !comboCalls.some((combo) => combo.id === trade.id)),
       isWalkBackWindowActive: false,
       walkBackSecondsRemaining: 0,
-      cronyFavor: state.cronyFavor + 25,
+      lastWalkBackNotice: `STRADDLE SQUEEZE: $${target} CALL SETTLED FOR $${Math.round(comboPayout).toLocaleString()}.`,
     });
+    return true;
   },
 
   bribeSlopAuditors: (bribeAmount) => {
     const state = get();
-    if (state.cronyFavor < bribeAmount) return false;
+    if (!state.hasRadarAccess || state.cronyFavor < bribeAmount) return false;
 
     set({
       cronyFavor: state.cronyFavor - bribeAmount,
@@ -212,7 +286,9 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
 
   wagerPolyGrift: (betId, choice, amount) => {
     const state = get();
-    if (state.treasuryCash < amount || amount <= 0) return { success: false };
+    if (!state.hasPolyGriftAccess || state.treasuryCash < amount || amount <= 0) {
+      return { success: false };
+    }
 
     const bet = INITIAL_POLYGRIFT_BETS.find((b) => b.id === betId);
     if (!bet) return { success: false };
@@ -318,14 +394,23 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
         walkBackRem = 0;
       }
     }
+    const walkBackWindowExpired = state.isWalkBackWindowActive && !walkBackActive;
 
     // 4. Auto-settle expired option trades
     let netSettledCash = 0;
+    let netSettledProfit = 0;
+    let returnedComboCollateral = 0;
     const remainingTrades: ActiveOptionTrade[] = [];
     const hasDarkPoolFiber = state.activeUpgrades.includes('darkpool_fiber');
 
     state.activeTrades.forEach((trade) => {
-      if (now >= trade.expiresAtTimestamp) {
+      if (
+        walkBackWindowExpired &&
+        trade.isWalkBackCombo &&
+        trade.symbol === state.lastTargetStockSymbol
+      ) {
+        returnedComboCollateral += trade.collateralLocked;
+      } else if (now >= trade.expiresAtTimestamp) {
         const stock = updatedStocks[trade.symbol] || state.stocks[trade.symbol];
         const netProfit = calculateOptionReturn(
           trade.type,
@@ -337,6 +422,7 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
           hasDarkPoolFiber
         );
         netSettledCash += Math.max(0, trade.collateralLocked + netProfit);
+        netSettledProfit += Math.max(0, netProfit);
       } else {
         remainingTrades.push(trade);
       }
@@ -345,7 +431,7 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
     // 5. Special Counsel Raid (100% Heat enforcement)
     let currentSuspicion = Math.max(0, state.slopSuspicion - 0.2 * deltaSeconds);
     let currentFavor = state.cronyFavor;
-    let currentTreasury = state.treasuryCash + netSettledCash;
+    let currentTreasury = state.treasuryCash + netSettledCash + returnedComboCollateral;
     let raidMessage = state.lastRaidMessage;
     let raidTimestamp = state.lastRaidTimestamp;
 
@@ -367,19 +453,35 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
       }
     }
 
-    const newVex = Math.max(15.0, state.vexVolatility - 0.5 * deltaSeconds);
+    const newVex = Math.max(VEX_BASELINE, state.vexVolatility - VEX_DECAY_PER_SECOND * deltaSeconds);
 
     set({
       treasuryCash: currentTreasury,
+      lifetimeOptionsProfit: state.lifetimeOptionsProfit + netSettledProfit,
       cronyFavor: currentFavor,
       stocks: updatedStocks,
       activeTrades: remainingTrades,
       isWalkBackWindowActive: walkBackActive,
       walkBackSecondsRemaining: Math.max(0, walkBackRem),
+      lastWalkBackNotice: walkBackWindowExpired
+        ? returnedComboCollateral > 0
+          ? 'WINDOW MISSED. Combo CALL collateral returned; realized PUT gains are untouched.'
+          : 'WINDOW CLOSED. Buy a matching CALL during the next crash to attempt the squeeze.'
+        : state.lastWalkBackNotice,
       slopSuspicion: currentSuspicion,
       vexVolatility: newVex,
       lastRaidMessage: raidMessage,
       lastRaidTimestamp: raidTimestamp,
     });
+  },
+
+  extendActiveTradesForOffline: (elapsedSeconds) => {
+    if (elapsedSeconds <= 0) return;
+    set((state) => ({
+      activeTrades: state.activeTrades.map((trade) => ({
+        ...trade,
+        expiresAtTimestamp: trade.expiresAtTimestamp + elapsedSeconds * 1000,
+      })),
+    }));
   },
 });

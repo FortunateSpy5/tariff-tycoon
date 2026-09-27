@@ -34,11 +34,23 @@ export const useGameStore = create<GameStore>()(
       name: 'executive_degen_save_v1',
       partialize: (state) => ({
         phase: state.phase,
+        hasMarketAccess: state.hasMarketAccess,
+        hasRadarAccess: state.hasRadarAccess,
+        hasPolyGriftAccess: state.hasPolyGriftAccess,
+        hasCronyUnlocksAccess: state.hasCronyUnlocksAccess,
+        hasTariffAccess: state.hasTariffAccess,
+        hasPrestigeAccess: state.hasPrestigeAccess,
         treasuryCash: state.treasuryCash,
         passiveCashPerSecond: state.passiveCashPerSecond,
         tariffRevenuePerSecond: state.tariffRevenuePerSecond,
+        lifetimeCashEarned: state.lifetimeCashEarned,
+        lifetimeOptionsProfit: state.lifetimeOptionsProfit,
         totalClicks: state.totalClicks,
         inkLevel: state.inkLevel,
+        tantrumMeter: state.tantrumMeter,
+        isCapsFrenzy: state.isCapsFrenzy,
+        capsFrenzySecondsRemaining: state.capsFrenzySecondsRemaining,
+        totalFrenziesTriggered: state.totalFrenziesTriggered,
         dryClicksCount: state.dryClicksCount,
         inkRefillCount: state.inkRefillCount,
         sovereignImmunitySlips: state.sovereignImmunitySlips,
@@ -51,6 +63,12 @@ export const useGameStore = create<GameStore>()(
         agencies: state.agencies,
         stocks: state.stocks,
         activeTrades: state.activeTrades,
+        hasSettledYapTrade: state.hasSettledYapTrade,
+        isWalkBackWindowActive: state.isWalkBackWindowActive,
+        walkBackSecondsRemaining: state.walkBackSecondsRemaining,
+        lastWalkBackNotice: state.lastWalkBackNotice,
+        lastTargetStockSymbol: state.lastTargetStockSymbol,
+        lastYapPost: state.lastYapPost,
         slopSuspicion: state.slopSuspicion,
         vexVolatility: state.vexVolatility,
         activeUpgrades: state.activeUpgrades,
@@ -61,15 +79,59 @@ export const useGameStore = create<GameStore>()(
         lastRaidTimestamp: state.lastRaidTimestamp,
         lastShredTimestamp: state.lastShredTimestamp,
         lastSecretSaleTimestamp: state.lastSecretSaleTimestamp,
+        lastPrinterTimestamp: state.lastPrinterTimestamp,
         activeLeftTab: state.activeLeftTab,
         activeRightTab: state.activeRightTab,
         isMuted: state.isMuted,
         screenShakeEnabled: state.screenShakeEnabled,
         streamerMode: state.streamerMode,
-        lastSavedTimestamp: Date.now(),
+        // Persist the ACTUAL last-saved timestamp (refreshed every 5s by updateLastSaved),
+        // NOT Date.now(). Overwriting it here on every serialization would reset the offline
+        // window to ~0 on each tick, silently disabling the Palm-a-Grifto offline protocol.
+        lastSavedTimestamp: state.lastSavedTimestamp,
       }),
+      version: 1,
+      migrate: (persistedState, version) => {
+        const state = persistedState as Partial<GameStore>;
+        if (version >= 1) return state as GameStore;
+
+        const phase = state.phase ?? 1;
+        const hadMarketAccess = Boolean(
+          state.hasMarketAccess || phase >= 2 || (state.treasuryCash ?? 0) >= 10000
+        );
+        const wasInOval = phase >= 2;
+        return {
+          ...state,
+          activeTrades: state.activeTrades?.map((trade) => ({
+            ...trade,
+            isWalkBackCombo: Boolean(
+              state.isWalkBackWindowActive &&
+              trade.type === 'CALL' &&
+              trade.symbol === state.lastTargetStockSymbol &&
+              trade.openedAtTimestamp >= (state.lastYapTimestamp ?? 0)
+            ),
+          })),
+          hasMarketAccess: hadMarketAccess,
+          hasRadarAccess: Boolean(state.hasRadarAccess || hadMarketAccess),
+          hasPolyGriftAccess: Boolean(state.hasPolyGriftAccess || hadMarketAccess),
+          hasSettledYapTrade: Boolean(state.hasSettledYapTrade || hadMarketAccess),
+          hasCronyUnlocksAccess: Boolean(state.hasCronyUnlocksAccess || wasInOval),
+          hasTariffAccess: Boolean(state.hasTariffAccess || wasInOval),
+          hasPrestigeAccess: Boolean(state.hasPrestigeAccess || wasInOval),
+          lastWalkBackNotice: state.lastWalkBackNotice,
+        } as GameStore;
+      },
       onRehydrateStorage: () => (state) => {
         if (!state) return;
+        state.hasMarketAccess = Boolean(state.hasMarketAccess || state.phase >= 2 || state.treasuryCash >= 10000);
+        if (!state.hasMarketAccess) state.activeLeftTab = 'stocks';
+        if (state.activeLeftTab === 'radar' && !state.hasRadarAccess) state.activeLeftTab = 'stocks';
+        if (state.activeLeftTab === 'polygrift' && !state.hasPolyGriftAccess) state.activeLeftTab = 'stocks';
+        if (state.phase < 2 || (state.activeRightTab === 'unlocks' && !state.hasCronyUnlocksAccess)) {
+          state.activeRightTab = 'dump';
+        }
+        if (state.activeRightTab === 'tariffs' && !state.hasTariffAccess) state.activeRightTab = 'dump';
+        if (state.activeRightTab === 'caymans' && !state.hasPrestigeAccess) state.activeRightTab = 'dump';
         const now = Date.now();
         const offlineSeconds = Math.max(0, (now - state.lastSavedTimestamp) / 1000);
 
@@ -83,15 +145,12 @@ export const useGameStore = create<GameStore>()(
             );
             if (cashEarned > 0) {
               state.treasuryCash += cashEarned;
+              state.hasMarketAccess = state.hasMarketAccess || state.treasuryCash >= 10000;
               console.log(
                 `[Palm-a-Grifto Protocol] Welcome back! While golfing, collected $${cashEarned.toFixed(2)} over ${secondsCredited}s.`
               );
             }
           }
-
-          // Offline Crony Favor accrual (+1 per minute offline)
-          const offlineCronyBonus = Math.floor(Math.min(offlineSeconds, 48 * 3600) / 60);
-          state.cronyFavor += offlineCronyBonus;
 
           // Extend expiration timestamp of all active trades by offlineSeconds
           if (state.activeTrades && state.activeTrades.length > 0) {
@@ -101,6 +160,9 @@ export const useGameStore = create<GameStore>()(
             }));
           }
         }
+
+        // Stamp the rehydrated save so a rapid reload cannot re-credit the same offline window.
+        state.lastSavedTimestamp = now;
       },
     }
   )

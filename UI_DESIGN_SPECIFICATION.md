@@ -45,8 +45,8 @@ To achieve this:
 │  │                      │                            │                   │  │
 │  │ Tabs:                │ Top Props:                 │ Tabs:             │  │
 │  │ • [1] STOCKS & 0DTE  │ • ☎️ Red Rotary Phone (Bail)│ • [D] D.U.M.P.    │  │
-│  │ • [2] POLY-GRIFT     │ • 📦 Gold Box (Secret Cash)│ • [U] CRONY       │  │
-│  │ • [3] S.L.O.P. Radar │ • 🗂️ Shredder (Heat Purge) │   UNLOCKS (Tree)  │  │
+│  │ • [2] S.L.O.P. Radar │ • 📦 Gold Box (Secret Cash)│ • [U] CRONY       │  │
+│  │ • [3] POLY-GRIFT     │ • 🗂️ Shredder (Heat Purge) │   UNLOCKS (Tree)  │  │
 │  │                      │                            │ • [T] TARIFFS     │  │
 │  │ Mini Candlestick     │ Parchment Directive        │ • [C] CAYMANS     │  │
 │  │ 1000x Put/Call Slip  │ Kinetic Rubber Stamp [SPC] │   PRESTIGE        │  │
@@ -71,25 +71,27 @@ To achieve this:
   3. **🗂️ The Subpoena Paper Shredder (Heat Purge QTE):** Sits on the upper-right desk. As insider trading pushes S.L.O.P. heat toward $90\%$, the shredder whirs to life. Clicking it (or pressing `[S]`) shreds incriminating trade slips, purging $-25\%$ regulatory suspicion.
 * **The Parchment Directive & Core Stamp Button:**
   - Dynamic procedural directive text (`"EXECUTIVE ORDER #8412 // 3:00 AM DIRECTIVE"`).
-  - Central kinetic clicker: Phase 1 starts with the Blue TSA Rubber Stamp (`CONFISCATE`), upgrading at $\$10\text{k}$ to the 24k Golden Sherpie on mahogany.
+  - Central kinetic clicker: Phase 1 starts with the Blue Rubber Stamp (`CONFISCATE`); the 24k Golden Sherpie appears at the $1\text{M}$ Oval Office transition.
   - Floating cash yield particles, stamina ink meter, and tantrum fire meter.
 * **The Dual Command Triggers:**
-  - **`[LAUNCH 3:00 AM LETHAL YAP] (Y)`**: Generates unhinged geopolitical tweet and crashes targeted stock.
-  - **`[WALK-BACK CLARIFICATION] (W)`**: Flashing 8-second button triggering a $+35\%$ market relief rally pump ("The Straddle Squeeze").
+  - **`[LAUNCH 3:00 AM LETHAL YAP] (Y)`**: Unlocks with BagHolder Pro at $10\text{k}$, generates an unhinged decree, and crashes the selected stock.
+  - **`[WALK-BACK CLARIFICATION] (W)`**: During the 8-second window, activates only after a matching CALL is armed. It pumps the market $+35\%$ and settles that CALL; missing the window returns combo collateral and never reverses settled PUT proceeds.
 
 ### 4.2 Left Wing: The Oval Telemetry Console (26% Width)
 * **Tab `[1] STOCKS & 0DTE OPTIONS`**:
   - Live S&Pain 500 mini candlestick/sparkline chart for targeted tickers (`$PAIN`, `$DOOR`, `$FRUT`, `$GIGA`).
   - 0DTE options ladder ($10\times$ to $1,000\times$ leverage slider).
   - Quick-short strike buttons with live P&L return indicator.
-* **Tab `[2] POLY-GRIFT (Prediction Markets)`**:
-  - Parody prediction betting terminal.
-  - Wager cash on unhinged political prop bets (e.g. *"Will Canadian maple syrup be taxed by sunrise? YES: 92% ($1.08) | NO: 8% ($12.50)"*).
-* **Tab `[3] S.L.O.P. REGULATORY RADAR`**:
+* **Tab `[2] S.L.O.P. REGULATORY RADAR`** (revealed after the first YAP):
   - Tracks Grand Jury investigation heat ($0\text{--}100\%$).
   - Displays raid countdowns and legal defense bribe funds.
+* **Tab `[3] POLY-GRIFT (Prediction Markets)`** (revealed after settling a YAP-targeted PUT):
+  - Parody prediction betting terminal.
+  - Wager cash on unhinged political prop bets (e.g. *"Will Canadian maple syrup be taxed by sunrise? YES: 92% ($1.08) | NO: 8% ($12.50)"*).
+* **First trade cue:** The stocks panel guides the player through selecting a ticker, opening a PUT, targeting it with YAP, and settling or attempting the timed CALL/walk-back.
 
 ### 4.3 Right Wing: The Executive Expansion Deck (32% Width)
+* BagHolder Pro opens at $10\text{k}$ during Phase 1. At Phase 2 ($1\text{M}$), D.U.M.P. opens. The first liquidation reveals upgrades; the first upgrade reveals tariffs; the first tariff change reveals Caymans prestige.
 * **Tab `[D] D.U.M.P. (Chainsaw Liquidations)`**:
   - 10 federal agencies (Weather Bureau, Food & Toxins, Aviation Safety, Postal Service, etc.) to scrap for instant cash payouts and permanent disaster perks.
 * **Tab `[U] CRONY UNLOCKS (Oligarch Tech Tree)`**:
@@ -111,11 +113,11 @@ To achieve this:
 | Key Binding | Primary Action | Target Panel |
 | :--- | :--- | :--- |
 | **`[SPACEBAR]`** or **`[ENTER]`** | Slam Stamp / Sign Directive | Center Desk |
-| **`[1]`, `[2]`, `[3]`** | Switch Left Telemetry Channels (Stocks, PolyGrift, S.L.O.P.) | Left Wing |
-| **`[D]`** | Switch Right Expansion Channel to **D.U.M.P.** | Right Wing |
-| **`[U]`** | Switch Right Expansion Channel to **Crony Unlocks** (Upgrade Tree) | Right Wing |
-| **`[T]`** | Switch Right Expansion Channel to **Bilateral Tariffs** | Right Wing |
-| **`[C]`** | Switch Right Expansion Channel to **Caymans Prestige** | Right Wing |
+| **`[1]`, `[2]`, `[3]`** | Switch Stocks, S.L.O.P. (after first YAP), and PolyGrift (after YAP PUT settlement) | Left Wing |
+| **`[D]`** | Switch to **D.U.M.P.** at Phase 2 | Right Wing |
+| **`[U]`** | Switch to **Crony Unlocks** after first liquidation | Right Wing |
+| **`[T]`** | Switch to **Bilateral Tariffs** after first upgrade | Right Wing |
+| **`[C]`** | Switch to **Caymans Prestige** after first tariff change | Right Wing |
 | **`[Y]`** | Launch 3:00 AM Lethal YAP | Center Desk |
 | **`[W]`** | Walk-Back Clarification (+35% recovery pump) | Center Desk |
 | **`[S]`** | Subpoena Paper Shredder (Heat purge QTE) | Center Desk |

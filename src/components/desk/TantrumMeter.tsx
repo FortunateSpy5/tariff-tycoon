@@ -6,11 +6,17 @@
 import React from 'react';
 import { Flame, Siren } from 'lucide-react';
 import { useGameStore } from '../../store/useGameStore';
+import {
+  INKED_TANTRUM_PER_CLICK,
+  DIET_SODA_TANTRUM_PER_CLICK,
+  DRY_TANTRUM_PER_CLICK,
+} from '../../constants/balance';
 
 export const TantrumMeter: React.FC = () => {
   const tantrumMeter = useGameStore((s) => s.tantrumMeter);
   const isCapsFrenzy = useGameStore((s) => s.isCapsFrenzy);
   const capsFrenzySecondsRemaining = useGameStore((s) => s.capsFrenzySecondsRemaining);
+  const hasDietSodaDrip = useGameStore((s) => s.activeUpgrades.includes('diet_soda_drip'));
 
   const percentage = Math.min(100, Math.round(tantrumMeter));
 
@@ -50,7 +56,7 @@ export const TantrumMeter: React.FC = () => {
 
       {/* Footer Info */}
       <div className="flex items-center justify-between text-[10px] text-stone-500 mt-1.5">
-        <span>{isCapsFrenzy ? '💥 10x CASH MULTIPLIER & ZERO INK CONSUMPTION' : 'Clicks build tantrum (Requires ink for >50%)'}</span>
+        <span>{isCapsFrenzy ? '💥 10x CASH · INK REFILLED' : `Inked +${hasDietSodaDrip ? DIET_SODA_TANTRUM_PER_CLICK : INKED_TANTRUM_PER_CLICK}% · dry +${DRY_TANTRUM_PER_CLICK}%`}</span>
         <span>{isCapsFrenzy ? 'PURE DEGEN ENERGY' : 'Frenzy triggers at 100%'}</span>
       </div>
     </div>

@@ -11,8 +11,8 @@ import { generateProceduralYap } from '../engine/systems/yapEngine';
 export function useGameHotkeys() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Don't intercept if user is typing in an input or textarea
-      if (['INPUT', 'TEXTAREA'].includes((e.target as HTMLElement)?.tagName)) {
+      const target = e.target as HTMLElement | null;
+      if (!target || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName) || target.isContentEditable) {
         return;
       }
 
@@ -24,26 +24,28 @@ export function useGameHotkeys() {
       const store = useGameStore.getState();
 
       if (e.code === 'Space' || e.key === 'Enter') {
+        if (target.closest('button, a, [role="button"]')) return;
         e.preventDefault();
         store.clickDesk();
       } else if (e.key === '1') {
-        if (store.phase >= 2) store.setActiveLeftTab('stocks');
+        if (store.hasMarketAccess) store.setActiveLeftTab('stocks');
       } else if (e.key === '2') {
-        if (store.phase >= 2) store.setActiveLeftTab('polygrift');
+        if (store.hasRadarAccess) store.setActiveLeftTab('radar');
       } else if (e.key === '3') {
-        if (store.phase >= 2) store.setActiveLeftTab('radar');
+        if (store.hasPolyGriftAccess) store.setActiveLeftTab('polygrift');
       } else if (e.key === 'd' || e.key === 'D') {
         if (store.phase >= 2) store.setActiveRightTab('dump');
       } else if (e.key === 'u' || e.key === 'U') {
-        if (store.phase >= 2) store.setActiveRightTab('unlocks');
+        if (store.hasCronyUnlocksAccess) store.setActiveRightTab('unlocks');
       } else if (e.key === 't' || e.key === 'T') {
-        if (store.phase >= 2) store.setActiveRightTab('tariffs');
+        if (store.hasTariffAccess) store.setActiveRightTab('tariffs');
       } else if (e.key === 'c' || e.key === 'C') {
-        if (store.phase >= 2) store.setActiveRightTab('caymans');
+        if (store.hasPrestigeAccess) store.setActiveRightTab('caymans');
       } else if (e.key === 'y' || e.key === 'Y') {
-        if (store.phase >= 2) {
+        if (store.hasMarketAccess) {
           e.preventDefault();
-          const yap = generateProceduralYap();
+          const preferredStock = store.yapTargetMode === 'selected' ? store.selectedStock : undefined;
+          const yap = generateProceduralYap(preferredStock);
           store.triggerYapMarketShock(yap);
         }
       } else if (e.key === 'w' || e.key === 'W') {

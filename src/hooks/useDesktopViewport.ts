@@ -20,7 +20,7 @@ export function useDesktopViewport(): ViewportMetrics {
     return {
       width: w,
       height: h,
-      scaleFactor: h < 700 ? Math.max(0.85, h / 720) : 1,
+      scaleFactor: h < 840 ? h / 860 : 1,
       isCompactHeight: h < 840,
     };
   });
@@ -33,7 +33,7 @@ export function useDesktopViewport(): ViewportMetrics {
       rafId = requestAnimationFrame(() => {
         const h = window.innerHeight;
         const w = window.innerWidth;
-        const scale = h < 700 ? Math.max(0.85, h / 720) : 1;
+        const scale = h < 840 ? h / 860 : 1;
         const isCompact = h < 840;
 
         setMetrics((prev) => {

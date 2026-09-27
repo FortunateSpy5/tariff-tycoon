@@ -41,17 +41,21 @@ export interface ActiveOptionTrade {
   expiresAtTimestamp: number;
   isSettled: boolean;
   profitOrLoss: number;
+  /** CALL opened during the post-YAP window; refunded if the player misses the clarification */
+  isWalkBackCombo?: boolean;
 }
 
 export interface MarketState {
   stocks: Record<StockSymbol, StockDefinition>;
   activeTrades: ActiveOptionTrade[];
+  hasSettledYapTrade: boolean;
   slopSuspicion: number; // 0 to 100%. At 100%, triggers Emergency Special Counsel Raid
   vexVolatility: number; // Baseline market volatility index ($VEX)
   cronyFavor: number; // Currency used to bribe S.L.O.P. auditors
   isWalkBackWindowActive: boolean; // 8-second Straddle Squeeze window
   walkBackSecondsRemaining: number;
-  lastTargetStockSymbol?: StockSymbol; // Targeted stock for the walk-back squeeze
+  lastWalkBackNotice: string | undefined;
+  lastTargetStockSymbol: StockSymbol | undefined; // Targeted stock for the walk-back squeeze
   yapTargetMode: 'selected' | 'shotgun'; // Toggle: targeted insider short vs unhinged shotgun
   selectedStock: StockSymbol; // Currently selected stock on BagHolder Pro
   lastYapTimestamp: number; // For YAP cooldown enforcement

@@ -8,6 +8,8 @@ import React, { useState } from 'react';
 import { TrendingDown, TrendingUp, CheckCircle, Clock } from 'lucide-react';
 import { useGameStore } from '../../../store/useGameStore';
 import type { StockSymbol, OptionType } from '../../../types/market';
+import { calculateOptionReturn } from '../../../engine/math/formulas';
+import { formatCurrency } from '../../../engine/math/bigNumber';
 
 export const StocksOptionsTab: React.FC = () => {
   const stocks = useGameStore((s) => s.stocks);
@@ -18,6 +20,12 @@ export const StocksOptionsTab: React.FC = () => {
   const activeUpgrades = useGameStore((s) => s.activeUpgrades);
   const selectedStock = useGameStore((s) => s.selectedStock);
   const setSelectedStock = useGameStore((s) => s.setSelectedStock);
+  const lastTargetStockSymbol = useGameStore((s) => s.lastTargetStockSymbol);
+  const lastYapTimestamp = useGameStore((s) => s.lastYapTimestamp);
+  const hasRadarAccess = useGameStore((s) => s.hasRadarAccess);
+  const hasPolyGriftAccess = useGameStore((s) => s.hasPolyGriftAccess);
+  const isWalkBackWindowActive = useGameStore((s) => s.isWalkBackWindowActive);
+  const walkBackSecondsRemaining = useGameStore((s) => s.walkBackSecondsRemaining);
 
   const [leverage, setLeverage] = useState<number>(100);
   const [collateralAmount, setCollateralAmount] = useState<number>(1000);
@@ -25,6 +33,37 @@ export const StocksOptionsTab: React.FC = () => {
 
   const activeStock = stocks[selectedStock] || stocks['DOOR'];
   const symbols = Object.keys(stocks) as StockSymbol[];
+  const armedPut = activeTrades.find((trade) => trade.type === 'PUT' && trade.symbol === selectedStock);
+  const comboCallArmed = activeTrades.some((trade) => trade.isWalkBackCombo);
+  const yapPut = activeTrades.find(
+    (trade) =>
+      trade.type === 'PUT' &&
+      trade.symbol === lastTargetStockSymbol &&
+      trade.openedAtTimestamp < lastYapTimestamp
+  );
+  const putWasHit = Boolean(
+    armedPut && lastTargetStockSymbol === armedPut.symbol && lastYapTimestamp >= armedPut.openedAtTimestamp && lastYapTimestamp > 0
+  );
+  const tradeGuide = isWalkBackWindowActive
+    ? comboCallArmed
+      ? `CALL armed on $${lastTargetStockSymbol}. Return to the desk and hit WALK-BACK before ${Math.ceil(walkBackSecondsRemaining)}s.`
+      : yapPut
+      ? `YAP hit $${yapPut.symbol}. Settle the PUT to bank its result, then arm a matching CALL within ${Math.ceil(walkBackSecondsRemaining)}s.`
+      : `Crash confirmed on $${lastTargetStockSymbol}. Arm a matching CALL within ${Math.ceil(walkBackSecondsRemaining)}s to attempt the squeeze.`
+    : !hasRadarAccess
+    ? 'Choose a ticker, place a PUT, then launch a YAP. Your first decree opens the S.L.O.P. case file.'
+    : !hasPolyGriftAccess
+    ? 'Settle the PUT you opened before a YAP to unlock PolyGrift and the pundits’ prediction market.'
+    : !armedPut
+    ? 'Choose a ticker, place a PUT, then launch a YAP at that ticker.'
+    : putWasHit
+    ? `YAP hit $${armedPut.symbol}. Settle the PUT to bank the result, or attempt the timed CALL squeeze.`
+    : `PUT armed on $${armedPut.symbol}. Launch a YAP at this ticker to trigger the price shock.`;
+  const nextUnlockHint = !hasRadarAccess
+    ? 'NEXT UNLOCK // Launch your first YAP to open the S.L.O.P. case file.'
+    : !hasPolyGriftAccess
+    ? 'NEXT UNLOCK // Settle a YAP-targeted PUT to open PolyGrift.'
+    : null;
 
   const handleTrade = (type: OptionType) => {
     const currentTreasury = useGameStore.getState().treasuryCash;
@@ -37,7 +76,17 @@ export const StocksOptionsTab: React.FC = () => {
     const success = openOptionTrade(selectedStock, type, leverage, collateralAmount);
     if (success) {
       const bonus = activeUpgrades.includes('darkpool_fiber') ? ' (+50% FIBER PERK)' : '';
-      setTradeStatus(`STRIKE ${leverage}x ${type} ON $${selectedStock}${bonus}!`);
+      const isComboCall =
+        type === 'CALL' &&
+        useGameStore.getState().activeTrades.some((trade) => trade.isWalkBackCombo && trade.symbol === selectedStock);
+      setTradeStatus(
+        isComboCall
+          ? `CALL ARMED ON $${selectedStock}. RETURN TO DESK AND WALK-BACK!`
+          : `STRIKE ${leverage}x ${type} ON $${selectedStock}${bonus}!`
+      );
+      setTimeout(() => setTradeStatus(null), 2500);
+    } else {
+      setTradeStatus('ORDER REJECTED. Check your available collateral.');
       setTimeout(() => setTradeStatus(null), 2500);
     }
   };
@@ -45,6 +94,12 @@ export const StocksOptionsTab: React.FC = () => {
   return (
     <div className="space-y-2 flex-1 flex flex-col justify-between select-none">
       <div>
+        <div className="mb-1.5 border-l-2 border-amber-500 bg-amber-950/30 px-2 py-1.5">
+          <span className="block text-[9px] font-mono font-black uppercase text-amber-400">First Trade</span>
+          <span className="block text-[10px] leading-snug text-stone-300">{tradeGuide}</span>
+          {nextUnlockHint && <span className="mt-1 block text-[9px] font-mono text-amber-300/90">{nextUnlockHint}</span>}
+        </div>
+
         {/* Active Stock Candlestick Telemetry */}
         <div className="bg-stone-950 border border-stone-800 rounded-lg p-2 flex items-center justify-between">
           <div>
@@ -88,10 +143,12 @@ export const StocksOptionsTab: React.FC = () => {
             const isUp = stk.currentPrice >= stk.basePrice;
 
             return (
-              <div
+              <button
+                type="button"
                 key={sym}
                 onClick={() => setSelectedStock(sym)}
-                className={`flex justify-between items-center p-1.5 rounded border cursor-pointer transition-colors ${
+                aria-pressed={isSelected}
+                className={`w-full text-left flex justify-between items-center p-1.5 rounded border cursor-pointer transition-colors ${
                   isSelected
                     ? 'bg-stone-800/90 border-amber-500/80 shadow-sm'
                     : 'bg-stone-950/80 border-stone-800/80 hover:border-stone-700'
@@ -109,7 +166,7 @@ export const StocksOptionsTab: React.FC = () => {
                     {isUp ? '▲' : '▼'}
                   </span>
                 </div>
-              </div>
+              </button>
             );
           })}
         </div>
@@ -123,22 +180,47 @@ export const StocksOptionsTab: React.FC = () => {
             </span>
             <div className="space-y-1 max-h-[75px] overflow-y-auto custom-scrollbar">
               {activeTrades.map((t) => (
-                <div
-                  key={t.id}
-                  className="flex items-center justify-between bg-stone-900/90 border border-stone-800 p-1 rounded text-[9px] font-mono"
-                >
-                  <span className={t.type === 'PUT' ? 'text-red-400 font-bold' : 'text-emerald-400 font-bold'}>
-                    ${t.symbol} {t.leverage}x {t.type} (${t.collateralLocked})
-                  </span>
-                  <button
-                    onClick={() => settleOptionTrade(t.id)}
-                    title="Lock in profit and close position early before walk-back"
-                    className="px-2 py-0.5 bg-emerald-600 hover:bg-emerald-500 text-stone-950 font-black rounded font-mono uppercase text-[9px] cursor-pointer flex items-center gap-0.5 active:scale-95 transition-all"
-                  >
-                    <CheckCircle className="w-2.5 h-2.5" />
-                    <span>SETTLE</span>
-                  </button>
-                </div>
+                (() => {
+                  const currentPrice = stocks[t.symbol]?.currentPrice ?? t.entryPrice;
+                  const currentPnl = calculateOptionReturn(
+                    t.type,
+                    t.entryPrice,
+                    currentPrice,
+                    t.leverage,
+                    t.collateralLocked,
+                    vexVolatility,
+                    activeUpgrades.includes('darkpool_fiber')
+                  );
+                  const pnlLabel = `${currentPnl >= 0 ? '+' : '-'}${formatCurrency(Math.abs(currentPnl))}`;
+                  const secondsLeft = Math.max(0, Math.ceil((t.expiresAtTimestamp - Date.now()) / 1000));
+
+                  return (
+                    <div
+                      key={t.id}
+                      className="flex items-center justify-between gap-2 bg-stone-900/90 border border-stone-800 p-1 rounded text-[9px] font-mono"
+                    >
+                      <span className="min-w-0">
+                        <span className={`block truncate ${t.type === 'PUT' ? 'text-red-400 font-bold' : 'text-emerald-400 font-bold'}`}>
+                          ${t.symbol} {t.leverage}x {t.type}{t.isWalkBackCombo ? ' · SQUEEZE CALL' : ''} ({t.contractsCount} contracts · {formatCurrency(t.collateralLocked)} risk)
+                        </span>
+                        <span className={currentPnl >= 0 ? 'text-emerald-400' : 'text-red-400'}>
+                          P&amp;L {pnlLabel} · {secondsLeft}s left
+                        </span>
+                        <span className="block text-stone-500">
+                          Strike ${t.strikePrice.toFixed(2)} · Target ${t.targetPrice.toFixed(2)}
+                        </span>
+                      </span>
+                      <button
+                        onClick={() => settleOptionTrade(t.id)}
+                        title="Lock in the current result and close this position"
+                        className="shrink-0 px-2 py-0.5 bg-emerald-600 hover:bg-emerald-500 text-stone-950 font-black rounded font-mono uppercase text-[9px] cursor-pointer flex items-center gap-0.5 active:scale-95 transition-all"
+                      >
+                        <CheckCircle className="w-2.5 h-2.5" />
+                        <span>SETTLE</span>
+                      </button>
+                    </div>
+                  );
+                })()
               ))}
             </div>
           </div>
@@ -195,10 +277,15 @@ export const StocksOptionsTab: React.FC = () => {
           </button>
           <button
             onClick={() => handleTrade('CALL')}
-            className="py-1.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 text-stone-950 font-black rounded font-mono uppercase tracking-wider text-[10px] active:scale-95 transition-all flex items-center justify-center gap-1 cursor-pointer"
+            title={isWalkBackWindowActive && selectedStock !== lastTargetStockSymbol
+              ? `Only a CALL on $${lastTargetStockSymbol} qualifies for this walk-back window`
+              : isWalkBackWindowActive
+              ? `Arm a $${lastTargetStockSymbol} CALL before the ${Math.ceil(walkBackSecondsRemaining)}s window closes`
+              : 'Open a regular CALL position'}
+            className={`py-1.5 text-stone-950 font-black rounded font-mono uppercase tracking-wider text-[10px] active:scale-95 transition-all flex items-center justify-center gap-1 cursor-pointer ${isWalkBackWindowActive && selectedStock === lastTargetStockSymbol ? 'bg-gradient-to-r from-amber-400 to-emerald-400 ring-2 ring-amber-300' : 'bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500'}`}
           >
             <TrendingUp className="w-3 h-3" />
-            <span>Bull {leverage}x CALL</span>
+            <span>{isWalkBackWindowActive && selectedStock === lastTargetStockSymbol ? `Arm ${leverage}x CALL` : `Bull ${leverage}x CALL`}</span>
           </button>
         </div>
 
