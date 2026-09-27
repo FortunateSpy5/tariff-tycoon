@@ -1,6 +1,7 @@
 /**
- * Breaking News Bar & Header Ticker
- * Displays macro treasury cash, currency counters, sound/shake controls, and a scrolling news ticker.
+ * Breaking News Bar & Header HUD (Single 48px Bar)
+ * High-density Bloomberg-style top rail: Brand title, scrolling ticker marquee,
+ * treasury cash & favor counters, and audio/shake quick toggles.
  */
 
 import React from 'react';
@@ -12,7 +13,7 @@ import type { StockSymbol } from '../../types/market';
 const HEADLINES = [
   'WALL STREET RALLIES ON 3:00 AM TARIFF POST // ANALYSTS SHOCKED',
   'FRUIT ECOSYSTEM INTRODUCES $3,500 REPLACEMENT POWER CORD',
-  'CUSTOMS CONFISCATES 400 WHEELS OF CANADIAN MAPLE BRIE AT GATE 99B',
+  'CUSTOMS CONFISCATES 400 WHEELS OF GREAT NORTHERN MAPLE BRIE AT GATE 99B',
   'D.U.M.P. HATCHET MEN SPOTTED OUTSIDE WEATHER BUREAU WITH CHAINSAWS',
   'GIGAFLEX WEDGETRUCK RUST DEFENSE DECLARED UNCONSTITUTIONAL',
   'THE S&PAIN 500 INCHES TOWARD RECORD DISASTER // BUY PUTS',
@@ -30,123 +31,115 @@ export const BreakingNewsBar: React.FC = () => {
   const toggleScreenShake = useGameStore((s) => s.toggleScreenShake);
   const stocks = useGameStore((s) => s.stocks);
   const isCapsFrenzy = useGameStore((s) => s.isCapsFrenzy);
+  const phase = useGameStore((s) => s.phase);
 
   return (
-    <header className="w-full bg-stone-900 border-b border-stone-800 text-stone-200 select-none shadow-md">
-      {/* Top Status Bar */}
-      <div className="max-w-7xl mx-auto px-4 py-2 flex flex-wrap items-center justify-between gap-3">
-        {/* Logo & Phase Title */}
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-red-600 animate-pulse" />
-          <span className="font-black text-sm tracking-widest text-amber-500 uppercase">
-            Executive Degen
-          </span>
-          <span className="text-xs bg-stone-800 text-stone-400 px-2 py-0.5 rounded border border-stone-700">
-            {isCapsFrenzy ? '🚨 CAPS LOCK FRENZY' : '3:14 AM // OVAL TERMINAL'}
+    <div className="w-full h-12 bg-stone-900/95 border-b border-stone-800 text-stone-200 select-none shadow-md px-3 flex items-center justify-between gap-3 overflow-hidden">
+      {/* 1. Left: Brand & Phase Status */}
+      <div className="flex items-center gap-2 shrink-0">
+        <div className={`w-2.5 h-2.5 rounded-full ${isCapsFrenzy ? 'bg-red-500 animate-ping' : 'bg-red-600 animate-pulse'}`} />
+        <span className="font-black text-xs sm:text-sm tracking-wider text-amber-500 uppercase font-mono">
+          Executive Degen
+        </span>
+        <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono border font-semibold ${
+          isCapsFrenzy 
+            ? 'bg-red-950 text-red-300 border-red-600 animate-pulse' 
+            : 'bg-stone-800 text-stone-400 border-stone-700'
+        }`}>
+          {isCapsFrenzy ? '🚨 FRENZY' : phase === 1 ? 'GATE 99B' : 'OVAL // 3 AM'}
+        </span>
+      </div>
+
+      {/* 2. Center: Seamless Marquee Ticker */}
+      <div className="flex-1 min-w-0 flex items-center gap-2 bg-stone-950/80 py-1 px-2.5 rounded-md border border-stone-800/80 overflow-hidden text-xs">
+        <div className="flex items-center gap-1 font-bold text-red-500 shrink-0 uppercase tracking-wider text-[11px]">
+          <Radio className="w-3 h-3 animate-pulse" />
+          <span className="hidden sm:inline">NEWS:</span>
+        </div>
+
+        <div className="flex-1 overflow-hidden whitespace-nowrap">
+          <div className="inline-flex items-center animate-marquee">
+            {[0, 1].map((copyIndex) => (
+              <div
+                key={copyIndex}
+                aria-hidden={copyIndex === 1}
+                className="inline-flex items-center gap-6 shrink-0 pr-6"
+              >
+                {(['PAIN', 'FRUT', 'GIGA', 'DOOR', 'MICR'] as StockSymbol[]).map((sym) => {
+                  const stock = stocks[sym];
+                  if (!stock) return null;
+                  const delta = stock.currentPrice - stock.basePrice;
+                  const isUp = delta >= 0;
+                  return (
+                    <span key={sym} className="font-mono text-[11px] inline-flex items-center gap-1">
+                      <span className="font-bold text-stone-300">${sym}</span>
+                      <span className="text-stone-400">${stock.currentPrice.toFixed(2)}</span>
+                      <span className={isUp ? 'text-emerald-400 font-semibold' : 'text-red-400 font-semibold'}>
+                        {isUp ? '▲' : '▼'}{Math.abs(delta).toFixed(1)}
+                      </span>
+                    </span>
+                  );
+                })}
+
+                {HEADLINES.map((headline, idx) => (
+                  <span key={idx} className="text-stone-400 text-[11px] font-sans tracking-wide">
+                    • {headline}
+                  </span>
+                ))}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* 3. Right: Metrics & Controls */}
+      <div className="flex items-center gap-3 sm:gap-4 shrink-0 font-mono">
+        {/* Treasury Cash */}
+        <div className="text-right">
+          <div className="text-xs sm:text-sm font-black text-emerald-400 flex items-baseline justify-end gap-1">
+            <span>{formatCurrency(treasuryCash)}</span>
+            {passiveCashPerSecond > 0 && (
+              <span className="text-[10px] text-emerald-500/80 font-normal">
+                +{formatCurrency(passiveCashPerSecond)}/s
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Crony Favor */}
+        <div className="text-right hidden sm:block">
+          <span className="text-xs font-bold text-amber-400 flex items-center gap-1" title="Crony Favor">
+            🤝 {cronyFavor}
           </span>
         </div>
 
-        {/* Currency Counters */}
-        <div className="flex items-center gap-4 sm:gap-6 font-mono text-sm">
-          {/* Treasury Cash */}
-          <div className="flex flex-col items-end">
-            <span className="text-[10px] text-stone-400 uppercase tracking-wider font-sans">
-              Treasury Cash
-            </span>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-lg font-black text-emerald-400">
-                {formatCurrency(treasuryCash)}
-              </span>
-              {passiveCashPerSecond > 0 && (
-                <span className="text-xs text-emerald-500/80">
-                  +{formatCurrency(passiveCashPerSecond)}/s
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Crony Favor */}
-          <div className="flex flex-col items-end">
-            <span className="text-[10px] text-stone-400 uppercase tracking-wider font-sans">
-              Crony Favor
-            </span>
-            <span className="font-bold text-amber-400 flex items-center gap-1">
-              🤝 {cronyFavor}
+        {/* Sovereign Immunity Slips */}
+        {sovereignImmunitySlips > 0 && (
+          <div className="text-right hidden md:block">
+            <span className="text-xs font-bold text-indigo-400 flex items-center gap-1" title="Sovereign Immunity Slips">
+              📜 {sovereignImmunitySlips}
             </span>
           </div>
+        )}
 
-          {/* Sovereign Immunity Slips */}
-          {sovereignImmunitySlips > 0 && (
-            <div className="flex flex-col items-end">
-              <span className="text-[10px] text-stone-400 uppercase tracking-wider font-sans">
-                Immunity Slips
-              </span>
-              <span className="font-bold text-indigo-400 flex items-center gap-1">
-                📜 {sovereignImmunitySlips}
-              </span>
-            </div>
-          )}
-        </div>
-
-        {/* Control Toggles */}
-        <div className="flex items-center gap-1">
+        {/* Audio & Shake Toggles */}
+        <div className="flex items-center gap-0.5 border-l border-stone-800 pl-2">
           <button
             onClick={toggleMute}
-            title={isMuted ? 'Unmute Audio' : 'Mute Audio'}
-            className="p-1.5 rounded hover:bg-stone-800 text-stone-400 hover:text-stone-200 transition-colors"
+            title={isMuted ? 'Unmute Audio [M]' : 'Mute Audio [M]'}
+            className="p-1 rounded hover:bg-stone-800 text-stone-400 hover:text-stone-200 transition-colors cursor-pointer"
           >
-            {isMuted ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4" />}
+            {isMuted ? <VolumeX className="w-3.5 h-3.5 text-red-400" /> : <Volume2 className="w-3.5 h-3.5 text-stone-300" />}
           </button>
           <button
             onClick={toggleScreenShake}
-            title={screenShakeEnabled ? 'Disable Screen Shake' : 'Enable Screen Shake'}
-            className="p-1.5 rounded hover:bg-stone-800 text-stone-400 hover:text-stone-200 transition-colors"
+            title={screenShakeEnabled ? 'Disable Screen Shake [Z]' : 'Enable Screen Shake [Z]'}
+            className="p-1 rounded hover:bg-stone-800 text-stone-400 hover:text-stone-200 transition-colors cursor-pointer"
           >
-            {screenShakeEnabled ? <Zap className="w-4 h-4 text-amber-400" /> : <ShieldAlert className="w-4 h-4 text-stone-500" />}
+            {screenShakeEnabled ? <Zap className="w-3.5 h-3.5 text-amber-400" /> : <ShieldAlert className="w-3.5 h-3.5 text-stone-500" />}
           </button>
         </div>
       </div>
-
-      {/* Scrolling Breaking News Ticker */}
-      <div className="bg-stone-950 py-1 px-4 border-t border-stone-800 flex items-center gap-3 overflow-hidden text-xs">
-        <div className="flex items-center gap-1 font-bold text-red-500 shrink-0 uppercase tracking-wider">
-          <Radio className="w-3.5 h-3.5 animate-pulse" />
-          <span>Breaking:</span>
-        </div>
-
-        {/* Ticker items - Duplicated for seamless -50% loop */}
-        <div className="flex overflow-x-hidden whitespace-nowrap">
-          {[0, 1].map((copyIndex) => (
-            <div
-              key={copyIndex}
-              aria-hidden={copyIndex === 1}
-              className="flex items-center gap-8 animate-marquee shrink-0 pr-8"
-            >
-              {(['PAIN', 'FRUT', 'GIGA', 'DOOR'] as StockSymbol[]).map((sym) => {
-                const stock = stocks[sym];
-                if (!stock) return null;
-                const delta = stock.currentPrice - stock.basePrice;
-                const isUp = delta >= 0;
-                return (
-                  <span key={sym} className="font-mono flex items-center gap-1">
-                    <span className="font-semibold text-stone-300">${sym}</span>
-                    <span className="text-stone-400">${stock.currentPrice.toFixed(2)}</span>
-                    <span className={isUp ? 'text-emerald-400' : 'text-red-400'}>
-                      {isUp ? '▲' : '▼'} {Math.abs(delta).toFixed(1)}
-                    </span>
-                  </span>
-                );
-              })}
-
-              {HEADLINES.map((headline, idx) => (
-                <span key={idx} className="text-stone-400 font-sans tracking-wide">
-                  {headline}
-                </span>
-              ))}
-            </div>
-          ))}
-        </div>
-      </div>
-    </header>
+    </div>
   );
 };

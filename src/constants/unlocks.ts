@@ -9,7 +9,7 @@ export const INITIAL_CRONY_UPGRADES: CronyUpgrade[] = [
   {
     id: 'heavy_tungsten_nib',
     name: 'Heavy Tungsten Nib',
-    description: 'Forged from scrap Boeing fasteners; doubles manual click yield (+100%).',
+    description: 'Forged from scrap DoorPlug ($DOOR) fuselage bolts; doubles manual click yield (+100%).',
     cost: 25000,
     multiplierType: 'click',
     value: 2.0,
@@ -51,7 +51,7 @@ export const INITIAL_CRONY_UPGRADES: CronyUpgrade[] = [
 export const INITIAL_POLYGRIFT_BETS: PolyGriftBet[] = [
   {
     id: 'maple_tariff',
-    title: 'Will Dealmaker-in-Chief tariff Canadian maple syrup before sunrise?',
+    title: 'Will Dealmaker-in-Chief tariff Great Northern Annex maple slurry before sunrise?',
     oddsYes: 1.08,
     oddsNo: 12.5,
     probYes: 92,
@@ -65,7 +65,7 @@ export const INITIAL_POLYGRIFT_BETS: PolyGriftBet[] = [
   },
   {
     id: 'brie_ban',
-    title: 'Will French Brie be designated an existential security bio-hazard?',
+    title: 'Will Strike Republic soft cheese be designated an existential security bio-hazard?',
     oddsYes: 2.10,
     oddsNo: 1.80,
     probYes: 48,

@@ -10,14 +10,14 @@ import { INITIAL_POLYGRIFT_BETS } from '../../../constants/unlocks';
 import { formatCurrency } from '../../../engine/math/bigNumber';
 
 export const PolyGriftTab: React.FC = () => {
-  const treasuryCash = useGameStore((s) => s.treasuryCash);
   const wagerPolyGrift = useGameStore((s) => s.wagerPolyGrift);
   const [feedback, setFeedback] = useState<string | null>(null);
 
   const wagerAmount = 1000;
 
   const handleWager = (betId: string, choice: 'YES' | 'NO') => {
-    if (treasuryCash < wagerAmount) {
+    const currentTreasury = useGameStore.getState().treasuryCash;
+    if (currentTreasury < wagerAmount) {
       setFeedback('Need at least $1,000 to wager!');
       setTimeout(() => setFeedback(null), 2000);
       return;

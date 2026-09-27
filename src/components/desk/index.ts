@@ -3,6 +3,6 @@
  */
 
 export { ClickerButton } from './ClickerButton';
-export { ExecutiveDesk } from './ExecutiveDesk';
+export { ResoluteBlotterCenter } from './ResoluteBlotterCenter';
 export { InkMeter } from './InkMeter';
 export { TantrumMeter } from './TantrumMeter';

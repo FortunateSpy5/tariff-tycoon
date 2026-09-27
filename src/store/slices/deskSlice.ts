@@ -30,6 +30,11 @@ export interface DeskSlice extends DeskState {
   triggerRedPhoneBailout: () => boolean;
   sellClassifiedSecrets: () => void;
   shredSubpoenas: () => void;
+  printEmergencyCash: () => boolean;
+
+  // Bilateral Tariffs state
+  tariffRates: Record<string, number>;
+  setTariffRate: (nationId: string, rate: number) => void;
 
   clickDesk: () => void;
   refillInk: () => boolean;
@@ -57,6 +62,16 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
   setActiveRightTab: (tab) => set({ activeRightTab: tab }),
 
   activeUpgrades: [],
+  tariffRates: {
+    can: 125,
+    fra: 200,
+    che: 100,
+    mex: 150,
+  },
+  setTariffRate: (nationId, rate) =>
+    set((state) => ({
+      tariffRates: { ...state.tariffRates, [nationId]: rate },
+    })),
 
   buyUpgrade: (upgradeId: string) => {
     const state = get();
@@ -103,6 +118,18 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
     });
   },
 
+  printEmergencyCash: () => {
+    const state = get();
+    if (!state.activeUpgrades.includes('broad_daylight_printer')) return false;
+
+    sound.playChaChing();
+    set({
+      treasuryCash: state.treasuryCash + 100000,
+      slopSuspicion: Math.min(100, state.slopSuspicion + 10),
+    });
+    return true;
+  },
+
   clickDesk: () => {
     const state = get();
     const isDry = state.inkLevel <= 0 && !state.isCapsFrenzy;
@@ -116,10 +143,10 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
       sound.playSharpieSqueak();
     }
 
-    // Cash calculation with real SIS Sovereign Immunity Slip count for bankruptcy floor
+    // Cash calculation: base $5.00 * phaseMultiplier (1x at P1 = $5, 10x at P2 = $50)
     let earnedCash = calculateClickValue(
       state.phase,
-      state.phase === 1 ? 5.0 : 50.0,
+      5.0,
       state.isCapsFrenzy ? 100 : state.inkLevel,
       state.isCapsFrenzy,
       state.sovereignImmunitySlips || 0
@@ -152,8 +179,19 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
       nextRefillCount = Math.max(0, nextRefillCount - 2); // Resets escalation penalty
     }
 
+    const nextCash = state.treasuryCash + earnedCash;
+    let nextPhase = state.phase;
+    if (state.phase === 1 && nextCash >= 10000) {
+      nextPhase = 2;
+      sound.playChaChing();
+    } else if (state.phase === 2 && nextCash >= 1000000) {
+      nextPhase = 3;
+      sound.playChaChing();
+    }
+
     set({
-      treasuryCash: state.treasuryCash + earnedCash,
+      treasuryCash: nextCash,
+      phase: nextPhase,
       totalClicks: state.totalClicks + 1,
       inkLevel: nextInkLevel,
       inkRefillCount: nextRefillCount,
@@ -211,8 +249,19 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
       ? state.inkLevel
       : Math.min(state.maxInk, state.inkLevel + 0.5 * deltaSeconds);
 
+    const nextCash = state.treasuryCash + passiveGain;
+    let nextPhase = state.phase;
+    if (state.phase === 1 && nextCash >= 10000) {
+      nextPhase = 2;
+      sound.playChaChing();
+    } else if (state.phase === 2 && nextCash >= 1000000) {
+      nextPhase = 3;
+      sound.playChaChing();
+    }
+
     set({
-      treasuryCash: state.treasuryCash + passiveGain,
+      treasuryCash: nextCash,
+      phase: nextPhase,
       inkLevel: regeneratedInk,
       isCapsFrenzy: isFrenzy,
       capsFrenzySecondsRemaining: Math.max(0, frenzyRemaining),

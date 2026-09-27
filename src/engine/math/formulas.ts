@@ -59,7 +59,8 @@ export function calculateOptionReturn(
   currentPrice: number,
   leverage: number,
   collateral: number,
-  vexVolatility: number = 15.0
+  vexVolatility: number = 15.0,
+  hasDarkPoolFiber: boolean = false
 ): number {
   if (entryPrice <= 0) return 0;
 
@@ -75,18 +76,21 @@ export function calculateOptionReturn(
   // Options cannot lose more than 100% of collateral locked
   const clampedReturn = Math.max(-1.0, leveragedDelta);
 
-  return collateral * clampedReturn;
+  // Dark Pool Fiber: +50% payout multiplier on profitable trades
+  const profitMultiplier = hasDarkPoolFiber && clampedReturn > 0 ? 1.5 : 1.0;
+
+  return collateral * clampedReturn * profitMultiplier;
 }
 
 /**
  * Calculates Sovereign Immunity Slips earned upon Tier 1 Prestige (Flight to the Caymans).
- * Threshold: $10B Lifetime Net Worth.
- * KaTeX: SIS = \left\lfloor \left(\frac{\text{NetWorth}}{10^{10}}\right)^{0.33} \right\rfloor
+ * Threshold: $1M Net Worth.
+ * KaTeX: SIS = \left\lfloor \left(\frac{\text{NetWorth}}{10^6}\right)^{0.33} \right\rfloor
  */
 export function calculatePrestigeSIS(netWorth: number): number {
-  if (netWorth < 10_000_000_000) return 0;
-  const ratio = netWorth / 10_000_000_000;
-  return Math.floor(Math.pow(ratio, 0.33));
+  if (netWorth < 1_000_000) return 0;
+  const ratio = netWorth / 1_000_000;
+  return Math.max(1, Math.floor(Math.pow(ratio, 0.33)));
 }
 
 /**

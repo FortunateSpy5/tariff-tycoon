@@ -1,26 +1,27 @@
 /**
  * Bilateral Tariffs Tab
  * Tracks foreign trade sanction dials and procedural diplomatic begging cables.
+ * Persists tariff rates in Zustand and dynamically shifts begging tiers based on pressure.
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Globe, MessageSquareQuote } from 'lucide-react';
+import { useGameStore } from '../../../store/useGameStore';
 import { PARODY_NATIONS } from '../../../constants/nations';
 
 export const BilateralTariffsTab: React.FC = () => {
-  const [tariffRates, setTariffRates] = useState<Record<string, number>>(() => {
-    const initial: Record<string, number> = {};
-    PARODY_NATIONS.forEach((n) => {
-      initial[n.id] = n.defaultTariffRate;
-    });
-    return initial;
-  });
+  const tariffRates = useGameStore((s) => s.tariffRates);
+  const setTariffRate = useGameStore((s) => s.setTariffRate);
 
   const handleAdjustTariff = (nationId: string, delta: number) => {
-    setTariffRates((prev) => ({
-      ...prev,
-      [nationId]: Math.max(0, Math.min(1000, (prev[nationId] || 100) + delta)),
-    }));
+    const current = tariffRates[nationId] ?? 100;
+    setTariffRate(nationId, Math.max(0, Math.min(1000, current + delta)));
+  };
+
+  const getBeggingCable = (nation: typeof PARODY_NATIONS[number], rate: number) => {
+    if (rate < 100) return nation.beggingTiers.mild;
+    if (rate < 300) return nation.beggingTiers.desperate;
+    return nation.beggingTiers.surrender;
   };
 
   return (
@@ -37,7 +38,8 @@ export const BilateralTariffsTab: React.FC = () => {
         {/* Nations List */}
         <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-0.5">
           {PARODY_NATIONS.map((nation) => {
-            const currentRate = tariffRates[nation.id] || nation.defaultTariffRate;
+            const currentRate = tariffRates[nation.id] ?? nation.defaultTariffRate;
+            const cableText = getBeggingCable(nation, currentRate);
 
             return (
               <div key={nation.id} className="bg-stone-950 border border-stone-800 rounded-lg p-2 space-y-1.5">
@@ -51,7 +53,11 @@ export const BilateralTariffsTab: React.FC = () => {
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="font-mono font-black text-red-400 text-sm">{currentRate}%</span>
+                    <span className={`font-mono font-black text-sm ${
+                      currentRate >= 300 ? 'text-amber-400' : currentRate >= 100 ? 'text-red-400' : 'text-stone-300'
+                    }`}>
+                      {currentRate}%
+                    </span>
                     <div className="flex flex-col gap-0.5">
                       <button
                         onClick={() => handleAdjustTariff(nation.id, 50)}
@@ -74,7 +80,7 @@ export const BilateralTariffsTab: React.FC = () => {
                 {/* Diplomatic Begging Cable */}
                 <div className="bg-stone-900/60 rounded p-1.5 border border-stone-800/80 text-[9px] font-sans italic text-stone-400 flex items-start gap-1.5">
                   <MessageSquareQuote className="w-3 h-3 text-amber-500 shrink-0 mt-0.5" />
-                  <span>"{nation.beggingTiers.mild}"</span>
+                  <span>"{cableText}"</span>
                 </div>
               </div>
             );

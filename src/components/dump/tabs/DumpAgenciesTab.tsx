@@ -1,10 +1,11 @@
 /**
  * D.U.M.P. Agencies Tab
- * Chainsaw list of federal agencies to liquidate for instant multi-million dollar cash injections.
+ * Chainsaw list of federal agencies to liquidate for sequential multi-million dollar cash injections.
+ * Enforces sequential gating so higher-tier agencies unlock progressively.
  */
 
 import React, { useState } from 'react';
-import { Scissors, AlertTriangle, CheckCircle } from 'lucide-react';
+import { Scissors, AlertTriangle, CheckCircle, Lock } from 'lucide-react';
 import { useGameStore } from '../../../store/useGameStore';
 import { formatCurrency } from '../../../engine/math/bigNumber';
 
@@ -29,13 +30,15 @@ export const DumpAgenciesTab: React.FC = () => {
             <Scissors className="w-3.5 h-3.5" />
             <span>FEDERAL AGENCY GUILLOTINE</span>
           </div>
-          <span>10 TARGETS</span>
+          <span>SEQUENTIAL TARGETS</span>
         </div>
 
         {/* Agency List */}
         <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-0.5">
-          {agencies.map((agency) => {
+          {agencies.map((agency, index) => {
             const isScrapped = agency.isLiquidated;
+            const isUnlocked = index === 0 || agencies[index - 1].isLiquidated;
+            const previousAgency = index > 0 ? agencies[index - 1] : null;
 
             return (
               <div
@@ -43,7 +46,9 @@ export const DumpAgenciesTab: React.FC = () => {
                 className={`p-2 rounded-lg border transition-all ${
                   isScrapped
                     ? 'bg-stone-950/40 border-stone-900 opacity-60'
-                    : 'bg-stone-950 border-stone-800 hover:border-amber-600/60'
+                    : isUnlocked
+                    ? 'bg-stone-950 border-stone-800 hover:border-amber-600/60'
+                    : 'bg-stone-950/50 border-stone-900 opacity-50'
                 }`}
               >
                 <div className="flex items-start justify-between gap-2">
@@ -67,13 +72,18 @@ export const DumpAgenciesTab: React.FC = () => {
                         <CheckCircle className="w-2.5 h-2.5" />
                         SCRAPPED
                       </span>
-                    ) : (
+                    ) : isUnlocked ? (
                       <button
                         onClick={() => handleLiquidate(agency.id, agency.acronym, agency.liquidationCashYield)}
                         className="px-2.5 py-1 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-stone-950 font-black rounded font-mono text-[10px] active:scale-95 transition-all shadow cursor-pointer"
                       >
                         🪓 +{formatCurrency(agency.liquidationCashYield)}
                       </button>
+                    ) : (
+                      <span className="px-2 py-0.5 rounded bg-stone-900 border border-stone-800 text-stone-500 font-mono text-[8px] font-semibold flex items-center gap-1">
+                        <Lock className="w-2.5 h-2.5" />
+                        Awaits {previousAgency?.acronym}
+                      </span>
                     )}
                   </div>
                 </div>

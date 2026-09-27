@@ -15,7 +15,7 @@ export const CaymansPrestigeTab: React.FC = () => {
 
   // Minimum $1M to prestige
   const canPrestige = treasuryCash >= 1000000;
-  const potentialSIS = Math.max(1, Math.floor(Math.pow(treasuryCash / 100000, 0.35)));
+  const potentialSIS = Math.max(1, Math.floor(Math.pow(treasuryCash / 1000000, 0.33)));
 
   const handlePrestige = () => {
     if (!canPrestige) {

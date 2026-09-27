@@ -10,12 +10,11 @@ import { Phone, PhoneCall } from 'lucide-react';
 import { useGameStore } from '../../../store/useGameStore';
 
 export const RedPhoneProp: React.FC = () => {
-  const treasuryCash = useGameStore((s) => s.treasuryCash);
+  const isBroke = useGameStore((s) => s.treasuryCash < 10);
   const phase = useGameStore((s) => s.phase);
   const triggerRedPhoneBailout = useGameStore((s) => s.triggerRedPhoneBailout);
   const [feedback, setFeedback] = useState<string | null>(null);
 
-  const isBroke = treasuryCash < 10;
   const bailoutAmount = 5000 * (1 + phase);
 
   const handleClick = () => {
@@ -32,7 +31,7 @@ export const RedPhoneProp: React.FC = () => {
   return (
     <button
       onClick={handleClick}
-      title={isBroke ? 'EMERGENCY BAILOUT: Bill Secret Service for golf carts' : 'Emergency Hot-Line (Standby)'}
+      title={isBroke ? 'EMERGENCY BAILOUT: Bill Sovereign Detail for golf cart rentals' : 'Emergency Hot-Line (Standby)'}
       className={`p-2 rounded-lg border transition-all flex items-center gap-2 text-left cursor-pointer group relative overflow-hidden select-none ${
         isBroke
           ? 'bg-red-950/80 border-red-600 text-red-200 animate-ring shadow-lg shadow-red-950/50'

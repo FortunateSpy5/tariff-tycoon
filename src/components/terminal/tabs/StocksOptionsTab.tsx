@@ -1,17 +1,20 @@
 /**
  * Stocks & 0DTE Options Tab
- * High-density fintech terminal displaying live prices, leverage selector, and short/call buttons.
+ * High-density fintech terminal displaying live prices, leverage selector,
+ * active trade positions with early settlement, and short/call buttons.
  */
 
 import React, { useState } from 'react';
-import { TrendingDown, TrendingUp } from 'lucide-react';
+import { TrendingDown, TrendingUp, CheckCircle, Clock } from 'lucide-react';
 import { useGameStore } from '../../../store/useGameStore';
 import type { StockSymbol, OptionType } from '../../../types/market';
 
 export const StocksOptionsTab: React.FC = () => {
   const stocks = useGameStore((s) => s.stocks);
-  const treasuryCash = useGameStore((s) => s.treasuryCash);
+  const vexVolatility = useGameStore((s) => s.vexVolatility);
   const openOptionTrade = useGameStore((s) => s.openOptionTrade);
+  const settleOptionTrade = useGameStore((s) => s.settleOptionTrade);
+  const activeTrades = useGameStore((s) => s.activeTrades);
   const activeUpgrades = useGameStore((s) => s.activeUpgrades);
 
   const [selectedStock, setSelectedStock] = useState<StockSymbol>('DOOR');
@@ -20,10 +23,11 @@ export const StocksOptionsTab: React.FC = () => {
   const [tradeStatus, setTradeStatus] = useState<string | null>(null);
 
   const activeStock = stocks[selectedStock] || stocks['DOOR'];
-  const symbols: StockSymbol[] = ['PAIN', 'DOOR', 'FRUT', 'GIGA', 'MICR'];
+  const symbols = Object.keys(stocks) as StockSymbol[];
 
   const handleTrade = (type: OptionType) => {
-    if (treasuryCash < collateralAmount) {
+    const currentTreasury = useGameStore.getState().treasuryCash;
+    if (currentTreasury < collateralAmount) {
       setTradeStatus('Insufficient cash for collateral!');
       setTimeout(() => setTradeStatus(null), 2000);
       return;
@@ -41,7 +45,7 @@ export const StocksOptionsTab: React.FC = () => {
     <div className="space-y-2 flex-1 flex flex-col justify-between select-none">
       <div>
         {/* Active Stock Candlestick Telemetry */}
-        <div className="bg-stone-950 border border-stone-800 rounded-lg p-2.5 flex items-center justify-between">
+        <div className="bg-stone-950 border border-stone-800 rounded-lg p-2 flex items-center justify-between">
           <div>
             <div className="flex items-center gap-1.5">
               <span className="font-mono font-bold text-stone-200 text-xs">${selectedStock}</span>
@@ -50,7 +54,7 @@ export const StocksOptionsTab: React.FC = () => {
               </span>
             </div>
             <span className="text-[9px] text-stone-500 font-mono block">
-              Base: ${activeStock?.basePrice.toFixed(2)} // Volatility: 420%
+              Base: ${activeStock?.basePrice.toFixed(2)} // Volatility: {vexVolatility.toFixed(0)}%
             </span>
           </div>
           <div className="text-right">
@@ -74,8 +78,8 @@ export const StocksOptionsTab: React.FC = () => {
           </div>
         </div>
 
-        {/* Watchlist Ladder */}
-        <div className="space-y-1 mt-1.5 max-h-[140px] overflow-y-auto custom-scrollbar pr-0.5">
+        {/* Watchlist Ladder (All 9 Stocks) */}
+        <div className="space-y-1 mt-1.5 max-h-[120px] overflow-y-auto custom-scrollbar pr-0.5">
           {symbols.map((sym) => {
             const stk = stocks[sym];
             if (!stk) return null;
@@ -108,6 +112,36 @@ export const StocksOptionsTab: React.FC = () => {
             );
           })}
         </div>
+
+        {/* Active Open Option Trades & Early Settlement */}
+        {activeTrades.length > 0 && (
+          <div className="mt-1.5 bg-stone-950 border border-emerald-900/60 rounded p-1.5 space-y-1">
+            <span className="text-[9px] font-mono font-bold text-emerald-400 uppercase flex items-center gap-1">
+              <Clock className="w-2.5 h-2.5 animate-spin" />
+              Active 0DTE Positions ({activeTrades.length})
+            </span>
+            <div className="space-y-1 max-h-[75px] overflow-y-auto custom-scrollbar">
+              {activeTrades.map((t) => (
+                <div
+                  key={t.id}
+                  className="flex items-center justify-between bg-stone-900/90 border border-stone-800 p-1 rounded text-[9px] font-mono"
+                >
+                  <span className={t.type === 'PUT' ? 'text-red-400 font-bold' : 'text-emerald-400 font-bold'}>
+                    ${t.symbol} {t.leverage}x {t.type} (${t.collateralLocked})
+                  </span>
+                  <button
+                    onClick={() => settleOptionTrade(t.id)}
+                    title="Lock in profit and close position early before walk-back"
+                    className="px-2 py-0.5 bg-emerald-600 hover:bg-emerald-500 text-stone-950 font-black rounded font-mono uppercase text-[9px] cursor-pointer flex items-center gap-0.5 active:scale-95 transition-all"
+                  >
+                    <CheckCircle className="w-2.5 h-2.5" />
+                    <span>SETTLE</span>
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* 0DTE Options Order Slip */}
@@ -119,7 +153,7 @@ export const StocksOptionsTab: React.FC = () => {
               <button
                 key={lvl}
                 onClick={() => setLeverage(lvl)}
-                className={`px-1.5 py-0.5 rounded text-[9px] font-bold font-mono transition-colors ${
+                className={`px-1.5 py-0.5 rounded text-[9px] font-bold font-mono transition-colors cursor-pointer ${
                   leverage === lvl ? 'bg-amber-500 text-stone-950 font-black' : 'bg-stone-800 text-stone-400 hover:text-stone-200'
                 }`}
               >
@@ -137,7 +171,7 @@ export const StocksOptionsTab: React.FC = () => {
               <button
                 key={amt}
                 onClick={() => setCollateralAmount(amt)}
-                className={`px-1.5 py-0.5 rounded text-[9px] font-bold font-mono transition-colors ${
+                className={`px-1.5 py-0.5 rounded text-[9px] font-bold font-mono transition-colors cursor-pointer ${
                   collateralAmount === amt
                     ? 'bg-emerald-500 text-stone-950 font-black'
                     : 'bg-stone-800 text-stone-400 hover:text-stone-200'

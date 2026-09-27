@@ -9,24 +9,33 @@ import { FileX2, AlertTriangle } from 'lucide-react';
 import { useGameStore } from '../../../store/useGameStore';
 
 export const SubpoenaShredderProp: React.FC = () => {
-  const slopSuspicion = useGameStore((s) => s.slopSuspicion);
+  const isHighHeat = useGameStore((s) => s.slopSuspicion > 70);
   const shredSubpoenas = useGameStore((s) => s.shredSubpoenas);
   const [feedback, setFeedback] = useState<string | null>(null);
-
-  const isHighHeat = slopSuspicion > 70;
+  const [cooldown, setCooldown] = useState(false);
 
   const handleClick = () => {
+    if (cooldown) {
+      setFeedback('JAMMED (Cooling Down)');
+      setTimeout(() => setFeedback(null), 1000);
+      return;
+    }
     shredSubpoenas();
+    setCooldown(true);
     setFeedback('WHIRRR! -25% HEAT');
     setTimeout(() => setFeedback(null), 1800);
+    setTimeout(() => setCooldown(false), 3000);
   };
 
   return (
     <button
       onClick={handleClick}
+      disabled={cooldown}
       title="Shred incriminating trade documents (-25% S.L.O.P. Suspicion) [Hotkey: S]"
       className={`p-2 rounded-lg border transition-all flex items-center gap-2 text-left cursor-pointer group relative overflow-hidden select-none active:scale-95 ${
-        isHighHeat
+        cooldown
+          ? 'opacity-60 cursor-not-allowed bg-stone-900 border-stone-800 text-stone-500'
+          : isHighHeat
           ? 'bg-amber-950/80 border-amber-500/80 text-amber-200 shadow-md shadow-amber-950/40'
           : 'bg-stone-950/90 border-stone-800 text-stone-400 hover:border-emerald-600/60'
       }`}

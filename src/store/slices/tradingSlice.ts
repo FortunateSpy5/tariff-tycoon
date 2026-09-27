@@ -69,13 +69,15 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
     if (!trade || trade.isSettled) return 0;
 
     const stock = state.stocks[trade.symbol];
+    const hasDarkPoolFiber = state.activeUpgrades.includes('darkpool_fiber');
     const netProfit = calculateOptionReturn(
       trade.type,
       trade.entryPrice,
       stock.currentPrice,
       trade.leverage,
       trade.collateralLocked,
-      state.vexVolatility
+      state.vexVolatility,
+      hasDarkPoolFiber
     );
 
     const totalPayout = Math.max(0, trade.collateralLocked + netProfit);
@@ -222,6 +224,7 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
     const now = Date.now();
     let netSettledCash = 0;
     const remainingTrades: ActiveOptionTrade[] = [];
+    const hasDarkPoolFiber = state.activeUpgrades.includes('darkpool_fiber');
 
     state.activeTrades.forEach((trade) => {
       if (now >= trade.expiresAtTimestamp) {
@@ -232,7 +235,8 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
           stock.currentPrice,
           trade.leverage,
           trade.collateralLocked,
-          state.vexVolatility
+          state.vexVolatility,
+          hasDarkPoolFiber
         );
         netSettledCash += Math.max(0, trade.collateralLocked + netProfit);
       } else {

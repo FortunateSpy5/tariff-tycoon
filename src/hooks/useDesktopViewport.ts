@@ -1,8 +1,7 @@
 /**
  * Hook: useDesktopViewport
- * Manages desktop fullscreen responsive containment and sub-1080p scaling.
- * If vertical height is below 840px (common on laptops), calculates a gentle
- * scale factor so all panels and controls remain 100% visible with zero scrolling.
+ * Manages desktop fullscreen responsive containment and sub-1080p metrics.
+ * Uses requestAnimationFrame throttling to prevent unnecessary re-render churn during window resizing.
  */
 
 import { useState, useEffect } from 'react';
@@ -21,27 +20,41 @@ export function useDesktopViewport(): ViewportMetrics {
     return {
       width: w,
       height: h,
-      scaleFactor: h < 840 ? Math.max(0.75, Math.min(1, h / 860)) : 1,
+      scaleFactor: h < 700 ? Math.max(0.85, h / 720) : 1,
       isCompactHeight: h < 840,
     };
   });
 
   useEffect(() => {
-    const handleResize = () => {
-      const h = window.innerHeight;
-      const w = window.innerWidth;
-      const scale = h < 840 ? Math.max(0.75, Math.min(1, h / 860)) : 1;
+    let rafId: number | null = null;
 
-      setMetrics({
-        width: w,
-        height: h,
-        scaleFactor: scale,
-        isCompactHeight: h < 840,
+    const handleResize = () => {
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        const h = window.innerHeight;
+        const w = window.innerWidth;
+        const scale = h < 700 ? Math.max(0.85, h / 720) : 1;
+        const isCompact = h < 840;
+
+        setMetrics((prev) => {
+          if (prev.scaleFactor === scale && prev.isCompactHeight === isCompact && Math.abs(prev.height - h) < 10) {
+            return prev;
+          }
+          return {
+            width: w,
+            height: h,
+            scaleFactor: scale,
+            isCompactHeight: isCompact,
+          };
+        });
       });
     };
 
     window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      if (rafId) cancelAnimationFrame(rafId);
+    };
   }, []);
 
   return metrics;
