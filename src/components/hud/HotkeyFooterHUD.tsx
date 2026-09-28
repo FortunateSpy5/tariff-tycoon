@@ -81,10 +81,10 @@ export const HotkeyFooterHUD: React.FC = () => {
     }
   };
 
-  const iconBtn = 'p-1 rounded transition-colors cursor-pointer shrink-0 hover:bg-stone-800';
+  const iconBtn = 'p-1 rounded transition-colors cursor-pointer shrink-0 hover:bg-redaction-500';
 
   return (
-    <footer className="h-8 w-full bg-stone-950 border-t border-stone-800 px-2 flex items-center justify-between gap-2 font-mono t-caption text-stone-400 select-none shrink-0 z-30">
+    <footer className="h-8 w-full bg-redaction-700 border-t border-redaction-500 px-2 flex items-center justify-between gap-2 font-mono t-caption text-newsprint-400 select-none shrink-0 z-30">
       {/* Key list: scrolls rather than truncating. See the invariant above. */}
       <nav
         aria-label="Keyboard shortcuts"
@@ -92,7 +92,7 @@ export const HotkeyFooterHUD: React.FC = () => {
       >
         {hints.map(({ key, label }) => (
           <span key={key} className="flex items-center gap-1 shrink-0">
-            <kbd className="px-1 py-px rounded bg-stone-900 border border-stone-700 text-stone-200 font-bold">
+            <kbd className="px-1 py-px rounded bg-redaction-500 border border-redaction-500 text-newsprint-200 font-bold">
               {key}
             </kbd>
             <span>{label}</span>
@@ -101,13 +101,13 @@ export const HotkeyFooterHUD: React.FC = () => {
       </nav>
 
       {/* Icon-only controls with explicit pressed state for screen readers. */}
-      <div className="flex items-center gap-0.5 shrink-0 border-l border-stone-800 pl-2">
+      <div className="flex items-center gap-0.5 shrink-0 border-l border-redaction-500 pl-2">
         <button
           onClick={toggleScreenShake}
           title={screenShakeEnabled ? 'Disable Screen Shake [Z]' : 'Enable Screen Shake [Z]'}
           aria-label="Toggle screen shake"
           aria-pressed={screenShakeEnabled}
-          className={`${iconBtn} ${screenShakeEnabled ? 'text-gold-400' : 'text-stone-600'}`}
+          className={`${iconBtn} ${screenShakeEnabled ? 'text-gold-400' : 'text-newsprint-600'}`}
         >
           <Vibrate className="w-3.5 h-3.5" />
         </button>
@@ -117,7 +117,7 @@ export const HotkeyFooterHUD: React.FC = () => {
           title={isMuted ? 'Enable Sound [M]' : 'Mute Sound [M]'}
           aria-label="Toggle sound"
           aria-pressed={!isMuted}
-          className={`${iconBtn} ${isMuted ? 'text-red-500' : 'text-stone-400 hover:text-stone-200'}`}
+          className={`${iconBtn} ${isMuted ? 'text-wax-400' : 'text-newsprint-400 hover:text-newsprint-100'}`}
         >
           {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
         </button>
@@ -126,7 +126,7 @@ export const HotkeyFooterHUD: React.FC = () => {
           onClick={toggleFullscreen}
           title="Toggle Fullscreen [F]"
           aria-label="Toggle fullscreen"
-          className={`${iconBtn} text-stone-400 hover:text-stone-200`}
+          className={`${iconBtn} text-newsprint-400 hover:text-newsprint-100`}
         >
           <Maximize2 className="w-3.5 h-3.5" />
         </button>

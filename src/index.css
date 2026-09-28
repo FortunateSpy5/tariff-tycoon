@@ -49,6 +49,7 @@
   --color-newsprint-100: #ece4d0;
   --color-newsprint-200: #ddd2b8;
   --color-newsprint-300: #c4b696;
+  --color-newsprint-400: #a89a7a;
   --color-newsprint-800: #4a4133;
   --color-newsprint-900: #332c22;
   --color-newsprint-950: #211c15;
@@ -175,6 +176,54 @@
         transparent 3px
       );
     color: var(--color-phosphor-300);
+  }
+
+  /* =================================================================
+     THE DESK [B6]
+     The centre blotter. The GDD already calls it a "Parchment Directive",
+     so this makes that literal: a warm cream parchment with a darker
+     vignette at the edges, as if the paper is lit from above and the desk
+     falls off into shadow at the periphery.
+
+     This is the single largest unthemed surface in the app — roughly 40%
+     of the screen and the thing the player looks at most — so it carries
+     most of the visual identity of the [Newsprint & Classified] direction.
+     ================================================================= */
+  .surface-desk {
+    background-color: var(--color-newsprint-50);
+    background-image:
+      radial-gradient(ellipse 120% 80% at 50% 0%, rgba(255, 252, 240, 0.95), transparent 70%),
+      radial-gradient(ellipse 100% 100% at 50% 100%, rgba(120, 95, 55, 0.22), transparent 65%),
+      repeating-linear-gradient(
+        0deg,
+        rgba(90, 70, 40, 0.028) 0px,
+        rgba(90, 70, 40, 0.028) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+    color: var(--color-newsprint-900);
+  }
+
+  /* A recessed well INSIDE a phosphor screen — the readouts, gauge tracks and
+     sub-panels of BagHolder Pro. Lighter than the screen bezel so nested
+     elements still separate, but still green-black rather than neutral grey.
+     Used instead of an ad-hoc `bg-stone-950` inside terminal tabs. */
+  .surface-terminal-well {
+    background-color: var(--color-phosphor-900);
+    background-image: linear-gradient(rgba(34, 197, 94, 0.05), rgba(34, 197, 94, 0.05));
+    border-color: rgba(22, 163, 74, 0.28);
+    color: var(--color-phosphor-300);
+  }
+
+  /* A single sheet of paper lying on the desk — for cards and objects
+     resting on the blotter. Lighter and flatter than the desk itself so
+     stacked documents still read as distinct layers. */
+  .surface-sheet {
+    background-color: var(--color-newsprint-100);
+    background-image:
+      radial-gradient(circle at 20% 15%, rgba(160, 130, 80, 0.10), transparent 50%),
+      radial-gradient(circle at 82% 85%, rgba(120, 95, 55, 0.12), transparent 55%);
+    color: var(--color-newsprint-900);
   }
 
   /* Faint CRT bloom without a filter (filters kill perf on the hot path). */

@@ -38,7 +38,7 @@ export const App: React.FC = () => {
 
   return (
     <div
-      className={`h-screen h-[100dvh] w-screen w-[100dvw] overflow-hidden select-none overscroll-none bg-stone-950 text-stone-100 flex flex-col font-sans transition-all duration-300 selection:bg-amber-500 selection:text-stone-950 ${
+      className={`h-screen h-[100dvh] w-screen w-[100dvw] overflow-hidden select-none overscroll-none bg-newsprint-950 text-newsprint-100 flex flex-col font-sans transition-all duration-300 selection:bg-gold-500 selection:text-newsprint-950 ${
         isCapsFrenzy ? 'ring-8 ring-inset ring-red-600/80' : ''
       }`}
       style={rootStyle}

@@ -81,13 +81,13 @@ export const ExecutiveExpansionPane: React.FC = () => {
         ) : (
           <div className="flex-1 min-h-0 flex flex-col items-center justify-center p-5 text-center">
             <Briefcase className="w-7 h-7 text-gold-500 mb-3" />
-            <span className="t-micro font-bold tracking-widest text-stone-500 uppercase">
+            <span className="t-micro font-bold tracking-widest text-newsprint-400 uppercase">
               Phase 1 // Customs Authorization
             </span>
-            <h4 className="mt-2 font-black text-gold-300 tracking-wider t-read font-mono">
+            <h4 className="mt-2 font-black text-gold-400 tracking-wider t-read font-mono">
               BAGHOLDER PRO // FIRST SLAM
             </h4>
-            <p className="t-body text-stone-400 mt-2 max-w-[250px] leading-relaxed">
+            <p className="t-body text-newsprint-300 mt-2 max-w-[250px] leading-relaxed">
               Slam the customs stamp once and the market terminal unseals. The
               causal shorting loop is playable from your very first tap.
             </p>
@@ -99,7 +99,7 @@ export const ExecutiveExpansionPane: React.FC = () => {
               aria-valuemax={1}
               aria-valuenow={totalClicks > 0 ? 1 : 0}
             >
-              <div className="h-2.5 overflow-hidden rounded-full border border-stone-700 bg-stone-900">
+              <div className="h-2.5 overflow-hidden rounded-full border border-newsprint-700 bg-redaction-700">
                 <div
                   className="h-full bg-gradient-to-r from-gold-600 to-phosphor-400 transition-[width] duration-300"
                   style={{ width: totalClicks > 0 ? '100%' : '0%' }}

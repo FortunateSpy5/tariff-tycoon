@@ -25,7 +25,7 @@ const TONE: Record<FeedbackTone, { bg: string; border: string; text: string }> =
   red: { bg: 'bg-red-950/95', border: 'border-red-500', text: 'text-red-200' },
   amber: { bg: 'bg-amber-950/95', border: 'border-amber-500', text: 'text-amber-200' },
   emerald: { bg: 'bg-emerald-950/95', border: 'border-emerald-500', text: 'text-emerald-200' },
-  blue: { bg: 'bg-stone-900/95', border: 'border-stone-600', text: 'text-stone-200' },
+  blue: { bg: 'bg-newsprint-900/95', border: 'border-newsprint-700', text: 'text-newsprint-100' },
 };
 
 export const FeedbackLayer: React.FC<{

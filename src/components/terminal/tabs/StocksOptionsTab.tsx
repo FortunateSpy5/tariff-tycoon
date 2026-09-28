@@ -95,27 +95,27 @@ export const StocksOptionsTab: React.FC = () => {
   return (
     <div className="h-full min-h-0 flex flex-col gap-2 select-none">
       <div className="shrink-0 space-y-2">
-        <div className="border-l-2 border-amber-500 bg-amber-950/30 px-2 py-1.5">
-          <span className="block t-caption font-mono font-black uppercase text-amber-400">First Trade</span>
-          <span className="block t-micro leading-snug text-stone-300">{tradeGuide}</span>
-          {nextUnlockHint && <span className="mt-1 block t-caption font-mono text-amber-300/90">{nextUnlockHint}</span>}
+        <div className="border-l-2 border-gold-500 bg-gold-500/15 px-2 py-1.5">
+          <span className="block t-caption font-mono font-black uppercase text-gold-400">First Trade</span>
+          <span className="block t-micro leading-snug text-phosphor-300">{tradeGuide}</span>
+          {nextUnlockHint && <span className="mt-1 block t-caption font-mono text-gold-400/90">{nextUnlockHint}</span>}
         </div>
 
         {/* Active Stock Candlestick Telemetry */}
-        <div className="bg-stone-950 border border-stone-800 rounded-lg p-2 flex items-center justify-between">
+        <div className="surface-terminal-well rounded-lg p-2 flex items-center justify-between">
           <div>
             <div className="flex items-center gap-1.5">
-              <span className="font-mono font-bold text-stone-200 text-xs">${selectedStock}</span>
-              <span className="t-micro text-stone-400 font-mono truncate max-w-[120px]">
+              <span className="font-mono font-bold text-phosphor-300 text-xs">${selectedStock}</span>
+              <span className="t-micro text-phosphor-600 font-mono truncate max-w-[120px]">
                 {activeStock?.name}
               </span>
             </div>
-            <span className="t-caption text-stone-500 font-mono block">
+            <span className="t-caption text-phosphor-600 font-mono block">
               Base: ${activeStock?.basePrice.toFixed(2)} // Volatility: {vexVolatility.toFixed(0)}%
             </span>
           </div>
           <div className="text-right">
-            <span className="font-mono font-bold text-sm block text-amber-300">
+            <span className="font-mono font-bold text-sm block text-gold-400">
               ${activeStock?.currentPrice.toFixed(2)}
             </span>
             {activeStock && (
@@ -139,8 +139,8 @@ export const StocksOptionsTab: React.FC = () => {
 
       {/* Watchlist Ladder (All 9 Stocks) — rows share the available height so the
           ladder fills its column instead of leaving a gap beneath the last row. */}
-      <Card density="flush" className="flex-1 min-h-0 flex flex-col overflow-hidden bg-stone-950/60">
-        <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar divide-y divide-stone-800/70 flex flex-col">
+      <Card material="term" density="flush" className="flex-1 min-h-0 flex flex-col overflow-hidden">
+        <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar divide-y divide-phosphor-600/20 flex flex-col">
           {symbols.map((sym) => {
             const stk = stocks[sym];
             if (!stk) return null;
@@ -155,16 +155,16 @@ export const StocksOptionsTab: React.FC = () => {
                 aria-pressed={isSelected}
                 className={`w-full text-left flex justify-between items-center px-2 py-1.5 min-h-[30px] flex-1 cursor-pointer transition-colors ${
                   isSelected
-                    ? 'bg-stone-800/90 text-amber-200 shadow-[inset_2px_0_0_0] shadow-amber-500'
-                    : 'hover:bg-stone-900/70'
+                    ? 'bg-phosphor-900 text-gold-300 shadow-[inset_2px_0_0_0] shadow-gold-500'
+                    : 'hover:bg-phosphor-900/60'
                 }`}
               >
                 <div className="flex items-center gap-1.5">
-                  <span className="font-mono font-bold text-[11px] text-stone-200">${sym}</span>
-                  <span className="t-caption text-stone-500 hidden sm:inline">{stk.sector.split(' ')[0]}</span>
+                  <span className="font-mono font-bold text-[11px] text-phosphor-300">${sym}</span>
+                  <span className="t-caption text-phosphor-600 hidden sm:inline">{stk.sector.split(' ')[0]}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="font-mono font-semibold text-[11px] text-stone-300">
+                  <span className="font-mono font-semibold text-[11px] text-phosphor-300">
                     ${stk.currentPrice.toFixed(2)}
                   </span>
                   <span className={`t-caption font-mono ${isUp ? 'text-emerald-400' : 'text-red-400'}`}>
@@ -179,7 +179,7 @@ export const StocksOptionsTab: React.FC = () => {
 
       {/* Active Open Option Trades & Early Settlement */}
       {activeTrades.length > 0 && (
-        <div className="shrink-0 rounded border border-emerald-900/60 bg-stone-950 p-1.5">
+        <div className="shrink-0 rounded border border-emerald-700/50 surface-terminal-well p-1.5">
           <span className="t-caption font-mono font-bold text-emerald-400 uppercase flex items-center gap-1">
             <Clock className="w-2.5 h-2.5 animate-spin" />
             Active 0DTE Positions ({activeTrades.length})
@@ -203,7 +203,7 @@ export const StocksOptionsTab: React.FC = () => {
                 return (
                   <div
                     key={t.id}
-                    className="flex items-center justify-between gap-2 bg-stone-900/90 border border-stone-800 p-1 rounded t-caption font-mono"
+                    className="flex items-center justify-between gap-2 surface-terminal-well p-1 rounded t-caption font-mono"
                   >
                     <span className="min-w-0">
                       <span className={`block truncate ${t.type === 'PUT' ? 'text-red-400 font-bold' : 'text-emerald-400 font-bold'}`}>
@@ -212,14 +212,14 @@ export const StocksOptionsTab: React.FC = () => {
                       <span className={currentPnl >= 0 ? 'text-emerald-400' : 'text-red-400'}>
                         P&amp;L {pnlLabel} · {secondsLeft}s left
                       </span>
-                      <span className="block text-stone-500">
+                      <span className="block text-phosphor-600">
                         Strike ${t.strikePrice.toFixed(2)} · Target ${t.targetPrice.toFixed(2)}
                       </span>
                     </span>
                     <button
                       onClick={() => settleOptionTrade(t.id)}
                       title="Lock in the current result and close this position"
-                      className="shrink-0 px-2 py-0.5 bg-emerald-600 hover:bg-emerald-500 text-stone-950 font-black rounded font-mono uppercase t-caption cursor-pointer flex items-center gap-0.5 active:scale-95 transition-all"
+                      className="shrink-0 px-2 py-0.5 bg-emerald-600 hover:bg-emerald-500 text-redaction-700 font-black rounded font-mono uppercase t-caption cursor-pointer flex items-center gap-0.5 active:scale-95 transition-all"
                     >
                       <CheckCircle className="w-2.5 h-2.5" />
                       <span>SETTLE</span>
@@ -233,16 +233,16 @@ export const StocksOptionsTab: React.FC = () => {
       )}
 
       {/* 0DTE Options Order Slip */}
-      <Card density="tight" className="shrink-0 bg-stone-950 space-y-2">
+      <Card material="term" density="tight" className="shrink-0 space-y-2">
         <div className="flex justify-between items-center t-micro font-mono">
-          <span className="text-stone-400">Leverage:</span>
+          <span className="text-phosphor-600">Leverage:</span>
           <div className="flex gap-1">
             {[10, 100, 1000].map((lvl) => (
               <button
                 key={lvl}
                 onClick={() => setLeverage(lvl)}
                 className={`px-1.5 py-0.5 rounded t-caption font-bold font-mono transition-colors cursor-pointer ${
-                  leverage === lvl ? 'bg-amber-500 text-stone-950 font-black' : 'bg-stone-800 text-stone-400 hover:text-stone-200'
+                  leverage === lvl ? 'bg-gold-500 text-redaction-700 font-black' : 'bg-phosphor-900 text-phosphor-600 hover:text-phosphor-300'
                 }`}
               >
                 {lvl}x
@@ -253,7 +253,7 @@ export const StocksOptionsTab: React.FC = () => {
 
         {/* Collateral Selector */}
         <div className="flex justify-between items-center t-micro font-mono">
-          <span className="text-stone-400">Collateral:</span>
+          <span className="text-phosphor-600">Collateral:</span>
           <div className="flex gap-1">
             {[500, 1000, 5000].map((amt) => (
               <button
@@ -262,7 +262,7 @@ export const StocksOptionsTab: React.FC = () => {
                 className={`px-1.5 py-0.5 rounded t-caption font-bold font-mono transition-colors cursor-pointer ${
                   collateralAmount === amt
                     ? 'bg-emerald-500 text-stone-950 font-black'
-                    : 'bg-stone-800 text-stone-400 hover:text-stone-200'
+                    : 'bg-phosphor-900 text-phosphor-600 hover:text-phosphor-300'
                 }`}
               >
                 ${amt >= 1000 ? `${amt / 1000}k` : amt}

@@ -4,8 +4,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && npm run theme:check && vite build",
     "lint": "oxlint",
+    "theme:check": "node scripts/check-theme-coverage.mjs --budget 0",
     "preview": "vite preview"
   },
   "dependencies": {

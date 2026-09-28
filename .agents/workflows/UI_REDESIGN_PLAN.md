@@ -138,6 +138,85 @@ rows became a plain number.
 
 ---
 
+## Phase B — Theme completion ✅ COMPLETE (81 → 0, enforced)
+
+### Why B is being redone
+
+B was previously marked complete and that was **wrong**. Measured, only 6 of 26
+player-facing files used a themed material. The theme had been applied to
+**chrome** (top bar, four tab headers, left pane, two onboarding cards) while the
+**content** was still default stone grey — including the centre desk, roughly 40%
+of the screen and the thing the player looks at most. A screenshot looked
+coherent, so the gap was invisible without counting.
+
+Baseline measured by `scripts/check-theme-coverage.mjs`: **81 unthemed stone
+surfaces across 20 files.**
+
+Root cause: `index.css` defines four materials but nothing ever decided *which
+material each region is*. So they were applied ad hoc to whatever looked wrong
+in a screenshot. The fix is an explicit material assignment, not more spot fixes.
+
+### The material assignment (the actual spec)
+
+| Region | Material | Rationale |
+|---|---|---|
+| App root | `newsprint-950` (deep) | desk wood behind the paper, not screen |
+| **Centre desk** | **newsprint (paper)** | the GDD already calls it a "Parchment Directive" — make that literal |
+| Pane frames L/R | `classified` (near-black) | recessed into the desk |
+| Cards on the desk | `newsprint` | stacked paperwork |
+| Desk props | newsprint + material accent | objects resting on paper |
+| Terminal contents | **keep `terminal`** | a phosphor CRT is correct there |
+| Inset wells / marquee | `newsprint-950` | dark wells for text contrast on paper |
+
+The desk becoming **actual paper** is the centrepiece of this phase. It currently
+reads as `from-stone-900 via-stone-900/95 to-amber-950/20`, which is the single
+largest unthemed surface in the app.
+
+### B5. Make `Card panel` a themed material ◀ biggest single win
+`Card`'s default `panel` variant is `bg-stone-900/95`, so **every** `<Card>` call
+without an explicit material is unthemed. Retargeting the default fixes ~10 call
+sites at once and prevents new ones from defaulting to grey.
+
+### B6. Migrate the desk
+`ResoluteBlotterCenter`, `ExecutiveGauges`, `ClickerButton`, and the three props
+(`RedPhoneProp`, `GoldBoxProp`, `SubpoenaShredderProp`) to paper. This is where
+the visible improvement is.
+
+### B7. Retarget `PaneShell` + the app root
+Pane frames → `classified`; `App.tsx` root → `newsprint-950`.
+
+### B8. Migrate the remaining tab bodies + modal + footer
+`ResetGameModal`, `PolyGriftTab`, and the residual `bg-stone-950` overrides the
+`Card` migration renders redundant.
+
+### B9. Remove the ad-hoc overrides
+95 `bg-stone-950` call sites exist largely to *undo* the primitive. Once B5
+lands, most become dead overrides and should be deleted rather than migrated.
+
+### B10. Wire the coverage check into `npm run build`
+`npm run theme:check` now runs inside `npm run build` with a budget of **0**.
+The build fails on any regression. Deliberate exceptions use an inline
+`theme-allow` marker so new violations in already-touched files are still
+caught.
+
+### Result
+
+```
+81 unthemed surfaces across 20 files   (start of phase B)
+ 0 unthemed surfaces                   (end of phase B)
+```
+
+Verified in-browser: three materials read as one system — phosphor CRT (left
+wing), parchment blotter (centre desk), classified paperwork (right deck).
+
+One defect the counter could not catch, found only by looking at the render:
+`/40` and `/50` opacity papers sit over the near-black classified pane, so
+"dimmed" rows rendered *dark* and their ink-on-paper text became illegible.
+The lesson generalises — **a coverage counter proves a class is themed, not
+that a given instance is legible.** Always re-screenshot after a batch change.
+
+---
+
 ## Phase C — Responsive & polish
 
 **C1.** Visual pass at 1920×1080, 1600×900, 1366×768, 1280×720. Verify zero

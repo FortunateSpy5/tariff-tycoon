@@ -28,7 +28,7 @@ import {
 } from '../../../constants/crisis';
 
 const SEVERITY_STYLE: Record<string, string> = {
-  WHISPER: 'text-stone-400 border-stone-600',
+  WHISPER: 'text-newsprint-300 border-newsprint-700',
   CONCERN: 'text-amber-300 border-amber-500',
   PROTEST: 'text-orange-400 border-orange-500',
   EMERGENCY: 'text-red-400 border-red-500',
@@ -62,10 +62,10 @@ export const RedPhoneProp: React.FC = () => {
         className={`p-2 rounded-lg border transition-all flex items-center gap-2 text-left cursor-pointer group relative overflow-hidden select-none ${
           isBroke
             ? 'bg-red-950/80 border-red-600 text-red-200 animate-ring shadow-lg shadow-red-950/50'
-            : 'bg-stone-950/90 border-stone-800 text-stone-400 hover:border-red-900/60'
+            : 'bg-newsprint-900 border-newsprint-800 text-newsprint-300 hover:border-wax-500/60'
         }`}
       >
-        <div className={`p-1.5 rounded-md shrink-0 ${isBroke ? 'bg-red-600 text-stone-950' : 'bg-stone-900 text-red-500'}`}>
+        <div className={`p-1.5 rounded-md shrink-0 ${isBroke ? 'bg-wax-500 text-newsprint-50' : 'bg-newsprint-800 text-wax-400'}`}>
           {isBroke ? <PhoneCall className="w-4 h-4 animate-bounce" /> : <Phone className="w-4 h-4" />}
         </div>
         <div className="min-w-0">
@@ -126,7 +126,7 @@ export const RedPhoneProp: React.FC = () => {
       </div>
 
       <div className="flex items-center justify-between gap-1">
-        <span className="t-micro font-mono text-stone-300 shrink-0">
+        <span className="t-micro font-mono text-newsprint-200 shrink-0">
           {isMaxTier ? 'MAX' : `+${CRISIS_TIER_MULTIPLIERS[tier + 1]}x in ${toNext}s`}
         </span>
         <button
@@ -139,14 +139,14 @@ export const RedPhoneProp: React.FC = () => {
         <button
           onClick={suppressCrisis}
           title="Issue a statement and move on. No payout, no heat, no tantrum."
-          className="px-1.5 py-1 rounded bg-stone-900 hover:bg-stone-800 border border-stone-700 text-stone-300 font-mono font-bold t-micro cursor-pointer active:scale-95 transition-all shrink-0 flex items-center gap-0.5"
+          className="px-1.5 py-1 rounded bg-newsprint-800 hover:bg-newsprint-700 border border-newsprint-700 text-newsprint-200 font-mono font-bold t-micro cursor-pointer active:scale-95 transition-all shrink-0 flex items-center gap-0.5"
         >
           <PhoneOff className="w-2.5 h-2.5" />
           <span>IGNORE</span>
         </button>
       </div>
 
-      <span className="t-caption font-mono text-stone-400 leading-none">
+      <span className="t-caption font-mono text-newsprint-300 leading-none">
         Peak pays {formatCurrency(maxPayout)} · max heat
       </span>
     </div>

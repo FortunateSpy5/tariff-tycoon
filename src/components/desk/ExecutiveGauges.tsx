@@ -69,11 +69,11 @@ export const ExecutiveGauges: React.FC = () => {
       <Card density="tight">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 min-w-0">
-            <Droplet className={`w-3.5 h-3.5 shrink-0 ${isDry ? 'text-red-500' : 'text-gold-400'}`} />
-            <span className="t-micro font-bold text-stone-300 truncate">{inkLabel}</span>
+            <Droplet className={`w-3.5 h-3.5 shrink-0 ${isDry ? 'text-wax-500' : 'text-gold-600'}`} />
+            <span className="t-micro font-bold text-newsprint-900 truncate">{inkLabel}</span>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
-            <span className={`t-micro font-mono font-bold ${isDry ? 'text-red-400' : 'text-stone-300'}`}>
+            <span className={`t-micro font-mono font-bold ${isDry ? 'text-wax-600' : 'text-newsprint-900'}`}>
               {isCapsFrenzy ? '∞' : `${inkPercent}%`}
             </span>
             <button
@@ -82,8 +82,8 @@ export const ExecutiveGauges: React.FC = () => {
               title="Refill the ink tank"
               className={`px-1.5 py-0.5 rounded t-caption font-mono font-bold flex items-center gap-1 transition-all ${
                 canAfford && inkPercent < 100
-                  ? 'bg-gold-600 hover:bg-gold-500 text-stone-950 active:scale-95 cursor-pointer'
-                  : 'bg-stone-800 text-stone-500 cursor-not-allowed'
+                  ? 'bg-gold-600 hover:bg-gold-500 text-newsprint-50 active:scale-95 cursor-pointer'
+                  : 'bg-newsprint-300 text-newsprint-800 cursor-not-allowed'
               }`}
             >
               <RefreshCw className="w-3 h-3" />
@@ -93,7 +93,7 @@ export const ExecutiveGauges: React.FC = () => {
         </div>
 
         <div
-          className="w-full h-1.5 bg-stone-950 rounded-full overflow-hidden mt-1"
+          className="w-full h-1.5 bg-newsprint-300 rounded-full overflow-hidden mt-1"
           role="progressbar"
           aria-label={inkLabel}
           aria-valuemin={0}
@@ -115,13 +115,13 @@ export const ExecutiveGauges: React.FC = () => {
         <div className="flex items-center gap-1 mt-0.5">
           {isDry ? (
             <>
-              <AlertTriangle className="w-3 h-3 shrink-0 text-red-400" />
-              <span className="t-caption text-red-400 font-semibold">
+              <AlertTriangle className="w-3 h-3 shrink-0 text-wax-500" />
+              <span className="t-caption text-wax-600 font-semibold">
                 DRY NIB: -90% yield
               </span>
             </>
           ) : (
-            <span className="t-caption text-stone-500 truncate">
+            <span className="t-caption text-newsprint-800 truncate">
               {isCapsFrenzy
                 ? 'Ink restored; none consumed during Frenzy'
                 : `−${INK_PER_CLICK} ink per ${phase === 1 ? 'stamp' : 'signature'}`}
@@ -135,18 +135,18 @@ export const ExecutiveGauges: React.FC = () => {
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 min-w-0">
             {isCapsFrenzy ? (
-              <Siren className="w-3.5 h-3.5 shrink-0 text-red-500" />
+              <Siren className="w-3.5 h-3.5 shrink-0 text-wax-500" />
             ) : (
-              <Flame className={`w-3.5 h-3.5 shrink-0 ${tantrumPercent > 70 ? 'text-red-500' : 'text-gold-500'}`} />
+              <Flame className={`w-3.5 h-3.5 shrink-0 ${tantrumPercent > 70 ? 'text-wax-500' : 'text-gold-600'}`} />
             )}
-            <span className="t-micro font-bold text-stone-300 truncate">
+            <span className="t-micro font-bold text-newsprint-900 truncate">
               {isCapsFrenzy ? 'CAPS LOCK FRENZY' : 'Executive Tantrum'}
             </span>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             <span
               className={`t-micro font-mono font-bold ${
-                isCapsFrenzy ? 'text-red-400' : tantrumPercent > 70 ? 'text-red-400' : 'text-stone-300'
+                isCapsFrenzy ? 'text-wax-600' : tantrumPercent > 70 ? 'text-wax-600' : 'text-newsprint-900'
               }`}
             >
               {isCapsFrenzy ? `${Math.ceil(capsFrenzySecondsRemaining)}s` : `${tantrumPercent}%`}
@@ -157,8 +157,8 @@ export const ExecutiveGauges: React.FC = () => {
               title="Burn all tantrum to cool VEX volatility. Costs the whole meter, including any progress toward a 10x FRENZY."
               className={`px-1.5 py-0.5 rounded t-caption font-mono font-bold flex items-center gap-1 transition-all ${
                 canVent
-                  ? 'bg-stone-700 hover:bg-stone-600 text-stone-100 active:scale-95 cursor-pointer'
-                  : 'bg-stone-900 text-stone-600 cursor-not-allowed'
+                  ? 'bg-stampblue-500 hover:bg-stampblue-700 text-newsprint-50 active:scale-95 cursor-pointer'
+                  : 'bg-newsprint-300 text-newsprint-800 cursor-not-allowed'
               }`}
             >
               <Wind className="w-3 h-3" />
@@ -168,7 +168,7 @@ export const ExecutiveGauges: React.FC = () => {
         </div>
 
         <div
-          className="w-full h-1.5 bg-stone-950 rounded-full overflow-hidden mt-1"
+          className="w-full h-1.5 bg-newsprint-300 rounded-full overflow-hidden mt-1"
           role="progressbar"
           aria-label="Executive Tantrum"
           aria-valuemin={0}
@@ -188,7 +188,7 @@ export const ExecutiveGauges: React.FC = () => {
         </div>
 
         <div className="flex items-center justify-between gap-2 mt-0.5">
-          <span className="t-caption text-stone-500 truncate">
+          <span className="t-caption text-newsprint-800 truncate">
             {isCapsFrenzy
               ? '10x CASH · INK RESTORED'
               : isCoolingOff
@@ -196,7 +196,7 @@ export const ExecutiveGauges: React.FC = () => {
               : `Inked +${hasDietSodaDrip ? DIET_SODA_TANTRUM_PER_CLICK : INKED_TANTRUM_PER_CLICK}% · dry +${DRY_TANTRUM_PER_CLICK}%`}
           </span>
           {!isCapsFrenzy && !isCoolingOff && (
-            <span className="t-caption text-stone-600 shrink-0">
+            <span className="t-caption text-newsprint-800/70 shrink-0">
               Frenzy at 100% · Vent −{TANTRUM_VENT_VEX_RELIEF} VEX
             </span>
           )}

@@ -75,7 +75,7 @@ export const TelemetryConsolePane: React.FC = () => {
           INVARIANT: fully opaque, and only rendered when there is no tab content
           behind it, so the underlying terminal is never ghosted through. */}
       {isLocked && (
-        <div className="absolute inset-0 bg-stone-950 z-20 flex flex-col items-center justify-center p-4 text-center">
+        <div className="absolute inset-0 bg-phosphor-900 z-20 flex flex-col items-center justify-center p-4 text-center">
           <div className="p-3 bg-amber-950/40 rounded-full border border-amber-600/40 text-amber-500 mb-2">
             <Lock className="w-6 h-6 animate-pulse" />
           </div>

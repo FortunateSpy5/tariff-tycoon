@@ -22,7 +22,7 @@ export const GoldBoxProp: React.FC = () => {
     <button
       onClick={handleClick}
       title="Sell classified bathroom documents for +$500 (+8% Suspicion)"
-      className="p-2 rounded-lg bg-stone-950/90 border border-stone-800 hover:border-amber-500/60 transition-all flex items-center gap-2 text-left cursor-pointer group relative overflow-hidden select-none active:scale-95"
+      className="p-2 rounded-lg bg-newsprint-900 border border-newsprint-800 hover:border-gold-500/60 transition-all flex items-center gap-2 text-left cursor-pointer group relative overflow-hidden select-none active:scale-95"
     >
       <div className="p-1.5 rounded-md bg-amber-950/60 border border-amber-500/30 text-amber-400 group-hover:scale-110 transition-transform">
         <Archive className="w-4 h-4" />
@@ -38,7 +38,7 @@ export const GoldBoxProp: React.FC = () => {
       </div>
 
       {feedback && (
-        <div className="absolute inset-0 bg-stone-950/95 flex items-center justify-center t-micro font-mono font-bold text-emerald-400 px-1 text-center">
+        <div className="absolute inset-0 bg-newsprint-950 flex items-center justify-center t-micro font-mono font-bold text-gold-400 px-1 text-center">
           {feedback}
         </div>
       )}

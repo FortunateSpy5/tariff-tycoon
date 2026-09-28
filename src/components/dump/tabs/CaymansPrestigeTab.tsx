@@ -66,34 +66,34 @@ export const CaymansPrestigeTab: React.FC = () => {
         />
 
         {/* Current Slips Meter */}
-        <Card density="tight" className="bg-stone-950 flex items-center justify-between">
+        <Card density="tight" className="flex items-center justify-between">
           <div>
-            <span className="t-micro text-stone-500 font-mono block">Current Balance:</span>
-            <span className="font-mono font-bold text-amber-400 text-sm flex items-center gap-1">
+            <span className="t-micro text-newsprint-800 font-mono block">Current Balance:</span>
+            <span className="font-mono font-bold text-gold-700 text-sm flex items-center gap-1">
               <ShieldCheck className="w-4 h-4" />
               {sovereignImmunitySlips || 0} Sovereign Immunity Slips (SIS)
             </span>
           </div>
           <div className="text-right">
-            <span className="t-micro text-emerald-400 font-mono block">
+            <span className="t-micro text-emerald-700 font-mono block">
               +{(sovereignImmunitySlips || 0) * 10}% Click Yield Multiplier
             </span>
           </div>
         </Card>
 
         {/* Prestige Reset Yield Card */}
-        <div className="bg-stone-950 border border-amber-900/40 rounded-lg p-2.5 space-y-2">
-          <span className="text-stone-300 font-medium text-xs block leading-snug">
+        <div className="surface-sheet border border-newsprint-300 rounded-lg p-2.5 space-y-2">
+          <span className="text-newsprint-900 font-medium text-xs block leading-snug">
             File Chapter 11 Nation Reorganization
           </span>
-          <p className="t-micro text-stone-500 leading-relaxed font-sans">
+          <p className="t-micro text-newsprint-800 leading-relaxed font-sans">
             Reset current Treasury cash and liquidations to incorporate an offshore Delaware C-Corp. 
             Retain permanent Sovereign Immunity Slips to amplify future click and tariff payouts.
           </p>
 
-          <div className="p-2 rounded bg-stone-900 border border-stone-800 font-mono text-xs flex justify-between items-center">
-            <span className="text-stone-400">Yield on Flight:</span>
-            <span className="text-emerald-400 font-bold">+{potentialSIS} SIS</span>
+          <div className="p-2 rounded bg-newsprint-200/70 border border-newsprint-300 font-mono text-xs flex justify-between items-center">
+            <span className="text-newsprint-800">Yield on Flight:</span>
+            <span className="text-emerald-700 font-bold">+{potentialSIS} SIS</span>
           </div>
 
           <button
@@ -101,8 +101,8 @@ export const CaymansPrestigeTab: React.FC = () => {
             disabled={!canPrestige}
             className={`w-full py-2 rounded-lg font-mono t-micro font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all ${
               canPrestige
-                ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-stone-950 shadow cursor-pointer active:scale-95 font-black'
-                : 'bg-stone-800 text-stone-500 cursor-not-allowed'
+                ? 'bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 text-newsprint-950 shadow cursor-pointer active:scale-95 font-black'
+                : 'bg-newsprint-300 text-newsprint-800 cursor-not-allowed'
             }`}
           >
             <RefreshCw className="w-3.5 h-3.5" />
@@ -112,7 +112,7 @@ export const CaymansPrestigeTab: React.FC = () => {
       </div>
 
       {feedback && (
-        <div className="shrink-0 p-1.5 rounded bg-stone-950 border border-amber-500/40 text-center font-mono t-micro font-bold text-amber-300 animate-pulse">
+        <div className="shrink-0 p-1.5 rounded bg-gold-500/20 border border-gold-600/50 text-center font-mono t-micro font-bold text-gold-900 animate-pulse">
           {feedback}
         </div>
       )}

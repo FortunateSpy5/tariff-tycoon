@@ -37,7 +37,7 @@ export const PaneShell: React.FC<PaneShellProps> = ({
   className = '',
 }) => (
   <div
-    className={`h-full min-h-0 flex flex-col overflow-hidden select-none rounded-xl border border-stone-800 bg-stone-900/95 shadow-2xl ${className}`}
+    className={`h-full min-h-0 flex flex-col overflow-hidden select-none rounded-xl border border-redaction-700 bg-newsprint-950 shadow-2xl ${className}`}
   >
     {header}
     <div className={`relative flex min-h-0 flex-1 flex-col overflow-hidden ${bodyClassName}`}>
@@ -62,13 +62,13 @@ export const TabStrip: React.FC<{
   accent?: 'phosphor' | 'gold';
   className?: string;
 }> = ({ tabs, activeId, onSelect, accent = 'phosphor', className = '' }) => (
-  <div className={`flex shrink-0 items-center gap-1 border-b border-stone-800 bg-stone-950 p-1 ${className}`}>
+  <div className={`flex shrink-0 items-center gap-1 border-b border-redaction-700 bg-redaction-700 p-1 ${className}`}>
     {tabs.map((tab) => {
       const isActive = tab.id === activeId;
       const active =
         accent === 'phosphor'
-          ? 'bg-phosphor-500 text-stone-950'
-          : 'bg-gold-500 text-stone-950';
+          ? 'bg-phosphor-500 text-redaction-700'
+          : 'bg-gold-500 text-redaction-700';
       return (
         <button
           key={tab.id}
@@ -76,7 +76,7 @@ export const TabStrip: React.FC<{
           className={`flex min-w-0 flex-1 items-center justify-center gap-1 rounded px-1 py-1 text-center font-mono t-micro font-bold transition-colors ${
             isActive
               ? `${active} font-black shadow-md`
-              : 'text-stone-400 hover:bg-stone-900 hover:text-stone-200'
+              : 'text-newsprint-300 hover:bg-redaction-500 hover:text-newsprint-100'
           }`}
         >
           <span className="shrink-0">[{tab.shortcut}]</span>
@@ -98,7 +98,7 @@ export const StatusStrip: React.FC<{
   label: string;
   right?: React.ReactNode;
 }> = ({ icon, label, right }) => (
-  <div className="flex shrink-0 items-center justify-between border-t border-stone-800 bg-stone-950 px-3 py-1.5 font-mono t-micro text-stone-500">
+  <div className="flex shrink-0 items-center justify-between border-t border-redaction-700 bg-redaction-700 px-3 py-1.5 font-mono t-micro text-newsprint-400">
     <div className="flex min-w-0 items-center gap-1.5">
       {icon}
       <span className="truncate">{label}</span>

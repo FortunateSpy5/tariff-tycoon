@@ -103,7 +103,12 @@ export const ResoluteBlotterCenter: React.FC = () => {
   );
 
   return (
-    <div className="h-full min-h-0 flex flex-col gap-2 bg-gradient-to-b from-stone-900 via-stone-900/95 to-amber-950/20 border border-amber-900/40 rounded-xl p-3 shadow-2xl relative overflow-hidden select-none">
+    // B6: the desk IS parchment. This is the largest surface in the app
+    // (~40% of the screen) and it was `from-stone-900` — default grey — which
+    // meant the [Newsprint & Classified] direction existed only in the chrome
+    // around it. The GDD already called this a "Parchment Directive"; now it
+    // is literally paper. Everything nested inside is dark ink on cream.
+    <div className="h-full min-h-0 flex flex-col gap-2 surface-desk border border-newsprint-400 rounded-xl p-3 shadow-2xl relative overflow-hidden select-none">
       
       {/* Special Counsel Raid / Asset Seizure Alert
           REDESIGN: this used to be a standalone banner competing with three
@@ -127,13 +132,13 @@ export const ResoluteBlotterCenter: React.FC = () => {
         <SubpoenaShredderProp />
       </div>
 
-      {/* Parchment Directive / Seizure Log */}
+      {/* Parchment Directive / Seizure Log — a stamped sheet on the blotter. */}
       <div
-        className={`bg-amber-50/5 border border-amber-500/20 rounded-lg p-2.5 text-center shadow-inner shrink-0 transition-all duration-100 relative ${
+        className={`surface-sheet border border-newsprint-300 rounded-lg p-2.5 text-center shadow-sm shrink-0 transition-all duration-100 relative ${
           isRecoilActive ? 'animate-recoil' : ''
-        } ${isPulseActive ? 'ring-2 ring-amber-400/80 animate-pulse' : ''}`}
+        } ${isPulseActive ? 'ring-2 ring-wax-500/60 animate-pulse' : ''}`}
       >
-        <div className="flex items-center justify-center gap-1.5 t-micro font-mono font-bold tracking-widest text-amber-400 uppercase">
+        <div className="flex items-center justify-center gap-1.5 t-micro font-mono font-bold tracking-widest text-wax-600 uppercase">
           <FileText className="w-3.5 h-3.5" />
           <span>
             {phase === 1
@@ -141,7 +146,7 @@ export const ResoluteBlotterCenter: React.FC = () => {
               : 'EXECUTIVE ORDER // 3:00 AM UNILATERAL DIRECTIVE'}
           </span>
         </div>
-        <p className="text-stone-300 italic text-xs mt-1 line-clamp-2 font-serif px-2">
+        <p className="text-newsprint-800 italic text-xs mt-1 line-clamp-2 font-serif px-2">
           {lastYapPost?.rawText ??
             (phase === 1
               ? '"Foreign brie and uninspected produce confiscated for emergency redistribution."'
@@ -149,11 +154,11 @@ export const ResoluteBlotterCenter: React.FC = () => {
         </p>
 
         {lastYapPost && (
-          <div className="mt-1 flex items-center justify-center gap-2 t-micro font-mono text-amber-500/80">
-            <span>Tariff {lastYapPost.tariffPercentage}%</span>
-            <span className="text-stone-500">·</span>
+          <div className="mt-1 flex items-center justify-center gap-2 t-micro font-mono text-newsprint-800">
+            <span className="text-wax-600">Tariff {lastYapPost.tariffPercentage}%</span>
+            <span className="opacity-40">·</span>
             <span>Impact ×{lastYapPost.impactMultiplier.toFixed(2)}</span>
-            <span className="text-stone-500">·</span>
+            <span className="opacity-40">·</span>
             <span>{lastYapPost.viralQuotesCount.toLocaleString()} viral quotes</span>
           </div>
         )}
@@ -171,7 +176,7 @@ export const ResoluteBlotterCenter: React.FC = () => {
             onClick={handlePrintMoney}
             disabled={printerCooldownRemaining > 0}
             title={printerCooldownRemaining > 0 ? `Printer cooling down: ${printerCooldownRemaining}s` : 'Print $100,000 and raise suspicion by 15%'}
-            className={`w-full py-1.5 px-3 text-stone-950 font-black rounded-lg font-mono uppercase tracking-wider text-[11px] shadow-lg flex items-center justify-center gap-2 transition-all border border-emerald-400/60 ${printerCooldownRemaining > 0 ? 'bg-stone-700 cursor-not-allowed opacity-70' : 'bg-gradient-to-r from-emerald-600 via-yellow-500 to-emerald-600 hover:opacity-95 cursor-pointer active:scale-95'}`}
+            className={`w-full py-1.5 px-3 text-newsprint-950 font-black rounded-lg font-mono uppercase tracking-wider text-[11px] shadow-lg flex items-center justify-center gap-2 transition-all border border-emerald-700/60 ${printerCooldownRemaining > 0 ? 'bg-newsprint-300 text-newsprint-800 cursor-not-allowed' : 'bg-gradient-to-r from-emerald-700 via-gold-500 to-emerald-700 hover:opacity-95 text-newsprint-50 cursor-pointer active:scale-95'}`}
           >
             <Printer className={`w-3.5 h-3.5 ${printerCooldownRemaining > 0 ? '' : 'animate-bounce'}`} />
             <span>{printerCooldownRemaining > 0 ? `COOLING DOWN (${printerCooldownRemaining}s)` : 'PRINT $BRRR (+$100k, +15% S.L.O.P.)'}</span>
@@ -189,20 +194,20 @@ export const ResoluteBlotterCenter: React.FC = () => {
       <div className="flex shrink-0 flex-col gap-1.5">
         <div className="flex items-center gap-1.5">
         {!hasMarketAccess ? (
-          <div className="flex-1 py-2 bg-stone-950/80 border border-stone-800 text-stone-500 font-mono text-center text-xs rounded-lg uppercase tracking-wider">
+          <div className="flex-1 py-2 bg-newsprint-200/70 border border-newsprint-400 text-newsprint-800 font-mono text-center text-xs rounded-lg uppercase tracking-wider">
             SLAM THE STAMP ONCE TO UNSEAL BAGHOLDER PRO
           </div>
         ) : isWalkBackWindowActive ? (
           <div className="flex w-full items-stretch gap-2">
             <div
-              className="flex-1 border border-amber-500/50 bg-amber-950/40 px-2 py-1.5 font-mono"
+              className="flex-1 border border-gold-600/50 bg-gold-500/15 px-2 py-1.5 font-mono"
               role="status"
               aria-live="polite"
             >
-              <span className="block t-micro font-black text-amber-300">
+              <span className="block t-micro font-black text-gold-900">
                 CLARIFICATION WINDOW // {Math.ceil(walkBackSecondsRemaining)}s
               </span>
-              <span className="block t-micro leading-snug text-stone-200">
+              <span className="block t-micro leading-snug text-newsprint-900">
                 {hasWalkBackCall
                   ? `CALL ARMED ON $${lastTargetStockSymbol}. Return the market to the desk.`
                   : `Arm a matching $${lastTargetStockSymbol} CALL in the market terminal, then walk it back.`}
@@ -216,8 +221,8 @@ export const ResoluteBlotterCenter: React.FC = () => {
                 : `Arm a matching $${lastTargetStockSymbol} CALL before the window closes`}
               className={`shrink-0 px-3 py-2 font-mono t-micro font-black uppercase transition-all ${
                 hasWalkBackCall
-                  ? 'animate-pulse bg-emerald-500 text-stone-950 hover:bg-emerald-400 cursor-pointer'
-                  : 'bg-stone-800 text-stone-500 cursor-not-allowed'
+                  ? 'animate-pulse bg-emerald-600 text-newsprint-50 hover:bg-emerald-500 cursor-pointer'
+                  : 'bg-newsprint-300 text-newsprint-800 cursor-not-allowed'
               }`}
             >
               <RotateCcw className="mx-auto mb-0.5 h-4 w-4" />
@@ -232,18 +237,18 @@ export const ResoluteBlotterCenter: React.FC = () => {
               title="Toggle: Short the stock selected on BagHolder Pro vs Unhinged Random Shotgun"
               className={`px-2.5 py-2 rounded-lg font-mono t-micro font-bold border flex items-center gap-1 cursor-pointer transition-all active:scale-95 shrink-0 ${
                 yapTargetMode === 'selected'
-                  ? 'bg-amber-950/80 border-amber-500/80 text-amber-300 hover:border-amber-400'
-                  : 'bg-purple-950/80 border-purple-500/80 text-purple-300 hover:border-purple-400'
+                  ? 'bg-gold-500/25 border-gold-600 text-gold-900 hover:border-gold-700'
+                  : 'bg-stampblue-500/20 border-stampblue-500 text-stampblue-700 hover:border-stampblue-700'
               }`}
             >
               {yapTargetMode === 'selected' ? (
                 <>
-                  <Crosshair className="w-3.5 h-3.5 text-amber-400" />
+                  <Crosshair className="w-3.5 h-3.5 text-gold-600" />
                   <span>Short ${selectedStock}</span>
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-3.5 h-3.5 text-purple-400" />
+                  <Sparkles className="w-3.5 h-3.5 text-stampblue-500" />
                   <span>Shotgun (+25%)</span>
                 </>
               )}
@@ -256,10 +261,10 @@ export const ResoluteBlotterCenter: React.FC = () => {
               title="Crash targeted stock and harvest short profits [Hotkey: Y] (Costs 20 Ink, 10s cooldown)"
               className={`flex-1 py-2 rounded-lg font-mono uppercase tracking-wider flex items-center justify-center gap-1.5 text-xs font-black transition-all shadow-lg ${
                 cooldownRemaining > 0
-                  ? 'bg-stone-800 text-stone-400 border border-stone-700 cursor-not-allowed opacity-80'
+                  ? 'bg-newsprint-300 text-newsprint-800 border border-newsprint-400 cursor-not-allowed'
                   : inkLevel < 20
-                  ? 'bg-stone-900 text-amber-500 border border-amber-800/80 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-red-600 via-amber-600 to-red-600 hover:opacity-95 text-stone-950 active:scale-95 cursor-pointer'
+                  ? 'bg-newsprint-200 text-gold-900 border border-gold-600/50 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-wax-600 via-wax-500 to-wax-600 hover:opacity-95 text-newsprint-50 active:scale-95 cursor-pointer'
               }`}
             >
               <Send className="w-3.5 h-3.5" />
@@ -276,7 +281,7 @@ export const ResoluteBlotterCenter: React.FC = () => {
         </div>
 
         {lastWalkBackNotice && !isWalkBackWindowActive && (
-          <p className="w-full min-w-0 border border-emerald-900/60 bg-stone-950/90 px-2 py-1 text-center font-mono t-caption leading-snug text-emerald-300 break-words" role="status" aria-live="polite">
+          <p className="w-full min-w-0 border border-emerald-800/50 bg-emerald-700/15 px-2 py-1 text-center font-mono t-caption leading-snug text-emerald-900 break-words" role="status" aria-live="polite">
             {lastWalkBackNotice}
           </p>
         )}

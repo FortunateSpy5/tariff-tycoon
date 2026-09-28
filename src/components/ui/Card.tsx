@@ -9,15 +9,24 @@
  * variant of it; do not reintroduce one-off padding utilities on panels.
  *
  * Material variants map to the [Newsprint & Classified] design direction:
- *   - 'term'     phosphor CRT screen   (BagHolder Pro, S.L.O.P. Radar, telemetry)
- *   - 'paper'    aged newsprint        (directives, objectives, certificates)
- *   - 'panel'    neutral office chrome (the three cockpit panes)
- *   - 'classified' redacted black bar  (seal headers, raid banners)
+ *   - 'sheet'     a sheet of paper on the desk   (DEFAULT — cards on the blotter)
+ *   - 'desk'      the parchment blotter itself
+ *   - 'term'      phosphor CRT screen            (BagHolder Pro, S.L.O.P. Radar)
+ *   - 'paper'     aged newsprint, high contrast (directives, certificates)
+ *   - 'panel'     recessed classified frame     (structural chrome only)
+ *   - 'classified' redacted black bar            (seal headers, raid banners)
+ *
+ * INVARIANT: [The Default Must Be Themed] [B5]
+ * `panel` used to be this component's default and it was a neutral grey
+ * (`bg-stone-900/95`). That made EVERY `<Card>` without an explicit material
+ * unthemed, and was the single largest source of grey surfaces in the app. The
+ * default is now `sheet`, so a bare `<Card>` is automatically paper. `panel`
+ * remains available but is now an explicit opt-in for structural chrome.
  */
 
 import React from 'react';
 
-export type CardMaterial = 'panel' | 'term' | 'paper' | 'classified';
+export type CardMaterial = 'sheet' | 'desk' | 'term' | 'paper' | 'panel' | 'classified';
 
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   material?: CardMaterial;
@@ -35,9 +44,11 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const MATERIAL_CLASS: Record<CardMaterial, string> = {
-  panel: 'bg-stone-900/95 border-stone-800',
+  sheet: 'surface-sheet border-newsprint-300',
+  desk: 'surface-desk border-newsprint-400',
   term: 'surface-terminal border-phosphor-600/35',
   paper: 'surface-newsprint border-newsprint-300',
+  panel: 'bg-newsprint-900 border-newsprint-800',
   classified: 'surface-classified border-stone-950',
 };
 
@@ -55,7 +66,7 @@ const ACCENT_CLASS = {
 } as const;
 
 export const Card: React.FC<CardProps> = ({
-  material = 'panel',
+  material = 'sheet',
   density = 'default',
   accent = 'none',
   className = '',
@@ -77,6 +88,11 @@ export const Card: React.FC<CardProps> = ({
 /**
  * CardHeader — a printed section label with an optional right-hand slot.
  * Uses the shared type scale instead of ad-hoc `t-micro font-mono`.
+ *
+ * INVARIANT: text colour is INHERITED from the card's material, not set here.
+ * A hard-coded stone text colour is illegible on paper. Components that place
+ * text on a Card must use the `text-newsprint-*` scale for paper surfaces and
+ * `text-stone-*` only inside `material="term"` / `material="panel"`.
  */
 export const CardHeader: React.FC<{
   title: string;

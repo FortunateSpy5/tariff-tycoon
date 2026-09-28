@@ -48,13 +48,13 @@ export const SubpoenaShredderProp: React.FC = () => {
       title="Shred incriminating trade documents (-25% S.L.O.P. Suspicion, costs 10 Favor) [Hotkey: S]"
       className={`p-2 rounded-lg border transition-all flex items-center gap-2 text-left cursor-pointer group relative overflow-hidden select-none active:scale-95 ${
         cooldown || !hasEnoughFavor
-          ? 'opacity-60 cursor-not-allowed bg-stone-900 border-stone-800 text-stone-500'
+          ? 'opacity-60 cursor-not-allowed bg-newsprint-300 border-newsprint-400 text-newsprint-800'
           : isHighHeat
           ? 'bg-amber-950/80 border-amber-500/80 text-amber-200 shadow-md shadow-amber-950/40'
-          : 'bg-stone-950/90 border-stone-800 text-stone-400 hover:border-emerald-600/60'
+          : 'bg-newsprint-900 border-newsprint-800 text-newsprint-300 hover:border-emerald-600/60'
       }`}
     >
-      <div className={`p-1.5 rounded-md ${isHighHeat ? 'bg-amber-500 text-stone-950 animate-pulse' : 'bg-stone-900 text-emerald-400'}`}>
+      <div className={`p-1.5 rounded-md ${isHighHeat ? 'bg-gold-500 text-newsprint-950 animate-pulse' : 'bg-newsprint-800 text-emerald-500'}`}>
         {isHighHeat ? <AlertTriangle className="w-4 h-4" /> : <FileX2 className="w-4 h-4" />}
       </div>
       <div>
@@ -67,7 +67,7 @@ export const SubpoenaShredderProp: React.FC = () => {
       </div>
 
       {feedback && (
-        <div className="absolute inset-0 bg-stone-950/95 flex items-center justify-center t-micro font-mono font-bold text-emerald-400 px-1 text-center">
+        <div className="absolute inset-0 bg-newsprint-950 flex items-center justify-center t-micro font-mono font-bold text-emerald-400 px-1 text-center">
           {feedback}
         </div>
       )}

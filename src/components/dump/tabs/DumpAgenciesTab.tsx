@@ -53,33 +53,33 @@ export const DumpAgenciesTab: React.FC = () => {
 
         {(totalCashHarvested > 0 || activeHazardsCount > 0) && (
           <div className="mt-2 grid grid-cols-3 gap-1 t-micro font-mono text-center">
-            <div className="bg-stone-900/80 border border-stone-800 rounded px-1 py-0.5">
-              <span className="block text-stone-500 uppercase">Harvested</span>
-              <span className="text-emerald-400 font-bold">{formatCurrency(totalCashHarvested)}</span>
+            <div className="surface-sheet border border-newsprint-300 rounded px-1 py-0.5">
+              <span className="block text-newsprint-800 uppercase">Harvested</span>
+              <span className="text-emerald-700 font-bold">{formatCurrency(totalCashHarvested)}</span>
             </div>
-            <div className="bg-stone-900/80 border border-stone-800 rounded px-1 py-0.5">
-              <span className="block text-stone-500 uppercase">Hazards</span>
-              <span className="text-amber-400 font-bold">{activeHazardsCount}</span>
+            <div className="surface-sheet border border-newsprint-300 rounded px-1 py-0.5">
+              <span className="block text-newsprint-800 uppercase">Hazards</span>
+              <span className="text-gold-700 font-bold">{activeHazardsCount}</span>
             </div>
-            <div className="bg-stone-900/80 border border-stone-800 rounded px-1 py-0.5">
-              <span className="block text-stone-500 uppercase">Disaster Rev</span>
-              <span className="text-emerald-400 font-bold">{formatCurrency(disasterCapitalismRevenue)}</span>
+            <div className="surface-sheet border border-newsprint-300 rounded px-1 py-0.5">
+              <span className="block text-newsprint-800 uppercase">Disaster Rev</span>
+              <span className="text-emerald-700 font-bold">{formatCurrency(disasterCapitalismRevenue)}</span>
             </div>
           </div>
         )}
 
         {!hasCronyUnlocksAccess && (
-          <p className="mt-2 border-l-2 border-amber-500/70 bg-amber-950/20 px-2 py-1 t-micro text-stone-400">
+          <p className="mt-2 border-l-2 border-gold-600/70 bg-gold-500/15 px-2 py-1 t-micro text-newsprint-200">
             First liquidation opens the Crony lobbying shop.
           </p>
         )}
         {hasCronyUnlocksAccess && !hasTariffAccess && (
-          <p className="mt-2 border-l-2 border-emerald-500/70 bg-emerald-950/20 px-2 py-1 t-micro text-stone-400">
+          <p className="mt-2 border-l-2 border-emerald-500/70 bg-emerald-500/15 px-2 py-1 t-micro text-newsprint-200">
             Buy your first upgrade to gain authority over bilateral tariffs.
           </p>
         )}
         {hasTariffAccess && !hasPrestigeAccess && (
-          <p className="mt-2 border-l-2 border-amber-500/70 bg-amber-950/20 px-2 py-1 t-micro text-stone-400">
+          <p className="mt-2 border-l-2 border-gold-600/70 bg-gold-500/15 px-2 py-1 t-micro text-newsprint-200">
             Adjust a tariff dial to unlock the Cayman reorganization.
           </p>
         )}
@@ -100,22 +100,22 @@ export const DumpAgenciesTab: React.FC = () => {
                 key={agency.id}
                 className={`p-2 rounded-lg border transition-all ${
                   isScrapped
-                    ? 'bg-stone-950/40 border-stone-900 opacity-60'
+                    ? 'bg-newsprint-200 border-newsprint-300 opacity-60'
                     : isUnlocked
-                    ? 'bg-stone-950 border-stone-800 hover:border-amber-600/60'
-                    : 'bg-stone-950/50 border-stone-900 opacity-50'
+                    ? 'surface-sheet border-newsprint-300 hover:border-gold-600/60'
+                    : 'bg-newsprint-200 border-newsprint-400 opacity-70'
                 }`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <div className="flex items-center gap-1.5">
-                      <span className="font-mono font-bold text-stone-200 text-xs">{agency.acronym}</span>
-                      <span className="t-micro text-stone-400 font-mono">({agency.name})</span>
+                      <span className="font-mono font-bold text-newsprint-900 text-xs">{agency.acronym}</span>
+                      <span className="t-micro text-newsprint-800 font-mono">({agency.name})</span>
                     </div>
-                    <p className="t-caption text-emerald-400 font-mono mt-0.5">
+                    <p className="t-caption text-emerald-700 font-mono mt-0.5">
                       Perk: {agency.perkDescription}
                     </p>
-                    <p className="t-caption text-amber-500/90 font-mono flex items-center gap-1 mt-0.5">
+                    <p className="t-caption text-gold-700 font-mono flex items-center gap-1 mt-0.5">
                       <AlertTriangle className="w-2.5 h-2.5" />
                       <Handshake className="w-2.5 h-2.5" aria-hidden />
                       Cost: {agency.cronyFavorCost} Favor // Req: {formatCurrency(agency.minNetWorthRequired)}
@@ -124,7 +124,7 @@ export const DumpAgenciesTab: React.FC = () => {
 
                   <div className="shrink-0 text-right">
                     {isScrapped ? (
-                      <span className="px-2 py-0.5 rounded bg-stone-800 text-stone-500 font-mono t-caption font-bold flex items-center gap-1">
+                      <span className="px-2 py-0.5 rounded bg-newsprint-300 text-newsprint-800 font-mono t-caption font-bold flex items-center gap-1">
                         <CheckCircle className="w-2.5 h-2.5" />
                         SCRAPPED
                       </span>
@@ -133,15 +133,15 @@ export const DumpAgenciesTab: React.FC = () => {
                         onClick={() => handleLiquidate(agency.id, agency.acronym, agency.liquidationCashYield, agency.cronyFavorCost, agency.minNetWorthRequired)}
                         className={`px-2.5 py-1 rounded font-mono t-micro font-bold transition-all shadow ${
                           canAfford
-                            ? 'bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-stone-950 font-black active:scale-95 cursor-pointer'
-                            : 'bg-stone-800 text-stone-500 cursor-not-allowed'
+                            ? 'bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 text-newsprint-950 font-black active:scale-95 cursor-pointer'
+                            : 'bg-newsprint-300 text-newsprint-800 cursor-not-allowed'
                         }`}
                       >
                         <Scissors className="w-3 h-3" aria-hidden />
                         +{formatCurrency(agency.liquidationCashYield)}
                       </button>
                     ) : (
-                      <span className="px-2 py-0.5 rounded bg-stone-900 border border-stone-800 text-stone-500 font-mono t-caption font-semibold flex items-center gap-1">
+                      <span className="px-2 py-0.5 rounded bg-redaction-500 border border-redaction-700 text-newsprint-400 font-mono t-caption font-semibold flex items-center gap-1">
                         <Lock className="w-2.5 h-2.5" />
                         Awaits {previousAgency?.acronym}
                       </span>
@@ -154,7 +154,7 @@ export const DumpAgenciesTab: React.FC = () => {
       </div>
 
       {alertMsg && (
-        <div className="shrink-0 p-1.5 rounded bg-stone-950 border border-amber-500/40 text-center font-mono t-micro font-bold text-amber-300 animate-pulse">
+        <div className="shrink-0 p-1.5 rounded bg-gold-500/20 border border-gold-600/50 text-center font-mono t-micro font-bold text-gold-400 animate-pulse">
           {alertMsg}
         </div>
       )}

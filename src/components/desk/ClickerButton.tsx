@@ -187,21 +187,21 @@ export const ClickerButton: React.FC = () => {
             </>
           ) : (
             <>
-              <PenTool className={`w-10 h-10 sm:w-12 sm:h-12 text-stone-950 mb-1 drop-shadow group-hover:-rotate-12 transition-transform ${isRecoilActive ? 'animate-recoil' : ''}`} />
-              <span className="font-mono t-micro font-black tracking-widest text-amber-950 uppercase">
+              <PenTool className={`w-10 h-10 sm:w-12 sm:h-12 text-newsprint-950 mb-1 drop-shadow group-hover:-rotate-12 transition-transform ${isRecoilActive ? 'animate-recoil' : ''}`} />
+              <span className="font-mono t-micro font-black tracking-widest text-newsprint-900 uppercase">
                 Resolute Desk
               </span>
-              <span className="text-lg sm:text-xl font-black text-stone-950 tracking-wider uppercase mt-0.5">
+              <span className="text-lg sm:text-xl font-black text-newsprint-950 tracking-wider uppercase mt-0.5">
                 {isDry ? 'DRY SCRATCH' : 'SIGN TARIFF'}
               </span>
-              <span className="t-micro font-mono text-amber-950/80 mt-0.5">
+              <span className="t-micro font-mono text-newsprint-900/80 mt-0.5">
                 24k Golden Sherpie
               </span>
             </>
           )}
 
           {/* Current Yield Tag */}
-          <div className="mt-2 px-2.5 py-0.5 rounded-full bg-stone-950/60 backdrop-blur-sm border border-white/10 flex items-center gap-1 font-mono text-[11px] font-bold text-emerald-300 shadow">
+          <div className="theme-allow mt-2 px-2.5 py-0.5 rounded-full bg-newsprint-950/70 backdrop-blur-sm border border-newsprint-800/40 flex items-center gap-1 font-mono text-[11px] font-bold text-emerald-300 shadow">
             <Sparkles className="w-3 h-3 text-amber-300" />
             <span>+{formatCurrency(clickValue)} / tap</span>
           </div>
@@ -209,7 +209,7 @@ export const ClickerButton: React.FC = () => {
       </button>
 
       {/* Helper caption — copy must never lie about the economy (see audit: UI vs code drift) */}
-      <span className="mt-1.5 t-caption font-mono text-stone-400 text-center">
+      <span className="mt-1.5 t-caption font-mono text-newsprint-800 text-center">
         {phase === 1
           ? tutorialStepIndex < 1
             ? 'Slam the stamp to seize contraband. Tap once to unseal BagHolder Pro.'
