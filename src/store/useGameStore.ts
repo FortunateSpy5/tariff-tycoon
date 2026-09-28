@@ -103,8 +103,11 @@ export const useGameStore = create<GameStore>()(
         if (version >= 1) return state as GameStore;
 
         const phase = state.phase ?? 1;
+        // REDESIGN: the $10,000 cash gate is gone (the market now unlocks on the
+        // first stamp slam). Retained for OLD saves only: a pre-redesign player
+        // who had earned past $10k should not lose terminal access on upgrade.
         const hadMarketAccess = Boolean(
-          state.hasMarketAccess || phase >= 2 || (state.treasuryCash ?? 0) >= 10000
+          state.hasMarketAccess || phase >= 2 || (state.treasuryCash ?? 0) >= 10000 || (state.totalClicks ?? 0) > 0
         );
         const wasInOval = phase >= 2;
         return {
@@ -152,7 +155,8 @@ export const useGameStore = create<GameStore>()(
             );
             if (cashEarned > 0) {
               state.treasuryCash += cashEarned;
-              state.hasMarketAccess = state.hasMarketAccess || state.treasuryCash >= 10000;
+              // NOTE: deliberately does NOT touch hasMarketAccess. Passive income
+              // must never be what opens the terminal — see [The Ten-Minute Wall].
               console.log(
                 `[Palm-a-Grifto Protocol] Welcome back! While golfing, collected $${cashEarned.toFixed(2)} over ${secondsCredited}s.`
               );

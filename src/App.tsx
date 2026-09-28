@@ -68,8 +68,9 @@ export const App: React.FC = () => {
         </section>
       </main>
 
-      {/* Fixed Bottom Hotkey HUD (36px) */}
-      <footer className="shrink-0 h-9 z-20">
+      {/* Fixed Bottom Hotkey HUD — 32px to match the rewritten footer, which
+          dropped from 36px once the duplicate toggles and strapline were cut. */}
+      <footer className="shrink-0 h-8 z-20">
         <HotkeyFooterHUD />
       </footer>
 

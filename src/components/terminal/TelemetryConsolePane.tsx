@@ -73,11 +73,15 @@ export const TelemetryConsolePane: React.FC = () => {
             <div className="p-3 bg-amber-950/40 rounded-full border border-amber-600/40 text-amber-500 mb-2">
               <Lock className="w-6 h-6 animate-pulse" />
             </div>
-            <h4 className="font-black text-amber-400 tracking-wider text-xs font-mono">
+            <h4 className="font-black text-amber-400 tracking-wider t-micro font-mono">
               RESTRICTED SECURITY ZONE
             </h4>
             <p className="t-micro text-stone-400 mt-1 max-w-[200px] leading-relaxed">
-              BagHolder Pro unlocks at $10,000 seed cash. The Oval Office opens at $1,000,000.
+              {/* REDESIGN: this used to say "$10,000 seed cash". The market now
+                  unlocks on the player's first stamp slam, so the copy was lying
+                  about a threshold that no longer exists. */}
+              Slam the customs stamp once to unseal BagHolder Pro. The Oval Office
+              opens at $1,000,000.
             </p>
           </div>
         )}

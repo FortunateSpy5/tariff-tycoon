@@ -6,11 +6,11 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { FileText, Send, RotateCcw, Printer, Crosshair, Sparkles, X, ShieldAlert } from 'lucide-react';
+import { FileText, Send, RotateCcw, Printer, Crosshair, Sparkles } from 'lucide-react';
 import { useGameStore } from '../../store/useGameStore';
 import { ClickerButton } from './ClickerButton';
-import { InkMeter } from './InkMeter';
-import { TantrumMeter } from './TantrumMeter';
+import { ExecutiveGauges } from './ExecutiveGauges';
+import { FeedbackLayer } from './FeedbackLayer';
 import { RedPhoneProp, GoldBoxProp, SubpoenaShredderProp } from './props';
 import { generateProceduralYap } from '../../engine/systems/yapEngine';
 
@@ -39,10 +39,7 @@ export const ResoluteBlotterCenter: React.FC = () => {
   const lastYapPost = useGameStore((s) => s.lastYapPost);
   const yapCooldownSeconds = useGameStore((s) => s.yapCooldownSeconds);
   const inkLevel = useGameStore((s) => s.inkLevel);
-  const lastRaidMessage = useGameStore((s) => s.lastRaidMessage);
-  const dismissRaidAlert = useGameStore((s) => s.dismissRaidAlert);
-  const lastCrisisOutcome = useGameStore((s) => s.lastCrisisOutcome);
-  const dismissCrisisOutcome = useGameStore((s) => s.dismissCrisisOutcome);
+  // Raid + crisis feedback moved to <FeedbackLayer> (see the priority note there).
 
   const [printFeedback, setPrintFeedback] = useState<string | null>(null);
   const [yapFeedback, setYapFeedback] = useState<string | null>(null);
@@ -108,22 +105,15 @@ export const ResoluteBlotterCenter: React.FC = () => {
   return (
     <div className="h-full min-h-0 flex flex-col gap-2 bg-gradient-to-b from-stone-900 via-stone-900/95 to-amber-950/20 border border-amber-900/40 rounded-xl p-3 shadow-2xl relative overflow-hidden select-none">
       
-      {/* Special Counsel Raid / Asset Seizure Alert Banner */}
-      {lastRaidMessage && (
-        <div className="bg-red-950/95 border border-red-500 rounded-lg p-2 t-micro font-mono font-bold text-red-200 flex items-center justify-between shadow-xl animate-pulse shrink-0 z-20">
-          <div className="flex items-center gap-1.5">
-            <ShieldAlert className="w-4 h-4 text-red-400 shrink-0" />
-            <span>{lastRaidMessage}</span>
-          </div>
-          <button
-            onClick={dismissRaidAlert}
-            title="Dismiss notification"
-            className="text-stone-400 hover:text-stone-100 p-0.5 cursor-pointer ml-1"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      )}
+      {/* Special Counsel Raid / Asset Seizure Alert
+          REDESIGN: this used to be a standalone banner competing with three
+          other overlays for the same pixels. All transient feedback now resolves
+          through <FeedbackLayer>, which renders exactly one message by priority. */}
+      <FeedbackLayer
+        yapFeedback={yapFeedback}
+        printFeedback={printFeedback}
+        hasWalkBackCall={hasWalkBackCall}
+      />
 
       {/* Interactive Prop Tray
           The Crisis Call owns a full-width row because it is the primary
@@ -167,12 +157,6 @@ export const ResoluteBlotterCenter: React.FC = () => {
             <span>{lastYapPost.viralQuotesCount.toLocaleString()} viral quotes</span>
           </div>
         )}
-
-        {yapFeedback && (
-          <div className="absolute inset-0 bg-stone-950/95 flex items-center justify-center font-mono text-[11px] font-black text-amber-400 rounded-lg animate-pulse z-10 px-2 text-center">
-            {yapFeedback}
-          </div>
-        )}
       </div>
 
       {/* Center Tactile Stamp / Sherpie Clicker */}
@@ -192,45 +176,21 @@ export const ResoluteBlotterCenter: React.FC = () => {
             <Printer className={`w-3.5 h-3.5 ${printerCooldownRemaining > 0 ? '' : 'animate-bounce'}`} />
             <span>{printerCooldownRemaining > 0 ? `COOLING DOWN (${printerCooldownRemaining}s)` : 'PRINT $BRRR (+$100k, +15% S.L.O.P.)'}</span>
           </button>
-          {printFeedback && (
-            <div className="absolute inset-0 bg-stone-950/95 flex items-center justify-center font-mono t-micro font-bold text-emerald-400 rounded-lg">
-              {printFeedback}
-            </div>
-          )}
+
         </div>
       )}
 
-      {/* Ink Stamina & Tantrum Gauges */}
-      <div className="grid grid-cols-2 gap-2 shrink-0">
-        <InkMeter />
-        <TantrumMeter />
-      </div>
-
-      {/* Crisis Call outcome notice */}
-      {lastCrisisOutcome && (
-        <div
-          role="status"
-          aria-live="polite"
-          className="shrink-0 flex items-center gap-2 rounded border border-red-900/70 bg-red-950/70 px-2 py-1"
-        >
-          <span className="t-micro font-mono font-bold text-red-300 truncate">
-            {lastCrisisOutcome}
-          </span>
-          <button
-            onClick={dismissCrisisOutcome}
-            className="ml-auto shrink-0 text-stone-400 hover:text-stone-100 t-micro font-mono px-1"
-          >
-            ✕
-          </button>
-        </div>
-      )}
+      {/* Ink Stamina & Tantrum Gauges — stacked full-width as a matched pair.
+          REDESIGN: these were a grid-cols-2 where only Ink had an action, which
+          read as one finished component beside one missing its button. */}
+      <ExecutiveGauges />
 
       {/* Command Actions: Target Mode Toggle, 3:00 AM Lethal YAP & 8s Walk-Back */}
       <div className="flex shrink-0 flex-col gap-1.5">
         <div className="flex items-center gap-1.5">
         {!hasMarketAccess ? (
           <div className="flex-1 py-2 bg-stone-950/80 border border-stone-800 text-stone-500 font-mono text-center text-xs rounded-lg uppercase tracking-wider">
-            🔒 BAGHOLDER PRO & YAP UNLOCK AT $10,000
+            SLAM THE STAMP ONCE TO UNSEAL BAGHOLDER PRO
           </div>
         ) : isWalkBackWindowActive ? (
           <div className="flex w-full items-stretch gap-2">

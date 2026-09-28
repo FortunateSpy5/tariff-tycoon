@@ -60,6 +60,35 @@ export const FRENZY_COOLDOWN_BY_PHASE: Record<number, number> = {
 /** Tantrum passively bleeds off during the post-frenzy cooldown. */
 export const FRENZY_COOLDOWN_TANTRUM_DECAY_PER_SECOND = 6.0;
 
+/**
+ * VENT THE TANTRUM — a deliberate, player-chosen release of executive blood
+ * pressure in exchange for calmer markets.
+ *
+ * DESIGN RATIONALE: the tantrum meter previously had no outlet. It filled to
+ * 100%, forced a FRENZY, and then bled off automatically on a cooldown. That
+ * made the meter a pure countdown rather than a decision, and the Ink/Tantrum
+ * pair read as structurally mismatched (only Ink had an action).
+ *
+ * INVARIANT: [Venting Must Never Be Optimal]
+ * Venting costs ALL accumulated tantrum (including anything past the 100% that
+ * a frenzy would have consumed for free) and grants a VEX reduction capped at
+ * VEX_BASELINE. So the correct play is still to ride the meter to 100% and take
+ * the 10x FRENZY; venting is the panic button for a player who needs calmer
+ * options pricing, not the efficient route to profit.
+ */
+
+/** Tantrum fraction consumed by a vent (always the full meter — see above). */
+export const TANTRUM_VENT_CONSUME_RATIO = 1.0;
+
+/** VEX points removed per vent, before clamping to the baseline. */
+export const TANTRUM_VENT_VEX_RELIEF = 8.0;
+
+/**
+ * Minimum tantrum required to vent. Prevents spamming the button at an empty
+ * meter, which would otherwise be a free no-op that still triggered sound/UI.
+ */
+export const TANTRUM_VENT_MIN_TANTRUM = 10;
+
 /** Multiplier applied to the ink refill cost curve (GDD: 1.15^n → steeper). */
 export const INK_REFILL_COST_GROWTH = 1.35;
 

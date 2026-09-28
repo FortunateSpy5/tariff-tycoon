@@ -38,6 +38,10 @@ import {
   INK_REFILL_TREASURY_RATIO,
   CRONY_FAVOR_PASSIVE_PER_SECOND,
   CRONY_FAVOR_MAX,
+  TANTRUM_VENT_CONSUME_RATIO,
+  TANTRUM_VENT_VEX_RELIEF,
+  TANTRUM_VENT_MIN_TANTRUM,
+  VEX_BASELINE,
 } from '../../constants/balance';
 import { sound } from '../../audio/soundEngine';
 import { formatCurrency } from '../../engine/math/bigNumber';
@@ -87,6 +91,13 @@ export interface DeskSlice extends DeskState {
 
   clickDesk: () => boolean;
   refillInk: () => boolean;
+  /**
+   * VENT THE TANTRUM: burn all accumulated tantrum for a burst of VEX relief.
+   * Never optimal (see TANTRUM_VENT_CONSUME_RATIO) — it exists as a panic
+   * button for calm options pricing, and as the Tantrum meter's counterpart
+   * to the Ink meter's refill action.
+   */
+  ventTantrum: () => boolean;
   tickDesk: (deltaSeconds: number) => void;
   creditOfflineEarnings: (elapsedSeconds: number) => number;
   setGamePhase: (phase: GamePhase) => void;
@@ -309,6 +320,37 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
   },
 
   dismissCrisisOutcome: () => set({ lastCrisisOutcome: undefined }),
+
+  /**
+   * VENT THE TANTRUM.
+   *
+   * INVARIANT: [Venting Must Never Be Optimal]
+   * Burns the entire meter — including any overflow past 100% that a FRENZY
+   * would have consumed for free — and buys VEX relief that is clamped to the
+   * VEX baseline. Taking a frenzy to 100% is therefore always worth more than
+   * venting at 99%, so this is a deliberate trade, not an upgrade path.
+   * Blocked during FRENZY and during the post-frenzy cooldown, so it cannot be
+   * used to dodge the Cooling-Off Protocol.
+   */
+  ventTantrum: () => {
+    const state = get();
+    if (state.isCapsFrenzy) return false;
+    if (state.frenzyCooldownSecondsRemaining > 0) return false;
+    if (state.tantrumMeter < TANTRUM_VENT_MIN_TANTRUM) return false;
+
+    const burned = state.tantrumMeter * TANTRUM_VENT_CONSUME_RATIO;
+    // Relieve VEX proportionally to how much pressure was released, capped so
+    // it can never push volatility below the market's natural floor.
+    const relief = Math.min(TANTRUM_VENT_VEX_RELIEF * (burned / 100), VEX_BASELINE);
+
+    sound.playDeskThud();
+    set({
+      tantrumMeter: Math.max(0, state.tantrumMeter - burned),
+      vexVolatility: Math.max(VEX_BASELINE, state.vexVolatility - relief),
+      lastCrisisOutcome: `VENTED // Tantrum purged. VEX cooled by ${relief.toFixed(1)} points.`,
+    });
+    return true;
+  },
 
   clickDesk: () => {
     const state = get();

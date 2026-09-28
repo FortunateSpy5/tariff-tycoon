@@ -76,6 +76,11 @@ export function useGameHotkeys() {
         store.shredSubpoenas();
       } else if (e.key === 'r' || e.key === 'R') {
         store.refillInk();
+      } else if (e.key === 'v' || e.key === 'V') {
+        // [V] Vent the tantrum: burn the meter for VEX relief. The counterpart
+        // to [R] refill. Deliberately NOT the frenzy path — see
+        // [Venting Must Never Be Optimal] in constants/balance.ts.
+        store.ventTantrum();
       } else if (e.key === 'p' || e.key === 'P') {
         // [P] Answer the ringing 3:00 AM crisis call. Equivalent to SWEAR IN.
         if (store.activeCrisis) {

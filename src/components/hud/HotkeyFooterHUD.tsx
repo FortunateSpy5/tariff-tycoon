@@ -1,25 +1,77 @@
 /**
- * Hotkey Footer HUD
- * Fixed-height bottom dock showing tactical keyboard shortcuts and engine status.
+ * HotkeyFooterHUD — a compact, non-clipping keyboard dock.
+ *
+ * DESIGN RATIONALE [The Clipping Footer]:
+ * The previous footer packed ~20 text nodes and 11 borders into a fixed 36px
+ * dock. It used `overflow-x-hidden`, so on narrower viewports the hotkey list was
+ * silently truncated with no scrollbar and no indication that keys existed past
+ * the cut. It also duplicated the mute and screen-shake toggles that already
+ * live in the ticker, and spent scarce pixels on a "100% TRANSFORMATIVE SATIRE"
+ * strapline that competed with the keys for the same row.
+ *
+ * The rebuild:
+ *   - one scrollable row, so nothing is ever silently hidden
+ *   - icon-only controls on the right, strapline removed
+ *   - agent actions (stamp/shake/mute/full) always visible, so the dock stays
+ *     useful even with zero unlocks
+ *
+ * INVARIANT: never set `overflow-hidden` on the key list. If the row cannot fit,
+ * it must scroll rather than truncate — a hotkey the player cannot see is a
+ * hotkey that does not exist.
  */
 
 import React from 'react';
 import { Maximize2, Volume2, VolumeX, Vibrate } from 'lucide-react';
 import { useGameStore } from '../../store/useGameStore';
 
-export const HotkeyFooterHUD: React.FC = () => {
-  const isMuted = useGameStore((s) => s.isMuted);
-  const toggleMute = useGameStore((s) => s.toggleMute);
-  const screenShakeEnabled = useGameStore((s) => s.screenShakeEnabled);
-  const toggleScreenShake = useGameStore((s) => s.toggleScreenShake);
-  const phase = useGameStore((s) => s.phase);
+interface KeyHint {
+  key: string;
+  label: string;
+}
+
+/** Builds the visible key list from live unlock state. */
+function useKeyHints(): KeyHint[] {
   const hasMarketAccess = useGameStore((s) => s.hasMarketAccess);
-  const hasPolyGriftAccess = useGameStore((s) => s.hasPolyGriftAccess);
   const hasRadarAccess = useGameStore((s) => s.hasRadarAccess);
+  const hasPolyGriftAccess = useGameStore((s) => s.hasPolyGriftAccess);
+  const phase = useGameStore((s) => s.phase);
   const hasCronyUnlocksAccess = useGameStore((s) => s.hasCronyUnlocksAccess);
   const hasTariffAccess = useGameStore((s) => s.hasTariffAccess);
   const hasPrestigeAccess = useGameStore((s) => s.hasPrestigeAccess);
   const isWalkBackWindowActive = useGameStore((s) => s.isWalkBackWindowActive);
+  // Only surface the Vent key once it is actually actionable, so the dock does
+  // not teach a key that silently does nothing.
+  const canVent = useGameStore((s) => !s.isCapsFrenzy && s.frenzyCooldownSecondsRemaining <= 0 && s.tantrumMeter >= 10);
+
+  const hints: KeyHint[] = [
+    { key: 'SPACE', label: 'Stamp' },
+    { key: 'R', label: 'Ink' },
+    { key: 'Z', label: 'Shake' },
+    { key: 'M', label: 'Mute' },
+    { key: 'F', label: 'Full' },
+  ];
+
+  if (hasMarketAccess) {
+    hints.push({ key: '1', label: 'Stocks' }, { key: 'Y', label: 'YAP' });
+  }
+  if (hasRadarAccess) hints.push({ key: '2', label: 'Radar' });
+  if (hasPolyGriftAccess) hints.push({ key: '3', label: 'PolyGrift' });
+  if (phase >= 2) hints.push({ key: 'D', label: 'D.U.M.P.' });
+  if (hasCronyUnlocksAccess) hints.push({ key: 'U', label: 'Upgrades' });
+  if (hasTariffAccess) hints.push({ key: 'T', label: 'Tariffs' });
+  if (hasPrestigeAccess) hints.push({ key: 'C', label: 'Caymans' });
+  if (canVent) hints.push({ key: 'V', label: 'Vent' });
+  if (isWalkBackWindowActive) hints.push({ key: 'W', label: 'Walk-Back' });
+
+  return hints;
+}
+
+export const HotkeyFooterHUD: React.FC = () => {
+  const hints = useKeyHints();
+  const isMuted = useGameStore((s) => s.isMuted);
+  const toggleMute = useGameStore((s) => s.toggleMute);
+  const screenShakeEnabled = useGameStore((s) => s.screenShakeEnabled);
+  const toggleScreenShake = useGameStore((s) => s.toggleScreenShake);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -29,57 +81,55 @@ export const HotkeyFooterHUD: React.FC = () => {
     }
   };
 
-  return (
-    <footer className="h-9 w-full bg-stone-950 border-t border-stone-800 px-3 flex items-center justify-between font-mono t-micro text-stone-400 select-none shrink-0 z-30">
-      
-      {/* Left Hotkey Guides */}
-      <div className="flex items-center gap-3 overflow-x-hidden whitespace-nowrap">
-        <span className="flex items-center gap-1">
-          <kbd className="px-1.5 py-0.5 rounded bg-stone-900 border border-stone-700 text-stone-200 font-bold">SPACE</kbd>
-          <span>Stamp</span>
-        </span>
-        {hasMarketAccess && <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 rounded bg-stone-900 border border-stone-700 text-stone-200 font-bold">1</kbd><span>Stocks</span></span>}
-        {hasRadarAccess && <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 rounded bg-stone-900 border border-stone-700 text-stone-200 font-bold">2</kbd><span>S.L.O.P.</span></span>}
-        {hasPolyGriftAccess && <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 rounded bg-stone-900 border border-stone-700 text-stone-200 font-bold">3</kbd><span>PolyGrift</span></span>}
-        {phase >= 2 && <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 rounded bg-stone-900 border border-stone-700 text-stone-200 font-bold">D</kbd><span>D.U.M.P.</span></span>}
-        {hasCronyUnlocksAccess && <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 rounded bg-stone-900 border border-stone-700 text-stone-200 font-bold">U</kbd><span>Upgrades</span></span>}
-        {hasTariffAccess && <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 rounded bg-stone-900 border border-stone-700 text-stone-200 font-bold">T</kbd><span>Tariffs</span></span>}
-        {hasPrestigeAccess && <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 rounded bg-stone-900 border border-stone-700 text-stone-200 font-bold">C</kbd><span>Caymans</span></span>}
-        {hasMarketAccess && <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 rounded bg-stone-900 border border-stone-700 text-stone-200 font-bold">Y</kbd><span>YAP</span></span>}
-        {isWalkBackWindowActive && <span className="flex items-center gap-1"><kbd className="px-1.5 py-0.5 rounded bg-stone-900 border border-stone-700 text-stone-200 font-bold">W</kbd><span>Walk-Back</span></span>}
-      </div>
+  const iconBtn = 'p-1 rounded transition-colors cursor-pointer shrink-0 hover:bg-stone-800';
 
-      {/* Right Controls & Tagline */}
-      <div className="flex items-center gap-3 shrink-0">
+  return (
+    <footer className="h-8 w-full bg-stone-950 border-t border-stone-800 px-2 flex items-center justify-between gap-2 font-mono t-caption text-stone-400 select-none shrink-0 z-30">
+      {/* Key list: scrolls rather than truncating. See the invariant above. */}
+      <nav
+        aria-label="Keyboard shortcuts"
+        className="flex items-center gap-2.5 overflow-x-auto custom-scrollbar min-w-0 flex-1"
+      >
+        {hints.map(({ key, label }) => (
+          <span key={key} className="flex items-center gap-1 shrink-0">
+            <kbd className="px-1 py-px rounded bg-stone-900 border border-stone-700 text-stone-200 font-bold">
+              {key}
+            </kbd>
+            <span>{label}</span>
+          </span>
+        ))}
+      </nav>
+
+      {/* Icon-only controls with explicit pressed state for screen readers. */}
+      <div className="flex items-center gap-0.5 shrink-0 border-l border-stone-800 pl-2">
         <button
           onClick={toggleScreenShake}
-          title="Toggle Screen Shake [Hotkey: Z]"
-          className={`p-1 rounded transition-colors cursor-pointer ${
-            screenShakeEnabled ? 'text-amber-400' : 'text-stone-600'
-          }`}
+          title={screenShakeEnabled ? 'Disable Screen Shake [Z]' : 'Enable Screen Shake [Z]'}
+          aria-label="Toggle screen shake"
+          aria-pressed={screenShakeEnabled}
+          className={`${iconBtn} ${screenShakeEnabled ? 'text-gold-400' : 'text-stone-600'}`}
         >
           <Vibrate className="w-3.5 h-3.5" />
         </button>
 
         <button
           onClick={toggleMute}
-          title="Toggle Sound [Hotkey: M]"
-          className="p-1 rounded text-stone-400 hover:text-stone-200 transition-colors cursor-pointer"
+          title={isMuted ? 'Enable Sound [M]' : 'Mute Sound [M]'}
+          aria-label="Toggle sound"
+          aria-pressed={!isMuted}
+          className={`${iconBtn} ${isMuted ? 'text-red-500' : 'text-stone-400 hover:text-stone-200'}`}
         >
-          {isMuted ? <VolumeX className="w-3.5 h-3.5 text-red-500" /> : <Volume2 className="w-3.5 h-3.5" />}
+          {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
         </button>
 
         <button
           onClick={toggleFullscreen}
-          title="Toggle Fullscreen [Hotkey: F]"
-          className="p-1 rounded text-stone-400 hover:text-stone-200 transition-colors cursor-pointer"
+          title="Toggle Fullscreen [F]"
+          aria-label="Toggle fullscreen"
+          className={`${iconBtn} text-stone-400 hover:text-stone-200`}
         >
           <Maximize2 className="w-3.5 h-3.5" />
         </button>
-
-        <span className="t-caption text-stone-600 hidden md:inline">
-          100% TRANSFORMATIVE SATIRE
-        </span>
       </div>
     </footer>
   );
