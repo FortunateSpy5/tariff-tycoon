@@ -22,7 +22,7 @@ export const SubpoenaShredderProp: React.FC = () => {
       return;
     }
     if (cronyFavor < 10) {
-      setFeedback('NEED 10 FAVOR 🤝');
+      setFeedback('NEED 10 FAVOR');
       setTimeout(() => setFeedback(null), 1500);
       return;
     }
@@ -30,7 +30,7 @@ export const SubpoenaShredderProp: React.FC = () => {
     const success = shredSubpoenas();
     if (success) {
       setCooldown(true);
-      setFeedback('WHIRRR! -25% HEAT (-10 🤝)');
+      setFeedback('WHIRRR! -25% HEAT (-10 FAVOR)');
       setTimeout(() => setFeedback(null), 2000);
       setTimeout(() => setCooldown(false), 5000);
     } else {
@@ -62,7 +62,7 @@ export const SubpoenaShredderProp: React.FC = () => {
           SHREDDER
         </span>
         <span className="t-caption text-stone-500 font-mono block">
-          {!hasEnoughFavor ? 'Need 10 Favor [S]' : isHighHeat ? 'PURGE HEAT NOW!' : '-25% (10 🤝) [S]'}
+          {!hasEnoughFavor ? 'Need 10 Favor [S]' : isHighHeat ? 'PURGE HEAT NOW!' : '-25% (10 FAVOR) [S]'}
         </span>
       </div>
 

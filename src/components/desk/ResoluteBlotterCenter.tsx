@@ -76,7 +76,7 @@ export const ResoluteBlotterCenter: React.FC = () => {
 
     if (result.success) {
       if (result.combo) {
-        setYapFeedback(`🔥 INSIDER COMBO! Short hit on $${result.targetSymbol}!`);
+        setYapFeedback(`INSIDER COMBO! Short hit on $${result.targetSymbol}!`);
       } else {
         setYapFeedback(`CRASHED $${result.targetSymbol}!`);
       }

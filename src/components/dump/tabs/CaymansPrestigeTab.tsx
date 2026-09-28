@@ -12,6 +12,7 @@ import { PRESTIGE_CASH_DIVISOR } from '../../../constants/balance';
 import { RunSummaryCard } from '../../share/RunSummaryCard';
 import { captureRunSnapshot, type RunSnapshot } from '../../share/runSummary';
 import { Card } from '../../ui';
+import { DossierHeader } from '../DossierHeader';
 
 export const CaymansPrestigeTab: React.FC = () => {
   const activeTrades = useGameStore((s) => s.activeTrades);
@@ -58,13 +59,11 @@ export const CaymansPrestigeTab: React.FC = () => {
         {runSummary && (
           <RunSummaryCard snapshot={runSummary} onDismiss={() => setRunSummary(null)} />
         )}
-        <div className="flex items-center justify-between t-micro font-mono text-stone-500 border-b border-stone-800 pb-1.5">
-          <div className="flex items-center gap-1.5 text-amber-400 font-bold">
-            <Palmtree className="w-3.5 h-3.5" />
-            <span>TIER 1 PRESTIGE: FLIGHT TO THE CAYMANS</span>
-          </div>
-          <span>PERMANENT SOVEREIGNTY</span>
-        </div>
+        <DossierHeader
+          icon={<Palmtree className="w-3.5 h-3.5 text-gold-500" />}
+          title="Tier 1 Prestige: Flight to the Caymans"
+          status="Permanent Sovereignty"
+        />
 
         {/* Current Slips Meter */}
         <Card density="tight" className="bg-stone-950 flex items-center justify-between">
@@ -94,7 +93,7 @@ export const CaymansPrestigeTab: React.FC = () => {
 
           <div className="p-2 rounded bg-stone-900 border border-stone-800 font-mono text-xs flex justify-between items-center">
             <span className="text-stone-400">Yield on Flight:</span>
-            <span className="text-emerald-400 font-bold">+{potentialSIS} 📜 SIS</span>
+            <span className="text-emerald-400 font-bold">+{potentialSIS} SIS</span>
           </div>
 
           <button

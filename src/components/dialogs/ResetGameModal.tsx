@@ -78,7 +78,7 @@ export const ResetGameModal: React.FC<ResetGameModalProps> = ({ isOpen, onClose 
               </div>
               <div className="bg-stone-950 p-2 rounded border border-stone-800/80">
                 <span className="text-stone-500 block t-caption">SOVEREIGN SLIPS</span>
-                <span className="text-indigo-400 font-bold">{sovereignImmunitySlips || 0} 📜</span>
+                <span className="text-indigo-400 font-bold">{sovereignImmunitySlips || 0} SIS</span>
               </div>
             </div>
           </div>

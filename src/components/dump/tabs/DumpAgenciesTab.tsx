@@ -5,9 +5,10 @@
  */
 
 import React, { useState } from 'react';
-import { Scissors, AlertTriangle, CheckCircle, Lock } from 'lucide-react';
+import { Scissors, AlertTriangle, CheckCircle, Lock, Handshake } from 'lucide-react';
 import { useGameStore } from '../../../store/useGameStore';
 import { formatCurrency } from '../../../engine/math/bigNumber';
+import { DossierHeader } from '../DossierHeader';
 
 export const DumpAgenciesTab: React.FC = () => {
   const agencies = useGameStore((s) => s.agencies);
@@ -24,7 +25,7 @@ export const DumpAgenciesTab: React.FC = () => {
 
   const handleLiquidate = (agencyId: string, name: string, yieldAmt: number, favorCost: number, minCash: number) => {
     if (cronyFavor < favorCost) {
-      setAlertMsg(`Needs 🤝 ${favorCost} Crony Favor to bribe liquidation committee!`);
+      setAlertMsg(`Needs ${favorCost} Crony Favor to bribe liquidation committee!`);
       setTimeout(() => setAlertMsg(null), 2500);
       return;
     }
@@ -36,7 +37,7 @@ export const DumpAgenciesTab: React.FC = () => {
 
     const cash = liquidateAgency(agencyId);
     if (cash > 0) {
-      setAlertMsg(`🪓 SCRAPPED ${name}! Injected +${formatCurrency(yieldAmt)} (+15% Heat)!`);
+      setAlertMsg(`SCRAPPED ${name}! Injected +${formatCurrency(yieldAmt)} (+15% Heat)!`);
       setTimeout(() => setAlertMsg(null), 2500);
     }
   };
@@ -44,13 +45,11 @@ export const DumpAgenciesTab: React.FC = () => {
   return (
     <div className="h-full min-h-0 flex flex-col gap-2 select-none">
       <div className="shrink-0">
-        <div className="flex items-center justify-between t-micro font-mono text-stone-500 border-b border-stone-800 pb-1.5">
-          <div className="flex items-center gap-1.5 text-amber-400 font-bold">
-            <Scissors className="w-3.5 h-3.5" />
-            <span>FEDERAL AGENCY GUILLOTINE</span>
-          </div>
-          <span className="text-amber-400 font-bold">🤝 {Math.floor(cronyFavor)} FAVOR AVAILABLE</span>
-        </div>
+        <DossierHeader
+          icon={<Scissors className="w-3.5 h-3.5 text-gold-500" />}
+          title="Federal Agency Guillotine"
+          status="Hatchet Orders"
+        />
 
         {(totalCashHarvested > 0 || activeHazardsCount > 0) && (
           <div className="mt-2 grid grid-cols-3 gap-1 t-micro font-mono text-center">
@@ -118,7 +117,8 @@ export const DumpAgenciesTab: React.FC = () => {
                     </p>
                     <p className="t-caption text-amber-500/90 font-mono flex items-center gap-1 mt-0.5">
                       <AlertTriangle className="w-2.5 h-2.5" />
-                      Cost: 🤝 {agency.cronyFavorCost} Favor // Req: {formatCurrency(agency.minNetWorthRequired)}
+                      <Handshake className="w-2.5 h-2.5" aria-hidden />
+                      Cost: {agency.cronyFavorCost} Favor // Req: {formatCurrency(agency.minNetWorthRequired)}
                     </p>
                   </div>
 
@@ -137,7 +137,8 @@ export const DumpAgenciesTab: React.FC = () => {
                             : 'bg-stone-800 text-stone-500 cursor-not-allowed'
                         }`}
                       >
-                        🪓 +{formatCurrency(agency.liquidationCashYield)}
+                        <Scissors className="w-3 h-3" aria-hidden />
+                        +{formatCurrency(agency.liquidationCashYield)}
                       </button>
                     ) : (
                       <span className="px-2 py-0.5 rounded bg-stone-900 border border-stone-800 text-stone-500 font-mono t-caption font-semibold flex items-center gap-1">

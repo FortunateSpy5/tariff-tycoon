@@ -215,7 +215,7 @@ export const ClickerButton: React.FC = () => {
             ? 'Slam the stamp to seize contraband. Tap once to unseal BagHolder Pro.'
             : 'BagHolder Pro is live. Open a PUT, fire a YAP, settle the crash.'
           : isCapsFrenzy
-          ? '🚨 FRENZY: 10x REVENUE // CLICK AS FAST AS POSSIBLE'
+          ? 'CAPS LOCK FRENZY: 10x REVENUE // CLICK AS FAST AS POSSIBLE'
           : 'Slam Sherpie to issue executive orders & build tantrum'}
       </span>
     </div>

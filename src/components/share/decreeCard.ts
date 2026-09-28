@@ -243,10 +243,31 @@ export async function renderDecreeCard(data: DecreeCardData): Promise<Blob | nul
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.font = 'bold 26px "Courier New", monospace';
-  ctx.fillText('OFFICIAL', sealX, sealY - 18);
-  ctx.fillText('SEAL', sealX, sealY + 12);
-  ctx.font = 'bold 18px "Courier New", monospace';
-  ctx.fillText('★ TREASURY ★', sealX, sealY + 44);
+  ctx.fillText('OFFICIAL', sealX, sealY - 22);
+  ctx.fillText('SEAL', sealX, sealY + 6);
+
+  // B4: the ★ glyph is drawn as vector geometry rather than a font character.
+  // Canvas has no access to lucide components, and a text star renders
+  // inconsistently across platforms (missing glyph -> tofu box). A drawn star
+  // is deterministic and matches the seal's wax material.
+  const drawStar = (cx: number, cy: number, outer: number, inner: number) => {
+    ctx.beginPath();
+    for (let i = 0; i < 10; i += 1) {
+      const r = i % 2 === 0 ? outer : inner;
+      const a = (Math.PI / 5) * i - Math.PI / 2;
+      const px = cx + Math.cos(a) * r;
+      const py = cy + Math.sin(a) * r;
+      if (i === 0) ctx.moveTo(px, py);
+      else ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fill();
+  };
+  ctx.fillStyle = 'rgba(255,220,220,0.92)';
+  drawStar(sealX - 58, sealY + 36, 9, 4);
+  drawStar(sealX + 58, sealY + 36, 9, 4);
+  ctx.font = 'bold 17px "Courier New", monospace';
+  ctx.fillText('TREASURY', sealX, sealY + 36);
 
   // ---- Target ticker chip ----------------------------------------------------
   if (data.targetSymbol) {
@@ -305,7 +326,7 @@ export function decreeDataFromYap(
     targetSymbol: yap?.targetSymbol,
     stats: [
       { label: 'Treasury', value: fallback.treasuryLabel },
-      { label: 'Crony Favor', value: `🤝 ${Math.floor(fallback.cronyFavor)}` },
+      { label: 'Crony Favor', value: String(Math.floor(fallback.cronyFavor)) },
       { label: 'S.L.O.P. Suspicion', value: fallback.suspicionLabel },
     ],
   };

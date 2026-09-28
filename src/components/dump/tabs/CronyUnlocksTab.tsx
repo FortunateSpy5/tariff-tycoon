@@ -8,6 +8,7 @@ import { Award, Check, Sparkles } from 'lucide-react';
 import { useGameStore } from '../../../store/useGameStore';
 import { INITIAL_CRONY_UPGRADES } from '../../../constants/unlocks';
 import { formatCurrency } from '../../../engine/math/bigNumber';
+import { DossierHeader } from '../DossierHeader';
 
 export const CronyUnlocksTab: React.FC = () => {
   const treasuryCash = useGameStore((s) => s.treasuryCash);
@@ -25,7 +26,7 @@ export const CronyUnlocksTab: React.FC = () => {
 
     const success = buyUpgrade(upgradeId);
     if (success) {
-      setFeedback(`⚡ UNLOCKED ${name}!`);
+      setFeedback(`UNLOCKED ${name}!`);
       setTimeout(() => setFeedback(null), 2500);
     }
   };
@@ -33,13 +34,11 @@ export const CronyUnlocksTab: React.FC = () => {
   return (
     <div className="h-full min-h-0 flex flex-col gap-2 select-none">
       <div className="shrink-0">
-        <div className="flex items-center justify-between t-micro font-mono text-stone-500 border-b border-stone-800 pb-1.5">
-          <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
-            <Award className="w-3.5 h-3.5" />
-            <span>OLIGARCH LOBBYING UPGRADES</span>
-          </div>
-          <span>PERMANENT MULTIPLIERS</span>
-        </div>
+        <DossierHeader
+          icon={<Award className="w-3.5 h-3.5 text-gold-500" />}
+          title="Oligarch Lobbying Upgrades"
+          status="Permanent Multipliers"
+        />
 
         {!hasTariffAccess && (
           <p className="mt-2 border-l-2 border-amber-500/70 bg-amber-950/20 px-2 py-1 t-micro text-stone-400">

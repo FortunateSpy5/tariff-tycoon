@@ -1,5 +1,6 @@
 import React from 'react';
-import { Globe, MessageSquareQuote, TrendingDown, DollarSign } from 'lucide-react';
+import { Globe, MessageSquareQuote, TrendingDown } from 'lucide-react';
+import { DossierHeader } from '../DossierHeader';
 import { useGameStore } from '../../../store/useGameStore';
 import { PARODY_NATIONS } from '../../../constants/nations';
 import { formatCurrency } from '../../../engine/math/bigNumber';
@@ -26,16 +27,11 @@ export const BilateralTariffsTab: React.FC = () => {
   return (
     <div className="h-full min-h-0 flex flex-col gap-2 select-none">
       <div className="shrink-0">
-        <div className="flex items-center justify-between t-micro font-mono text-stone-500 border-b border-stone-800 pb-1.5">
-          <div className="flex items-center gap-1.5 text-red-400 font-bold">
-            <Globe className="w-3.5 h-3.5" />
-            <span>BILATERAL TARIFF DIALS</span>
-          </div>
-          <div className="flex items-center gap-1 text-emerald-400 font-bold">
-            <DollarSign className="w-3 h-3" />
-            <span>Total Duties: +{formatCurrency(tariffRevenuePerSecond)}/s</span>
-          </div>
-        </div>
+        <DossierHeader
+          icon={<Globe className="w-3.5 h-3.5 text-gold-500" />}
+          title="Bilateral Tariff Dials"
+          status={`Total Duties: +${formatCurrency(tariffRevenuePerSecond)}/s`}
+        />
 
         {!hasPrestigeAccess && (
           <p className="mt-2 border-l-2 border-amber-500/70 bg-amber-950/20 px-2 py-1 t-micro text-stone-400">

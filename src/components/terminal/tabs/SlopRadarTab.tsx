@@ -78,7 +78,7 @@ export const SlopRadarTab: React.FC = () => {
             }`}
           >
             <Award className="w-3.5 h-3.5" />
-            <span>Bribe Inquest Lead (Costs 🤝 20 Favor // -16% Heat)</span>
+            <span>Bribe Inquest Lead (Costs 20 Favor // -16% Heat)</span>
           </button>
 
           <button

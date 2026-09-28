@@ -1,6 +1,6 @@
 # UI/UX Redesign — Completion Plan
 
-**Status:** Phase 0 ✅ · Phase A ✅ COMPLETE · Phase B/C next
+**Status:** Phase 0 ✅ · Phase A ✅ · Phase B ✅ · Phase C next
 **Direction:** [Newsprint & Classified Documents] — aged paper, redaction bars, wax seals, phosphor terminals
 **Last updated:** 2026-09-29
 
@@ -105,42 +105,36 @@ cash alone during offline credit. All corrected.
 
 ---
 
-## Phase B — Theme completion
+## Phase B — Theme completion ✅ COMPLETE
 
-### B1. `TelemetryConsolePane` → `surface-terminal`
-BagHolder Pro should read as a real phosphor CRT (scanlines + glow), not dark
-stone. This is the game's signature terminal and currently looks generic.
+### B1. `TelemetryConsolePane` → `surface-terminal` ✅ DONE
+The left wing now renders as a phosphor CRT (green-on-black, scanlines). The two
+wings read as different MATERIALS rather than two dark rectangles, and the
+status strip was recoloured to match.
 
-### B2. `BreakingNewsBar` → newsprint
-The only fully un-themed surface, and the most screenshot-visible element in the
-app. Aged paper with ink-on-newsprint headlines.
+### B2. `BreakingNewsBar` → newsprint ✅ DONE
+The 48px top rail is now aged newsprint with a double rule, so the app reads as
+paperwork from the first pixel. The marquee keeps a dark inset well — light
+scrolling text on a light bar would be unreadable. Brand, phase badge, treasury
+and controls all moved onto the newsprint palette.
 
-### B3. Terminal materials across the 4 dump tabs
-Shift `DumpAgenciesTab`, `CronyUnlocksTab`, `BilateralTariffsTab`,
-`CaymansPrestigeTab` from "office chrome" to "classified paperwork", consistent
-with `SituationRoom`.
+### B3. Terminal materials across the 4 dump tabs ✅ DONE
+Added `src/components/dump/DossierHeader.tsx`: a black redaction bar with the
+section name in wax red. It replaced four hand-written copies of the same
+header, so this was both a theming fix and a de-duplication.
+**INVARIANT:** all four right-deck tabs render through `<DossierHeader>`.
 
-### B4. Remove ALL emoji ✅ DECIDED
-Replace with lucide icons throughout — **including the shareable PNG**
-(overrides my earlier recommendation; the artifact should read as official, not
-meme-bright):
+### B4. Remove ALL emoji ✅ DONE (user decision: includes the PNG)
+Replaced with lucide icons (`Handshake` for Crony Favor, `ScrollText` for SIS,
+`Scissors` in the agency tab) or plain text where an icon adds nothing.
+Emoji cleared from: ticker, desk props, desk caption, blotter feedback, agency
+tab, upgrades tab, caymans tab, S.L.O.P. radar, reset modal, and both raid
+messages in `tradingSlice`.
 
-| Emoji | Replacement | Sites |
-|-------|-------------|-------|
-| 🤝 | `Handshake` | ticker, `DumpAgenciesTab`, `SlopRadarTab`, `SubpoenaShredderProp`, `decreeCard.ts` PNG |
-| 📜 | `ScrollText` | ticker (SIS), prestige tab, `decreeCard.ts` PNG |
-| 🚨 | `Siren` | crisis/raid banners, `TantrumMeter` |
-| 💥 | `Zap` | `TantrumMeter` |
-| ★ | drawn vector / `Award` | wax seal area, `RunSummaryCard` |
-| 🔥 | `Flame` | insider-combo feedback |
-
-**Canvas note:** the PNG renderer cannot use lucide components — glyphs must be
-drawn with `ctx.fillText` or replaced with canvas-native shapes. Plan: draw the
-seal and rule graphics as vector paths, and use plain text labels in the PNG
-(`CRONY FAVOR`, `SOVEREIGN IMMUNITY SLIPS`) rather than emoji.
-
-**Verify:** grep the whole repo for the emoji set; expect zero hits in
-player-facing code and the PNG.
+**Canvas note:** `decreeCard.ts` cannot use lucide (no DOM in canvas), so the
+wax-seal ★ is now drawn as vector geometry via a 10-point star path. A text
+glyph would render as tofu on platforms without the font. The 🤝 in the PNG stat
+rows became a plain number.
 
 ---
 

@@ -8,7 +8,7 @@ import React from 'react';
 import { Lock, Radio, Activity } from 'lucide-react';
 import { useGameStore } from '../../store/useGameStore';
 import type { LeftChannelTab } from '../../types/unlocks';
-import { PaneShell, TabStrip, StatusStrip } from '../ui';
+import { PaneShell, TabStrip } from '../ui';
 import { StocksOptionsTab } from './tabs/StocksOptionsTab';
 import { PolyGriftTab } from './tabs/PolyGriftTab';
 import { SlopRadarTab } from './tabs/SlopRadarTab';
@@ -35,6 +35,15 @@ export const TelemetryConsolePane: React.FC = () => {
 
   return (
     <PaneShell
+      /* REDESIGN [B1 — The Terminal Is a CRT]:
+         BagHolder Pro is the game's signature surface and it was rendering as
+         generic dark stone, identical to the desk it sits next to. Under the
+         [Newsprint & Classified] direction the left wing is a phosphor CRT:
+         green-on-black with scanlines, so the two wings read as different
+         MATERIALS (terminal vs classified paperwork) rather than two dark
+         rectangles. The right wing keeps `panel`. */
+      className="surface-terminal border-phosphor-600/30"
+      bodyClassName="p-2.5"
       header={
         availableTabs.length > 0 ? (
           <TabStrip
@@ -46,16 +55,16 @@ export const TelemetryConsolePane: React.FC = () => {
         ) : undefined
       }
       footer={
-        <StatusStrip
-          icon={<Radio className="w-3 h-3 text-phosphor-400 animate-pulse" />}
-          label="CITADULL HFT FEED"
-          right={
-            <>
-              <Activity className="w-3 h-3 text-gold-400" />
-              <span className="text-phosphor-400 font-bold">0ms LATENCY</span>
-            </>
-          }
-        />
+        <div className="flex shrink-0 items-center justify-between border-t border-phosphor-600/30 bg-newsprint-950 px-3 py-1.5 font-mono t-micro text-phosphor-300/70">
+          <div className="flex items-center gap-1.5">
+            <Radio className="w-3 h-3 text-phosphor-400 animate-pulse" />
+            <span>CITADULL HFT FEED</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <Activity className="w-3 h-3 text-gold-400" />
+            <span className="text-phosphor-300 font-bold">0ms LATENCY</span>
+          </div>
+        </div>
       }
     >
       {activeLeftTab === 'stocks' && <StocksOptionsTab />}

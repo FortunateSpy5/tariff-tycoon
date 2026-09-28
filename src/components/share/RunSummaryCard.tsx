@@ -13,6 +13,7 @@
  */
 
 import React, { useState, useCallback } from 'react';
+import { ScrollText } from 'lucide-react';
 import { Card, CardHeader } from '../ui';
 import { renderDecreeCard, downloadBlob } from './decreeCard';
 import { snapshotToCardData, type RunSnapshot } from './runSummary';
@@ -42,7 +43,7 @@ export const RunSummaryCard: React.FC<{
 
       <CardHeader
         title="Certificate of Structural Damage"
-        icon={<span className="text-wax-500 text-micro">★</span>}
+        icon={<ScrollText className="w-3.5 h-3.5 text-wax-500" />}
         right={
           <button
             onClick={onDismiss}

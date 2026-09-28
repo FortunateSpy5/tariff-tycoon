@@ -510,14 +510,14 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
         // Averted via Crony Favor bribe!
         currentFavor -= 50;
         currentSuspicion = 25;
-        raidMessage = '🛡️ RAID AVERTED! Bribed Special Counsel with 🤝 50 Favor (-75% Heat).';
+        raidMessage = 'RAID AVERTED! Bribed Special Counsel with 50 Favor (-75% Heat).';
         sound.playChaChing();
       } else {
         // Direct cash fine / asset seizure!
         const fineAmount = Math.max(5000, Math.round(currentTreasury * 0.35));
         currentTreasury = Math.max(10, currentTreasury - fineAmount);
         currentSuspicion = 20; // Plea agreement resets heat
-        raidMessage = `🚨 DOJ RAID! Asset seizure executed: -$${fineAmount.toLocaleString()} (35% Treasury) confiscated!`;
+        raidMessage = `DOJ RAID! Asset seizure executed: -$${fineAmount.toLocaleString()} (35% Treasury) confiscated!`;
         sound.playDeskThud();
       }
     }
