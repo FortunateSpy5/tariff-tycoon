@@ -1,0 +1,108 @@
+/**
+ * PaneShell — the frame shared by all three cockpit wings.
+ *
+ * WHY THIS EXISTS [A2: Surface Drift]:
+ * The three panes were hand-written divs that each declared their own
+ * background, border, radius, and shadow. They looked nearly identical and were
+ * not identical, which is precisely the kind of drift that makes a UI read as
+ * an accumulation of components rather than a designed surface. The same drift
+ * existed one level down, inside each pane's tab bodies.
+ *
+ * This component owns the frame. A pane supplies its tab strip and its body,
+ * and inherits a consistent border, radius, shadow, and header treatment.
+ *
+ * INVARIANT: the three cockpit panes MUST render through <PaneShell>. Do not
+ * hand-roll `h-full rounded-xl border shadow-2xl` on a pane root again.
+ */
+
+import React from 'react';
+
+export interface PaneShellProps {
+  /** Tab strip rendered in the header. Omit for a pane with no tabs. */
+  header?: React.ReactNode;
+  /** Main body. Should manage its own scrolling. */
+  children: React.ReactNode;
+  /** Footer status strip. Omit for none. */
+  footer?: React.ReactNode;
+  /** Extra classes on the body region (e.g. padding overrides). */
+  bodyClassName?: string;
+  className?: string;
+}
+
+export const PaneShell: React.FC<PaneShellProps> = ({
+  header,
+  children,
+  footer,
+  bodyClassName = 'p-2.5',
+  className = '',
+}) => (
+  <div
+    className={`h-full min-h-0 flex flex-col overflow-hidden select-none rounded-xl border border-stone-800 bg-stone-900/95 shadow-2xl ${className}`}
+  >
+    {header}
+    <div className={`relative flex min-h-0 flex-1 flex-col overflow-hidden ${bodyClassName}`}>
+      {children}
+    </div>
+    {footer}
+  </div>
+);
+
+/**
+ * TabStrip — the shared channel selector used by both wings.
+ *
+ * INVARIANT: both cockpit tab strips use this. The only difference between the
+ * wings is the active-tab accent, passed as `accent` — never a forked copy of
+ * this markup, which is how the two strips drifted apart in the first place.
+ */
+export const TabStrip: React.FC<{
+  tabs: ReadonlyArray<{ id: string; label: string; shortcut: string }>;
+  activeId: string;
+  onSelect: (id: string) => void;
+  /** Accent for the active tab. Terminal = phosphor, right deck = gold. */
+  accent?: 'phosphor' | 'gold';
+  className?: string;
+}> = ({ tabs, activeId, onSelect, accent = 'phosphor', className = '' }) => (
+  <div className={`flex shrink-0 items-center gap-1 border-b border-stone-800 bg-stone-950 p-1 ${className}`}>
+    {tabs.map((tab) => {
+      const isActive = tab.id === activeId;
+      const active =
+        accent === 'phosphor'
+          ? 'bg-phosphor-500 text-stone-950'
+          : 'bg-gold-500 text-stone-950';
+      return (
+        <button
+          key={tab.id}
+          onClick={() => onSelect(tab.id)}
+          className={`flex min-w-0 flex-1 items-center justify-center gap-1 rounded px-1 py-1 text-center font-mono t-micro font-bold transition-colors ${
+            isActive
+              ? `${active} font-black shadow-md`
+              : 'text-stone-400 hover:bg-stone-900 hover:text-stone-200'
+          }`}
+        >
+          <span className="shrink-0">[{tab.shortcut}]</span>
+          <span className="truncate">{tab.label}</span>
+        </button>
+      );
+    })}
+  </div>
+);
+
+/**
+ * StatusStrip — the shared footer row for a pane.
+ *
+ * @param accent dot/icon colour so the left terminal reads phosphor and the
+ *               right deck reads gold, without forking the markup.
+ */
+export const StatusStrip: React.FC<{
+  icon?: React.ReactNode;
+  label: string;
+  right?: React.ReactNode;
+}> = ({ icon, label, right }) => (
+  <div className="flex shrink-0 items-center justify-between border-t border-stone-800 bg-stone-950 px-3 py-1.5 font-mono t-micro text-stone-500">
+    <div className="flex min-w-0 items-center gap-1.5">
+      {icon}
+      <span className="truncate">{label}</span>
+    </div>
+    {right && <div className="flex shrink-0 items-center gap-1">{right}</div>}
+  </div>
+);

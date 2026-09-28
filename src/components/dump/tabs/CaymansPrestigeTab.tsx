@@ -9,10 +9,9 @@ import { useGameStore } from '../../../store/useGameStore';
 import { calculatePrestigeSIS } from '../../../engine/math/formulas';
 import { formatCurrency } from '../../../engine/math/bigNumber';
 import { PRESTIGE_CASH_DIVISOR } from '../../../constants/balance';
-import {
-  RunSummaryCard,
-} from '../../share/RunSummaryCard';
+import { RunSummaryCard } from '../../share/RunSummaryCard';
 import { captureRunSnapshot, type RunSnapshot } from '../../share/runSummary';
+import { Card } from '../../ui';
 
 export const CaymansPrestigeTab: React.FC = () => {
   const activeTrades = useGameStore((s) => s.activeTrades);
@@ -68,7 +67,7 @@ export const CaymansPrestigeTab: React.FC = () => {
         </div>
 
         {/* Current Slips Meter */}
-        <div className="bg-stone-950 border border-stone-800 rounded-lg p-2.5 flex items-center justify-between">
+        <Card density="tight" className="bg-stone-950 flex items-center justify-between">
           <div>
             <span className="t-micro text-stone-500 font-mono block">Current Balance:</span>
             <span className="font-mono font-bold text-amber-400 text-sm flex items-center gap-1">
@@ -81,7 +80,7 @@ export const CaymansPrestigeTab: React.FC = () => {
               +{(sovereignImmunitySlips || 0) * 10}% Click Yield Multiplier
             </span>
           </div>
-        </div>
+        </Card>
 
         {/* Prestige Reset Yield Card */}
         <div className="bg-stone-950 border border-amber-900/40 rounded-lg p-2.5 space-y-2">

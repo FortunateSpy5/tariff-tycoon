@@ -6,6 +6,7 @@
 import React from 'react';
 import { ShieldAlert, Award, FileX2 } from 'lucide-react';
 import { useGameStore } from '../../../store/useGameStore';
+import { Card } from '../../ui';
 
 export const SlopRadarTab: React.FC = () => {
   const slopSuspicion = useGameStore((s) => s.slopSuspicion);
@@ -31,7 +32,7 @@ export const SlopRadarTab: React.FC = () => {
       </div>
 
       {/* Suspicion Heat Gauge — the hero element, expands to fill spare height */}
-      <div className="flex-1 min-h-0 flex flex-col justify-center gap-3 rounded-lg border border-stone-800 bg-stone-950 p-3">
+      <Card density="tight" className="flex-1 min-h-0 flex flex-col justify-center gap-3 bg-stone-950">
         <div className="flex justify-between items-baseline text-xs font-mono">
           <span className="text-stone-500">Grand Jury Heat</span>
           <span
@@ -56,14 +57,14 @@ export const SlopRadarTab: React.FC = () => {
         <span className="t-micro text-stone-500 font-mono block leading-snug">
           Accumulates on 1,000x trades and state secret sales; decays -0.2%/sec passively.
         </span>
-      </div>
+      </Card>
 
       <div className="shrink-0 space-y-2.5">
         {/* VEX Volatility Metric */}
-        <div className="bg-stone-950 border border-stone-800 rounded-lg p-2 flex justify-between items-center font-mono t-micro">
+        <Card density="tight" className="flex justify-between items-center font-mono t-micro bg-stone-950">
           <span className="text-stone-500">VEX Volatility Index:</span>
           <span className="text-amber-400 font-bold">{vexVolatility.toFixed(1)} pts</span>
-        </div>
+        </Card>
 
         {/* Tactical Defense Tools */}
         <div className="space-y-1.5">

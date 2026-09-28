@@ -21,8 +21,14 @@ export type CardMaterial = 'panel' | 'term' | 'paper' | 'classified';
 
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   material?: CardMaterial;
-  /** Visual density. 'tight' for list rows, 'default' for content blocks. */
-  density?: 'tight' | 'default';
+  /**
+   * Visual density.
+   *   'tight'   p-2   — list rows, gauge rows
+   *   'default' p-2.5 — content blocks
+   *   'flush'   p-0   — hero surfaces that manage their own inner padding
+   *                     (e.g. a full-bleed heat gauge that must reach the edges)
+   */
+  density?: 'tight' | 'default' | 'flush';
   /** Optional accent rule along the top edge (amber for money, green for terminal). */
   accent?: 'gold' | 'phosphor' | 'red' | 'none';
   children?: React.ReactNode;
@@ -38,6 +44,7 @@ const MATERIAL_CLASS: Record<CardMaterial, string> = {
 const DENSITY_CLASS = {
   tight: 'p-2',
   default: 'p-2.5',
+  flush: 'p-0',
 } as const;
 
 const ACCENT_CLASS = {

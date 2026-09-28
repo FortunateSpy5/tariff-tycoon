@@ -3,6 +3,7 @@ import { Globe, MessageSquareQuote, TrendingDown, DollarSign } from 'lucide-reac
 import { useGameStore } from '../../../store/useGameStore';
 import { PARODY_NATIONS } from '../../../constants/nations';
 import { formatCurrency } from '../../../engine/math/bigNumber';
+import { Card } from '../../ui';
 
 export const BilateralTariffsTab: React.FC = () => {
   const phase = useGameStore((s) => s.phase);
@@ -55,7 +56,7 @@ export const BilateralTariffsTab: React.FC = () => {
             const isPunitive = currentRate > 250;
 
             return (
-              <div key={nation.id} className="bg-stone-950 border border-stone-800 rounded-lg p-2 space-y-1.5">
+              <Card key={nation.id} density="tight" className="bg-stone-950 space-y-1.5">
                 <div className="flex items-center justify-between">
                   <div>
                     <span className="font-bold text-stone-200 text-xs block">
@@ -110,7 +111,7 @@ export const BilateralTariffsTab: React.FC = () => {
                   <MessageSquareQuote className="w-3 h-3 text-amber-500 shrink-0 mt-0.5" />
                   <span>"{cableText}"</span>
                 </div>
-              </div>
+              </Card>
             );
           })}
       </div>

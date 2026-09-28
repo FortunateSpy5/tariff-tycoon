@@ -10,6 +10,7 @@ import { useGameStore } from '../../../store/useGameStore';
 import type { StockSymbol, OptionType } from '../../../types/market';
 import { calculateOptionReturn } from '../../../engine/math/formulas';
 import { formatCurrency } from '../../../engine/math/bigNumber';
+import { Card } from '../../ui';
 
 export const StocksOptionsTab: React.FC = () => {
   const stocks = useGameStore((s) => s.stocks);
@@ -138,7 +139,7 @@ export const StocksOptionsTab: React.FC = () => {
 
       {/* Watchlist Ladder (All 9 Stocks) — rows share the available height so the
           ladder fills its column instead of leaving a gap beneath the last row. */}
-      <div className="flex-1 min-h-0 flex flex-col overflow-hidden rounded-lg border border-stone-800 bg-stone-950/60">
+      <Card density="flush" className="flex-1 min-h-0 flex flex-col overflow-hidden bg-stone-950/60">
         <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar divide-y divide-stone-800/70 flex flex-col">
           {symbols.map((sym) => {
             const stk = stocks[sym];
@@ -174,7 +175,7 @@ export const StocksOptionsTab: React.FC = () => {
             );
           })}
         </div>
-      </div>
+      </Card>
 
       {/* Active Open Option Trades & Early Settlement */}
       {activeTrades.length > 0 && (
@@ -232,7 +233,7 @@ export const StocksOptionsTab: React.FC = () => {
       )}
 
       {/* 0DTE Options Order Slip */}
-      <div className="shrink-0 rounded-lg border border-stone-800 bg-stone-950 p-2 space-y-2">
+      <Card density="tight" className="shrink-0 bg-stone-950 space-y-2">
         <div className="flex justify-between items-center t-micro font-mono">
           <span className="text-stone-400">Leverage:</span>
           <div className="flex gap-1">
@@ -298,7 +299,7 @@ export const StocksOptionsTab: React.FC = () => {
             {tradeStatus}
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 };

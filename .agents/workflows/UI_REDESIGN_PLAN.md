@@ -1,6 +1,6 @@
 # UI/UX Redesign — Completion Plan
 
-**Status:** Phase 0 (QA + type system) ✅ COMPLETE · Phase A next
+**Status:** Phase 0 ✅ · Phase A ✅ COMPLETE · Phase B/C next
 **Direction:** [Newsprint & Classified Documents] — aged paper, redaction bars, wax seals, phosphor terminals
 **Last updated:** 2026-09-29
 
@@ -48,53 +48,60 @@ Phase 0 and the redesign landed:
 
 ---
 
-## Phase A — Layout & component consolidation ◀ NEXT
+## Phase A — Layout & component consolidation ✅ COMPLETE
 
-### A1. Collapse the competing center overlays
-`ResoluteBlotterCenter.tsx` mounts up to 4 `absolute inset-0` feedback layers
-(lines ~172, ~196, plus the raid and crisis banners) that fight for the same
-z-index and can stack invisibly.
+### A1. Collapse the competing center overlays ✅ DONE
+Was: up to 4 `absolute inset-0` overlays racing for the same z-index.
+**Now:** `<FeedbackLayer>` renders exactly ONE message by explicit priority
+(`raid > walkBack > yap > print > crisis`). Priority logic lives in
+`feedbackPriority.ts` (pure, exported for testing). Zero `absolute inset-0`
+overlays remain in `ResoluteBlotterCenter.tsx`.
 
-**Do:** one prioritized feedback slot. A single renderer picks the
-highest-priority active message — `raid > walk-back > yap > print` — so only
-one overlay can ever mount.
+**Verified:** live screenshot shows a single dismissible status row.
 
-**Verify:** trigger a raid + a YAP in the same frame; exactly one overlay renders.
+### A2. Roll `<Card>` into the panes and terminal tabs ✅ DONE
+Added `src/components/ui/PaneShell.tsx` exporting `PaneShell`, `TabStrip`, and
+`StatusStrip`. The three cockpit panes were each hand-writing the same
+`h-full rounded-xl border shadow-2xl` frame and their own near-identical tab
+strip; they now share one frame, with the active-tab accent passed as a prop
+(`phosphor` for the left terminal, `gold` for the right deck) rather than by
+forking the markup.
 
-### A2. Roll `<Card>` into the panes and terminal tabs
-Only 3 components use the primitive today, so padding/radius remain inconsistent
-across the cockpit — the exact drift `<Card>` was introduced to kill.
+Also converted: the stocks ladder + order slip, the S.L.O.P. heat gauge + VEX
+row, the bilateral tariff nation rows, and the Cayman SIS balance panel.
+`Card` gained a `flush` density (p-0) for full-bleed surfaces like the ladder
+that manage their own inner padding.
 
-**Do:** adopt `<Card material="panel">` in `TelemetryConsolePane`,
-`ExecutiveExpansionPane`, and the 4 terminal tabs. Replace one-off
-`p-2`/`p-2.5`/`p-3` and `rounded-lg`/`rounded-xl` on panels.
+**Deliberately NOT converted:** small chips and badges (e.g. the agency stat
+pills, lock buttons). Those are inline elements, not panel surfaces, and
+routing them through `<Card>` would add DOM weight for no visual gain.
 
-**Verify:** grep for remaining one-off panel paddings; should drop to near zero.
+**Verified:** tsc / oxlint / build clean; full cockpit screenshot shows a
+consistent frame across all three wings.
 
-### A3. Rewrite `HotkeyFooterHUD`
-~20 text nodes in a 36px dock that silently clips. It also duplicates the
-mute/shake toggles already present in the ticker.
+### A3. Rewrite `HotkeyFooterHUD` ✅ DONE
+Was: ~20 text nodes in 36px with `overflow-x-hidden`, silently truncating keys.
+**Now:** 32px, single scrollable row, icon-only controls with `aria-pressed`,
+strapline removed, agent actions (SPACE/R/Z/M/F) always visible so the dock is
+useful at 0 unlocks. `[V] Vent` surfaces only when actually actionable.
+**INVARIANT:** never set `overflow-hidden` on the key list — it must scroll.
 
-**Do:** collapse to a single scrollable row of essential keys; icon-only
-mute/shake/fullscreen; drop the "100% TRANSFORMATIVE SATIRE" strapline. Raise to
-40px only if the row still truncates at 1366px.
+### A4. Ink/Tantrum gauges + Vent Tantrum ✅ DONE
+**Now:** `<ExecutiveGauges>` stacks them full-width as a matched pair, each with
+a real action. New mechanic: `[V]` burns the entire tantrum meter for VEX relief
+clamped to `VEX_BASELINE` (`ventTantrum` in `deskSlice`).
+**INVARIANT [Venting Must Never Be Optimal]:** it consumes the whole meter
+including overflow past 100% that a frenzy takes for free, so riding to 100% for
+the 10x FRENZY always beats it. Blocked during frenzy AND the cooling-off
+protocol. Verified all five edge cases (too low / healthy / frenzy / cooldown /
+VEX floor).
 
-**Verify:** no clipping at 1920, 1600, 1366, 1280.
+**Deleted:** `InkMeter.tsx`, `TantrumMeter.tsx` (superseded).
 
-### A4. Resolve the Ink/Tantrum meter asymmetry ✅ DECIDED
-They sit in a `grid-cols-2` but only Ink has an action, so the pair reads as
-broken rather than intentional.
-
-**Decision (user):** do **both** —
-1. **Restack** as a deliberate full-width pair so the asymmetry reads as designed
-2. **Add a "Vent Tantrum" action**: spend tantrum to cool VEX faster
-
-The Vent action is a real balance change and needs a new store action in
-`deskSlice` plus a constant. Keep it modest — e.g. spend all tantrum, gain a
-short VEX decay bonus — so it never becomes the optimal path to frenzy.
-
-**Verify:** venting removes the meter, boosts VEX decay, and does **not**
-undercut the CAPS LOCK FRENZY loop.
+### Copy fixes found during A ✅ DONE
+The desk lock and terminal shutter both still advertised "unlocks at $10,000"
+after that gate was removed, and `useGameStore` still granted market access on
+cash alone during offline credit. All corrected.
 
 ---
 
