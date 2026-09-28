@@ -61,10 +61,13 @@ The viewport is divided into three persistent, fixed-height zones:
    - **NEVER** shake the root window, `#root`, or the outer bounding containers.
    - Shaking the window displaces buttons out from under the player's cursor, causing missed clicks and motion sickness.
 2. **Element-Level Recoil:**
-   - Visual recoil and frenzy shake must be applied **only** to the interior parchment document and stamp (`.shake-surface` with `transform: translate3d(...)`) inside an `overflow-hidden` container.
+   - Visual recoil and frenzy shake must be applied **only** to the interior parchment document and stamp (`tactical-recoil`, `stamp-slam`, `stamp-slam-calm` — *not* a `.shake-surface` class, which was removed) inside an `overflow-hidden` container.
+   - **Recoil amplitude is fixed, never scaled by the Tantrum Meter.** A high Tantrum Meter is only reachable by clicking fast, so a meter-proportional recoil becomes a proportional *click-rate* recoil and collapses into a permanent judder at frenzy speed. Add a new animation if you want more impact; do not scale the existing one.
    - Flanking terminals, gauges, headers, and footer HUD remain **100% physically stationary**.
 3. **Accessibility Invariant:**
-   - Always honor `screenShakeEnabled === false` and the browser's `prefers-reduced-motion` media query. When disabled, shake animations must immediately swap to a gentle brightness/border pulse.
+   - Always honor `screenShakeEnabled === false` (`[Z]`) and the browser's `prefers-reduced-motion` media query. When disabled, shake animations must immediately swap to a gentle brightness/border pulse.
+   - The `prefers-reduced-motion` block must cover `animation-duration` and `animation-iteration-count` as well as `transition-*`. The slam, recoil, ink-bloom and glow are **animations**; a transition-only block leaves every one of them running at full strength.
+   - Focus rings must land on the **visible** surface. `CertificateExporter` wraps a rich `Card` in a real `<button>`, so the button has no visible bounds and a default outline draws a ring floating in empty space. Forward the ring to the card. Verify with real Tab navigation — programmatic `.focus()` does not trigger `:focus-visible` and will give you a false negative.
 
 ---
 

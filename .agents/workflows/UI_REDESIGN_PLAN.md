@@ -1,8 +1,14 @@
 # UI/UX Redesign — Completion Plan
 
-**Status:** Phase 0 ✅ · Phase A ✅ · Phase B ✅ · Phase C next
+**Status:** ✅ **COMPLETE** — Phase 0 · A · B · C, plus the post-C QA and cleanup pass.
 **Direction:** [Newsprint & Classified Documents] — aged paper, redaction bars, wax seals, phosphor terminals
 **Last updated:** 2026-09-29
+
+> This document is now a **historical record of the plan**, kept for the rationale and
+> measurements. It is **not** the source of truth for the current theme. For that see
+> the region→material table in `UI_DESIGN_SPECIFICATION.md` §3, and for live invariants
+> the two build gates: `npm run theme:check` (budget 0) and `npm run size:check`
+> (400-line ceiling). Both run inside `npm run build`.
 
 ---
 
