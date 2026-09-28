@@ -57,7 +57,9 @@
 * **The Interaction:** A heavy, ink-stained blue rubber stamp: **[CONFISCATED - BY ORDER OF AGENT 412]** slamming down onto tourist baggage declarations and wheels of foreign brie on a scuffed laminate TSA counter.
 * **The Side-Hustle:** Confiscated goods are tossed into the desk mini-fridge and flipped on **GriftBay Underground** for seed capital.
 * **The Milestone ($1M):** Sirens wail, screen fades to black, and an armored motorcade whisks the player directly to the Oval Office!
-* **Early Market Unlock ($10K):** BagHolder Pro's stock console and YAP open while the player remains at Customs. The connected mechanics then unfold from player actions: the first YAP opens S.L.O.P. Radar; settling a PUT opened before that YAP opens PolyGrift.
+* **Early Market Unlock (first slam):** BagHolder Pro's stock console and YAP open the moment the player stamps for the first time, while still at Customs. The connected mechanics then unfold from player actions: the first YAP opens S.L.O.P. Radar; settling a PUT opened before that YAP opens PolyGrift.
+  * **Rationale:** this was originally a **$10K cash threshold**, roughly 2,000 manual clicks. That buried the game's actual subject — the causal shorting loop — behind a wall of clicking, and the overwhelming majority of players never reached it. Gating the premise on tedium is not onboarding. See `.agents/workflows/UI_REDESIGN_PLAN.md`.
+  * **Paper trades:** the first 3 contracts are risk-free (losses refund, wins pay). Combined with the 5-step directive tutorial, the player learns the verb without going bankrupt on a first guess.
 
 #### Phase 2+ Clicker: The Golden Squeak & Tantrum System ($1M+)
 * **Setting:** The Resolute Desk in the Oval Office.
@@ -165,10 +167,11 @@ $$\text{YAP} = [\text{TIME\_PREFIX}] + [\text{TARGET\_ENTITY}] + [\text{BIZARRE\
   3. **The Desperation Dry Nib:** Dry clicks always yield at least $\$0.10 \times \text{Tap Multiplier}$ and double Tantrum generation.
 
 ### 3.6 First-Hour Progression Contract
-* At $10,000 current treasury cash, BagHolder Pro's stocks/options console and YAP unlock while the player remains in Phase 1.
+* On the **first slam**, BagHolder Pro's stocks/options console and YAP unlock while the player remains in Phase 1. This is an *event*, not a cash threshold.
+* A 5-step classified-directive tutorial drives the loop by real game events: slam → open a paper PUT → fire a YAP → settle. The first 3 contracts are paper trades (losses refund; wins pay out and feed the Tantrum meter), and a paper contract that expires on the 0DTE timer refunds its allowance rather than silently consuming it. The final manual step auto-completes on reaching Phase 2, so the directive card can never pin permanently.
 * The first successful YAP reveals S.L.O.P. Radar. Settling a PUT opened before a YAP reveals PolyGrift.
 * At $1,000,000, the player enters Phase 2 and unlocks D.U.M.P. liquidations. The first liquidation unlocks Crony upgrades; the first upgrade unlocks tariff controls; the first tariff change unlocks Caymans prestige.
-* Phase transitions are Phase 1 at $0–$1M, Phase 2 at $1M–$100B, Phase 3 at $100B–$10^{18}$, and Phase 4 at $10^{18}$ and beyond.
+* Phase transitions are Phase 1 at $0-$1M, Phase 2 at $1M-$100B, Phase 3 at $100B-$10^{18}$, and Phase 4 at $10^{18}$ and beyond.
 * The first market tutorial teaches: select a ticker, open a PUT, target it with YAP, settle the PUT to protect its payout, then optionally arm a matching CALL and hit WALK-BACK before the 8-second window closes.
 
 ---
@@ -180,7 +183,7 @@ $$\text{YAP} = [\text{TIME\_PREFIX}] + [\text{TARGET\_ENTITY}] + [\text{BIZARRE\
   $0 -> $1,000,000            $1M -> $100 Billion         $100B -> $10^18               $10^18 -> $10^42 (Singularity)
 ```
 
-BagHolder Pro and YAP unlock at $10,000 as a Phase 1 milestone; this does not advance the formal phase.
+BagHolder Pro and YAP unlock on the **first slam** as a Phase 1 milestone; this does not advance the formal phase.
 
 1. **Phase 1: The Customs Desk ("Confiscation Arbitrage")**: Shaking down tourists at Gate 99B Liberty International for unpasteurized French brie, fine cigars, and luxury cosmetics. Stashing contraband in the desk mini-fridge and flipping it on GriftBay Underground.
 2. **Phase 2: The Oval Syndicate ("The BagHolder Pro Era")**: Controlling global trade policy from the Resolute Desk. Front-running the S&Pain 500 with unhinged 3:00 AM YAPs, buying 1,000x leveraged options, and cashing in billions.

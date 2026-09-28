@@ -1,5 +1,5 @@
 /**
- * Settings Slice: Manages audio preferences, screen recoil, and streamer mode.
+ * Settings Slice: Manages audio preferences, screen recoil, and save lifecycle.
  */
 
 import type { StateCreator } from 'zustand';
@@ -9,12 +9,10 @@ import { sound } from '../../audio/soundEngine';
 export interface SettingsSlice {
   isMuted: boolean;
   screenShakeEnabled: boolean;
-  streamerMode: boolean;
   lastSavedTimestamp: number;
 
   toggleMute: () => void;
   toggleScreenShake: () => void;
-  toggleStreamerMode: () => void;
   updateLastSaved: () => void;
   hardResetGame: () => void;
 }
@@ -22,7 +20,6 @@ export interface SettingsSlice {
 export const createSettingsSlice: StateCreator<GameStore, [], [], SettingsSlice> = (set, get) => ({
   isMuted: false,
   screenShakeEnabled: true,
-  streamerMode: false,
   lastSavedTimestamp: Date.now(),
 
   toggleMute: () => {
@@ -33,10 +30,6 @@ export const createSettingsSlice: StateCreator<GameStore, [], [], SettingsSlice>
 
   toggleScreenShake: () => {
     set({ screenShakeEnabled: !get().screenShakeEnabled });
-  },
-
-  toggleStreamerMode: () => {
-    set({ streamerMode: !get().streamerMode });
   },
 
   updateLastSaved: () => {

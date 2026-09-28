@@ -4,8 +4,7 @@
  */
 
 import type { StateCreator } from 'zustand';
-import type { DeskState, GamePhase } from '../../types/desk';
-import type { LeftChannelTab, RightChannelTab } from '../../types/unlocks';
+import type { DeskSliceContract } from '../../types/store';
 import type { GameStore } from '../useGameStore';
 import {
   calculateClickValue,
@@ -13,18 +12,24 @@ import {
   calculateOfflineEarnings,
 } from '../../engine/math/formulas';
 import { INITIAL_CRONY_UPGRADES } from '../../constants/unlocks';
-import { PARODY_NATIONS } from '../../constants/nations';
-import { TUTORIAL_CHAIN } from '../../constants/onboarding';
+import { tickCrisis } from '../../engine/systems/crisisEngine';
+import { clickInkFrenzy, tickInkFrenzy } from '../../engine/systems/inkFrenzyEngine';
+import { tickTariffRevenue } from '../../engine/systems/tariffEngine';
+import { isPhasePromotion, nextPhaseFor } from '../../engine/systems/phaseEngine';
+import { tickPassiveEconomy } from '../../engine/systems/passiveEngine';
+import { clampCronyFavor } from '../../engine/systems/slopEngine';
 import {
-  CRISIS_BOOK,
-  CRISIS_HEAT_PER_TIER,
-  CRISIS_INTERVAL_BY_PHASE,
-  CRISIS_TANTRUM_REWARD,
-  CRISIS_TIER_MULTIPLIERS,
-  CRISIS_WINDOW_SECONDS,
-  crisisBasePayoutForPhase,
-  crisisTierForElapsed,
-} from '../../constants/crisis';
+  advanceTutorialIndex,
+  completedTutorialIndex,
+  resolveMarketAccess,
+  resolveTutorialIndex,
+} from '../../engine/systems/onboardingEngine';
+import {
+  canBuyUpgrades,
+  canSetTariff,
+  isLeftTabUnlocked,
+  isRightTabUnlocked,
+} from '../../engine/systems/unlockEngine';
 import {
   INK_PER_CLICK,
   INK_REGEN_PER_SECOND,
@@ -37,71 +42,14 @@ import {
   DRY_CLICK_JAM_THRESHOLD,
   INK_REFILL_TREASURY_RATIO,
   CRONY_FAVOR_PASSIVE_PER_SECOND,
-  CRONY_FAVOR_MAX,
   TANTRUM_VENT_CONSUME_RATIO,
   TANTRUM_VENT_VEX_RELIEF,
   TANTRUM_VENT_MIN_TANTRUM,
   VEX_BASELINE,
 } from '../../constants/balance';
 import { sound } from '../../audio/soundEngine';
-import { formatCurrency } from '../../engine/math/bigNumber';
 
-/** Compact cash for short desk notices (e.g. "+$6.00K TREASURY"). */
-function formatCompactCash(value: number): string {
-  return formatCurrency(value);
-}
-
-export interface DeskSlice extends DeskState {
-  treasuryCash: number;
-  passiveCashPerSecond: number;
-  lastTickTimestamp: number;
-
-  /** Lifetime treasury cash accumulated this run (drives the Tier 1 prestige SIS formula). */
-  lifetimeCashEarned: number;
-
-  // Active Channel Tabs
-  activeLeftTab: LeftChannelTab;
-  activeRightTab: RightChannelTab;
-  setActiveLeftTab: (tab: LeftChannelTab) => void;
-  setActiveRightTab: (tab: RightChannelTab) => void;
-
-  // Upgrades
-  activeUpgrades: string[];
-  buyUpgrade: (upgradeId: string) => boolean;
-
-  /** Advance the onboarding chain. Clamped at the end; never wraps. */
-  advanceTutorial: () => void;
-  /** Skip onboarding permanently (players who already know the loop). */
-  skipTutorial: () => void;
-
-  // Interactive Desk Props
-  triggerRedPhoneBailout: () => boolean;
-  sellClassifiedSecrets: () => boolean;
-  shredSubpoenas: () => boolean;
-  printEmergencyCash: () => boolean;
-
-  // Crisis Call (Red Rotary Phone dial)
-  swearInCrisis: () => boolean;
-  suppressCrisis: () => boolean;
-  dismissCrisisOutcome: () => void;
-
-  // Bilateral Tariffs state
-  tariffRates: Record<string, number>;
-  setTariffRate: (nationId: string, rate: number) => void;
-
-  clickDesk: () => boolean;
-  refillInk: () => boolean;
-  /**
-   * VENT THE TANTRUM: burn all accumulated tantrum for a burst of VEX relief.
-   * Never optimal (see TANTRUM_VENT_CONSUME_RATIO) — it exists as a panic
-   * button for calm options pricing, and as the Tantrum meter's counterpart
-   * to the Ink meter's refill action.
-   */
-  ventTantrum: () => boolean;
-  tickDesk: (deltaSeconds: number) => void;
-  creditOfflineEarnings: (elapsedSeconds: number) => number;
-  setGamePhase: (phase: GamePhase) => void;
-}
+export interface DeskSlice extends DeskSliceContract {}
 
 export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set, get) => ({
   phase: 1,
@@ -135,29 +83,14 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
   activeLeftTab: 'stocks',
   activeRightTab: 'dump',
   setActiveLeftTab: (tab) => {
-    const state = get();
-    const isUnlocked =
-      (tab === 'stocks' && state.hasMarketAccess) ||
-      (tab === 'radar' && state.hasRadarAccess) ||
-      (tab === 'polygrift' && state.hasPolyGriftAccess);
-    if (isUnlocked) set({ activeLeftTab: tab });
+    // INVARIANT: [Progression Must Be Earned, Not Idle] — see `unlockEngine`.
+    if (isLeftTabUnlocked(tab, get())) set({ activeLeftTab: tab });
   },
   setActiveRightTab: (tab) => {
-    const state = get();
-    const isUnlocked =
-      (tab === 'dump' && state.phase >= 2) ||
-      (tab === 'unlocks' && state.hasCronyUnlocksAccess) ||
-      (tab === 'tariffs' && state.hasTariffAccess) ||
-      (tab === 'caymans' && state.hasPrestigeAccess);
-    if (isUnlocked) set({ activeRightTab: tab });
+    if (isRightTabUnlocked(tab, get())) set({ activeRightTab: tab });
   },
 
   activeUpgrades: [],
-  activeCrisis: null,
-  crisisCooldownSeconds: 8,
-  totalCrisesAnswered: 0,
-  totalCrisesSuppressed: 0,
-  lastCrisisOutcome: undefined,
   tariffRates: {
     north_annex: 125,
     nearshore_fed: 150,
@@ -168,7 +101,7 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
   },
   setTariffRate: (nationId, rate) =>
     set((state) => {
-      if (state.phase < 2 || !state.hasTariffAccess) return state;
+      if (!canSetTariff(state)) return state;
       return {
         tariffRates: { ...state.tariffRates, [nationId]: rate },
         hasPrestigeAccess: state.hasPrestigeAccess || state.tariffRates[nationId] !== rate,
@@ -179,17 +112,16 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
    * ADVANCE TUTORIAL: clamps at the end of the chain so a completed tutorial
    * can never wrap back to step 0. A function (not a raw setter) so no caller
    * can corrupt the index into a negative or out-of-range state.
+   * See `onboardingEngine`.
    */
   advanceTutorial: () =>
-    set((state) => ({
-      tutorialStepIndex: Math.min(TUTORIAL_CHAIN.length, state.tutorialStepIndex + 1),
-    })),
+    set((state) => ({ tutorialStepIndex: advanceTutorialIndex(state.tutorialStepIndex) })),
 
-  skipTutorial: () => set({ tutorialStepIndex: TUTORIAL_CHAIN.length }),
+  skipTutorial: () => set({ tutorialStepIndex: completedTutorialIndex() }),
 
   buyUpgrade: (upgradeId: string) => {
     const state = get();
-    if (state.phase < 2 || !state.hasCronyUnlocksAccess) return false;
+    if (!canBuyUpgrades(state)) return false;
     if (state.activeUpgrades.includes(upgradeId)) return false;
 
     const def = INITIAL_CRONY_UPGRADES.find((u) => u.id === upgradeId);
@@ -204,122 +136,9 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
     return true;
   },
 
-  triggerRedPhoneBailout: () => {
-    const state = get();
-    // Only available when broke (< $10)
-    if (state.treasuryCash >= 10) return false;
-
-    const bailoutAmount = 5000 * (1 + state.phase);
-    sound.playChaChing();
-    set({
-      treasuryCash: state.treasuryCash + bailoutAmount,
-    });
-    return true;
-  },
-
-  sellClassifiedSecrets: () => {
-    const state = get();
-    const now = Date.now();
-    // Cooldown check: max 1 sale every 8 seconds, unless broke (< $50) emergency bailout
-    const elapsed = now - (state.lastSecretSaleTimestamp || 0);
-    if (elapsed < 8000 && state.treasuryCash >= 50) return false;
-
-    sound.playChaChing();
-    set({
-      treasuryCash: state.treasuryCash + 500,
-      slopSuspicion: Math.min(100, state.slopSuspicion + 8),
-      lastSecretSaleTimestamp: now,
-    });
-    return true;
-  },
-
-  shredSubpoenas: () => {
-    const state = get();
-    const now = Date.now();
-
-    // INVARIANT: Phase gate — shredder only available in Oval Office (Phase >= 2)
-    if (state.phase < 2) return false;
-
-    // INVARIANT: Cooldown enforcement (5-second shredder cooldown)
-    if (now - (state.lastShredTimestamp || 0) < 5000) return false;
-
-    // INVARIANT: Cost gate — Requires 10 Crony Favor (political capital to shred federal subpoenas)
-    if (state.cronyFavor < 10) return false;
-
-    sound.playDeskThud();
-    set({
-      cronyFavor: state.cronyFavor - 10,
-      slopSuspicion: Math.max(0, state.slopSuspicion - 25),
-      lastShredTimestamp: now,
-    });
-    return true;
-  },
-
-  printEmergencyCash: () => {
-    const state = get();
-    const now = Date.now();
-    if (!state.activeUpgrades.includes('broad_daylight_printer')) return false;
-    if (now - state.lastPrinterTimestamp < 60000) return false;
-
-    sound.playChaChing();
-    set({
-      treasuryCash: state.treasuryCash + 100000,
-      slopSuspicion: Math.min(100, state.slopSuspicion + 15),
-      lastPrinterTimestamp: now,
-    });
-    return true;
-  },
-
   // ===================================================================
-  // THE CRISIS CALL — Red Rotary Phone dial
+  // THE DESK PROPS live in `deskPropsSlice`.
   // ===================================================================
-
-  swearInCrisis: () => {
-    const state = get();
-    const crisis = state.activeCrisis;
-    if (!crisis) return false;
-
-    const def = CRISIS_BOOK.find((c) => c.id === crisis.id);
-    if (!def) return false;
-
-    const tier = crisisTierForElapsed(crisis.elapsedSeconds);
-    const tierDef = def.tiers[tier];
-    const payout = Math.round(
-      crisisBasePayoutForPhase(state.phase) * CRISIS_TIER_MULTIPLIERS[tier]
-    );
-    const heat = CRISIS_HEAT_PER_TIER * (tier + 1);
-
-    sound.playChaChing();
-    set({
-      treasuryCash: state.treasuryCash + payout,
-      lifetimeCashEarned: state.lifetimeCashEarned + payout,
-      slopSuspicion: Math.min(100, state.slopSuspicion + heat),
-      tantrumMeter: Math.min(100, state.tantrumMeter + CRISIS_TANTRUM_REWARD),
-      activeCrisis: null,
-      crisisCooldownSeconds: CRISIS_INTERVAL_BY_PHASE[state.phase] ?? 45,
-      totalCrisesAnswered: state.totalCrisesAnswered + 1,
-      lastCrisisOutcome: `SWEAR IN // ${tierDef.severity} // +${formatCompactCash(payout)} TREASURY // +${heat}% HEAT`,
-    });
-    return true;
-  },
-
-  suppressCrisis: () => {
-    const state = get();
-    if (!state.activeCrisis) return false;
-
-    // INVARIANT: suppression is always a legal escape hatch, but it forfeits the
-    // crisis tantrum and resets the phone, so it is a real (if passive) choice.
-    sound.playDeskThud();
-    set({
-      activeCrisis: null,
-      crisisCooldownSeconds: CRISIS_INTERVAL_BY_PHASE[state.phase] ?? 45,
-      totalCrisesSuppressed: state.totalCrisesSuppressed + 1,
-      lastCrisisOutcome: 'SUPPRESSED // Statement issued. Nothing improved. Tantrum wasted.',
-    });
-    return true;
-  },
-
-  dismissCrisisOutcome: () => set({ lastCrisisOutcome: undefined }),
 
   /**
    * VENT THE TANTRUM.
@@ -362,10 +181,26 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
     }
 
     const isDry = state.inkLevel <= 0 && !state.isCapsFrenzy;
-    const currentDryClicks = isDry ? (state.dryClicksCount || 0) + 1 : 0;
-    // INVARIANT: After DRY_CLICK_JAM_THRESHOLD consecutive dry scratches the nib jams,
-    // collapsing dry yield further (but never below the bankruptcy floor).
-    const isJammed = isDry && currentDryClicks >= DRY_CLICK_JAM_THRESHOLD;
+
+    // INVARIANT: [Ink & Frenzy live in the engine] — see `inkFrenzyEngine` for
+    // the dry-nib, ink-freeze and Cooling-Off Protocol rules.
+    const ink = clickInkFrenzy({
+      inkLevel: state.inkLevel,
+      tantrumMeter: state.tantrumMeter,
+      isCapsFrenzy: state.isCapsFrenzy,
+      capsFrenzySecondsRemaining: state.capsFrenzySecondsRemaining,
+      frenzyCooldownSecondsRemaining: state.frenzyCooldownSecondsRemaining,
+      totalFrenziesTriggered: state.totalFrenziesTriggered,
+      dryClicksCount: state.dryClicksCount || 0,
+      inkPerClick: INK_PER_CLICK,
+      inkedTantrum: INKED_TANTRUM_PER_CLICK,
+      dryTantrum: DRY_TANTRUM_PER_CLICK,
+      dietSodaTantrum: DIET_SODA_TANTRUM_PER_CLICK,
+      dryClickJamThreshold: DRY_CLICK_JAM_THRESHOLD,
+      frenzyDurationSeconds: FRENZY_DURATION_SECONDS,
+      hasDietSodaDrip: state.activeUpgrades.includes('diet_soda_drip'),
+    });
+    const { isJammed } = ink;
 
     // Sound feedback
     if (state.phase === 1) {
@@ -391,105 +226,37 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
       earnedCash *= 2;
     }
 
-    // Tantrum gain:
-    // INVARIANT: [The Cooling-Off Protocol]
-    // Tantrum does NOT accumulate during an active FRENZY, and cannot accumulate
-    // at all while the post-frenzy cooldown is running. Without this gate the meter
-    // is already >100% the moment the frenzy timer expires, so frenzy re-triggers
-    // on the same frame and uptime approaches 100%.
-    let tantrumDelta = 0;
-    if (state.isCapsFrenzy || state.frenzyCooldownSecondsRemaining > 0) {
-      // No accumulation during frenzy or while cooling off.
-      tantrumDelta = 0;
-    } else if (isDry) {
-      tantrumDelta = DRY_TANTRUM_PER_CLICK;
-    } else {
-      tantrumDelta = state.activeUpgrades.includes('diet_soda_drip')
-        ? DIET_SODA_TANTRUM_PER_CLICK
-        : INKED_TANTRUM_PER_CLICK;
-    }
-
-    let nextTantrum = state.tantrumMeter + tantrumDelta;
-    let shouldTriggerFrenzy = state.isCapsFrenzy;
-    let frenzyRemaining = state.capsFrenzySecondsRemaining;
-    let frenziesCount = state.totalFrenziesTriggered;
-    let nextCooldown = state.frenzyCooldownSecondsRemaining;
-    // Ink consumption: normal clicks consume INK_PER_CLICK; during frenzy ink is infinite
-    let nextInkLevel = state.isCapsFrenzy ? state.inkLevel : Math.max(0, state.inkLevel - INK_PER_CLICK);
-    let nextRefillCount = state.inkRefillCount;
-
-    // Trigger CAPS LOCK FRENZY only when legitimate ink was used AND the
-    // post-frenzy cooldown has elapsed.
-    if (
-      nextTantrum >= 100 &&
-      !state.isCapsFrenzy &&
-      !isDry &&
-      state.frenzyCooldownSecondsRemaining <= 0
-    ) {
-      shouldTriggerFrenzy = true;
-      nextTantrum = 0;
-      frenzyRemaining = FRENZY_DURATION_SECONDS;
-      nextCooldown = 0;
-      frenziesCount += 1;
-      // INVARIANT: Frenzy does NOT grant free 100% ink refills. Current ink is preserved.
-      nextInkLevel = state.inkLevel;
-      nextRefillCount = Math.max(0, nextRefillCount - 1);
-    }
-
     const nextCash = state.treasuryCash + earnedCash;
-    let nextPhase = state.phase;
-    if (state.phase === 1 && nextCash >= 1000000) {
-      nextPhase = 2;
-      sound.playChaChing();
-    } else if (state.phase === 2 && nextCash >= 100000000000) {
-      nextPhase = 3;
-      sound.playChaChing();
-    } else if (state.phase === 3 && nextCash >= 1e18) {
-      nextPhase = 4;
-      sound.playChaChing();
-    }
+    // INVARIANT: [One Definition Of The Phase Ladder] — see `phaseEngine`.
+    const nextPhase = nextPhaseFor(state.phase, nextCash);
+    if (isPhasePromotion(state.phase, nextPhase)) sound.playChaChing();
 
-    // REDESIGN: [The Ten-Minute Wall]
-    // BagHolder Pro + YAP now unlock on the VERY FIRST SLAM, not at $10,000.
-    // The causal shorting loop IS the game's subject; hiding it behind 2,000
-    // clicks of the weakest verb meant most players never saw the premise.
-    // `hasMarketAccess` used to be a cash threshold — it is now an event.
-    //
-    // INVARIANT: onboarding gates on the tutorial index, NEVER on
-    // `totalClicks === 0`. A save that already contains clicks (an interrupted
-    // session, a migrated save, a player who skipped onboarding) would
-    // otherwise be permanently stuck on step 1 with no way forward. Keying off
-    // the index makes every advance idempotent and self-healing.
-    const isFirstSlam = state.tutorialStepIndex === 0;
-
-    // INVARIANT: [Onboarding Must Always Terminate]
-    // The final tutorial step is manual ("Seal It"). If a player simply ignores
-    // it, the directive card would sit above the objectives forever. Reaching
-    // the Oval Office is proof the player understood the loop, so promote them
-    // past onboarding automatically. Never nag a player who has demonstrably
-    // graduated.
-    const tutorialStepIndex =
-      nextPhase >= 2 && state.tutorialStepIndex < TUTORIAL_CHAIN.length
-        ? TUTORIAL_CHAIN.length
-        : isFirstSlam
-          ? 1
-          : state.tutorialStepIndex;
+    // INVARIANT: [The Ten-Minute Wall] and [Onboarding Must Always Terminate]
+    // — see `onboardingEngine`. The market opens on the FIRST SLAM, and
+    // onboarding ends for good at Phase 2 on every cash-gain path.
+    const tutorialStepIndex = resolveTutorialIndex(nextPhase, state.tutorialStepIndex);
+    const marketAccess = resolveMarketAccess(state.hasMarketAccess, state.tutorialStepIndex);
 
     set({
       treasuryCash: nextCash,
       lifetimeCashEarned: state.lifetimeCashEarned + earnedCash,
       phase: nextPhase,
-      hasMarketAccess: state.hasMarketAccess || isFirstSlam,
+      // REDESIGN: [The Ten-Minute Wall] — see `onboardingEngine`.
+      hasMarketAccess: marketAccess,
       tutorialStepIndex,
       totalClicks: state.totalClicks + 1,
-      inkLevel: nextInkLevel,
-      dryClicksCount: currentDryClicks,
-      inkRefillCount: nextRefillCount,
-      tantrumMeter: Math.min(100, nextTantrum),
-      isCapsFrenzy: shouldTriggerFrenzy,
-      capsFrenzySecondsRemaining: frenzyRemaining,
-      totalFrenziesTriggered: frenziesCount,
-      frenzyCooldownSecondsRemaining: nextCooldown,
+      inkLevel: ink.inkLevel,
+      dryClicksCount: ink.dryClicksCount,
+      // A frenzy trigger consumes one stored refill charge. The engine owns the
+      // trigger decision; the charge bookkeeping stays here with the economy.
+      inkRefillCount: ink.triggeredFrenzy
+        ? Math.max(0, state.inkRefillCount - 1)
+        : state.inkRefillCount,
+      tantrumMeter: ink.tantrumMeter,
+      isCapsFrenzy: ink.isCapsFrenzy,
+      capsFrenzySecondsRemaining: ink.capsFrenzySecondsRemaining,
+      totalFrenziesTriggered: ink.totalFrenziesTriggered,
+      frenzyCooldownSecondsRemaining: ink.frenzyCooldownSecondsRemaining,
       lastClickTimestamp: now,
     });
     return true;
@@ -522,156 +289,88 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
   tickDesk: (deltaSeconds: number) => {
     const state = get();
 
-    // 1. Passive agency cash accrual
-    let passiveGain = state.passiveCashPerSecond * deltaSeconds;
+    // The desk tick is now a thin orchestrator: five PURE engines each own one
+    // rule set, and this action only wires their results into a single `set`.
+    // Every rule that used to be inline here now has a docstring and a name.
+    //   tariffEngine   — Laffer curve + retaliatory heat
+    //   inkFrenzyEngine— frenzy timer and the Cooling-Off Protocol
+    //   passiveEngine  — cash, ink regen, integer Crony Favor
+    //   phaseEngine    — the single phase ladder
+    //   crisisEngine   — the Crisis Call lifecycle
+    //   onboardingEngine— first-slam and tutorial termination
 
-    // AI Autopen Interns passive clicks (5 taps/sec)
-    if (state.activeUpgrades.includes('autopen_army')) {
-      const autopenBase = state.phase === 1 ? 5.0 : 50.0;
-      const autopenPerSec = autopenBase * 5;
-      passiveGain += autopenPerSec * deltaSeconds;
-    }
+    const tariff = tickTariffRevenue(state.tariffRates, state.phase, deltaSeconds);
 
-    // 2. Bilateral Tariffs passive export duties (Laffer curve with diminishing returns above 250%)
-    let calculatedTariffRev = 0;
-    let retaliatoryHeat = 0;
-
-    PARODY_NATIONS.forEach((nation) => {
-      const rate = state.tariffRates[nation.id] ?? nation.defaultTariffRate;
-      let rateMultiplier = 0;
-
-      if (rate <= 250) {
-        // Linear export revenue up to 250% tariff
-        rateMultiplier = rate / 100;
-      } else {
-        // Diminishing returns & smuggling above 250%
-        rateMultiplier = Math.max(0.3, 2.5 - ((rate - 250) / 100) * 0.4);
-        // Extreme trade war sanctions generate Inflation Heat
-        retaliatoryHeat += 0.08 * deltaSeconds;
-      }
-
-      const baseDuty = nation.baseExportYield || 10.0;
-      calculatedTariffRev += baseDuty * rateMultiplier * (state.phase === 1 ? 0.3 : state.phase * 0.9);
+    const frenzy = tickInkFrenzy({
+      isCapsFrenzy: state.isCapsFrenzy,
+      capsFrenzySecondsRemaining: state.capsFrenzySecondsRemaining,
+      frenzyCooldownSecondsRemaining: state.frenzyCooldownSecondsRemaining,
+      tantrumMeter: state.tantrumMeter,
+      deltaSeconds,
+      cooldownByPhase: FRENZY_COOLDOWN_BY_PHASE,
+      cooldownDecayPerSecond: FRENZY_COOLDOWN_TANTRUM_DECAY_PER_SECOND,
+      phase: state.phase,
     });
 
-    const totalTariffIncome = calculatedTariffRev * deltaSeconds;
+    const passive = tickPassiveEconomy({
+      phase: state.phase,
+      passiveCashPerSecond: state.passiveCashPerSecond,
+      tariffRevenuePerSecond: tariff.revenuePerSecond,
+      hasAutopenArmy: state.activeUpgrades.includes('autopen_army'),
+      inkLevel: state.inkLevel,
+      maxInk: state.maxInk,
+      inkRegenPerSecond: INK_REGEN_PER_SECOND,
+      isCapsFrenzy: frenzy.isCapsFrenzy,
+      cronyFavor: state.cronyFavor,
+      cronyFavorRemainder: state.cronyFavorRemainder,
+      cronyFavorPerSecond: CRONY_FAVOR_PASSIVE_PER_SECOND,
+      deltaSeconds,
+    });
+    const nextCash = state.treasuryCash + passive.cashGain;
 
-    // Frenzy timer countdown
-    let isFrenzy = state.isCapsFrenzy;
-    let frenzyRemaining = state.capsFrenzySecondsRemaining;
-    // INVARIANT: [The Cooling-Off Protocol] starting a lockout the moment frenzy ends.
-    let frenzyCooldown = state.frenzyCooldownSecondsRemaining;
-    let tantrumAfterTick = state.tantrumMeter;
+    // The Crisis Call advances every frame, but its state and actions live in
+    // `crisisSlice`. See `crisisEngine` for the escalation and auto-suppression
+    // rules. INVARIANT: an ignored crisis resolves as a suppression — no payout
+    // and no heat, but the tantrum it would have fed is forfeited.
+    const crisis = tickCrisis(
+      state.activeCrisis,
+      state.crisisCooldownSeconds,
+      deltaSeconds,
+      state.phase
+    );
+    const crisisOutcome = crisis.autoSuppressed
+      ? 'SUPPRESSED // The crisis passed. The tantrum is gone.'
+      : state.lastCrisisOutcome;
 
-    if (isFrenzy) {
-      frenzyRemaining -= deltaSeconds;
-      if (frenzyRemaining <= 0) {
-        isFrenzy = false;
-        frenzyRemaining = 0;
-        // INVARIANT: [The Cooling-Off Protocol] scales with phase so early game
-        // stays snappy and late game makes frenzy genuinely precious.
-        frenzyCooldown = FRENZY_COOLDOWN_BY_PHASE[state.phase] ?? 15;
-      }
-    } else if (frenzyCooldown > 0) {
-      // Cool down the tantrum meter while locked out so the player is not
-      // sitting on a full meter the instant the lockout expires.
-      frenzyCooldown -= deltaSeconds;
-      if (frenzyCooldown <= 0) {
-        frenzyCooldown = 0;
-        tantrumAfterTick = 0;
-      } else {
-        tantrumAfterTick = Math.max(
-          0,
-          tantrumAfterTick - FRENZY_COOLDOWN_TANTRUM_DECAY_PER_SECOND * deltaSeconds
-        );
-      }
-    }
+    // INVARIANT: [One Definition Of The Phase Ladder] — see `phaseEngine`.
+    const nextPhase = nextPhaseFor(state.phase, nextCash);
+    if (isPhasePromotion(state.phase, nextPhase)) sound.playChaChing();
 
-    // Natural ink passive regeneration (0.5 units / sec)
-    const regeneratedInk = isFrenzy
-      ? state.inkLevel
-      : Math.min(state.maxInk, state.inkLevel + INK_REGEN_PER_SECOND * deltaSeconds);
-
-    // Crony Favor passive drip: holding power accrues political capital over time.
-    const favorGain = CRONY_FAVOR_PASSIVE_PER_SECOND * deltaSeconds;
-
-    // INVARIANT: [Integer Crony Favor]
-    // The passive faucet grants a fractional trickle (0.05/s). Carrying the
-    // fractional part in `cronyFavorRemainder` and only ever promoting whole
-    // units keeps the displayed counter a clean integer while preserving the
-    // exact 0.05/s rate — no favour is lost to rounding, and the player never
-    // sees "🤝 82.34520000000012" on a currency spent in discrete bribes.
-    const favorPool = favorGain + state.cronyFavorRemainder;
-    const favorWholeUnits = Math.floor(favorPool);
-    const favorRemainder = favorPool - favorWholeUnits;
-
-    // ===================================================================
-    // THE CRISIS CALL — spawn / age / auto-suppress
-    // ===================================================================
-    let activeCrisis = state.activeCrisis;
-    let crisisCooldown = state.crisisCooldownSeconds;
-    let totalCrisesSuppressed = state.totalCrisesSuppressed;
-    let crisisOutcome = state.lastCrisisOutcome;
-
-    if (activeCrisis) {
-      const nextElapsed = activeCrisis.elapsedSeconds + deltaSeconds;
-      if (nextElapsed >= CRISIS_WINDOW_SECONDS) {
-        // INVARIANT: an ignored crisis resolves as a suppression — no payout and
-        // no heat, but the tantrum it would have fed is forfeited.
-        totalCrisesSuppressed += 1;
-        activeCrisis = null;
-        crisisCooldown = CRISIS_INTERVAL_BY_PHASE[state.phase] ?? 45;
-        crisisOutcome = 'SUPPRESSED // The crisis passed. The tantrum is gone.';
-      } else {
-        activeCrisis = { ...activeCrisis, elapsedSeconds: nextElapsed };
-      }
-    } else {
-      crisisCooldown -= deltaSeconds;
-      if (crisisCooldown <= 0) {
-        const def = CRISIS_BOOK[Math.floor(Math.random() * CRISIS_BOOK.length)];
-        activeCrisis = { id: def.id, elapsedSeconds: 0 };
-        crisisCooldown = CRISIS_INTERVAL_BY_PHASE[state.phase] ?? 45;
-      }
-    }
-
-    const nextCash = state.treasuryCash + passiveGain + totalTariffIncome;
-    let nextPhase = state.phase;
-    if (state.phase === 1 && nextCash >= 1000000) {
-      nextPhase = 2;
-      sound.playChaChing();
-    } else if (state.phase === 2 && nextCash >= 100000000000) {
-      nextPhase = 3;
-      sound.playChaChing();
-    } else if (state.phase === 3 && nextCash >= 1e18) {
-      nextPhase = 4;
-      sound.playChaChing();
-    }
+    // INVARIANT: onboarding ends for good at Phase 2 (same as `clickDesk`), so
+    // a returning player who idled overnight is not re-nagged by a tutorial
+    // they already finished. See `onboardingEngine`.
+    const tutorialStepIndex = resolveTutorialIndex(nextPhase, state.tutorialStepIndex);
 
     set({
       treasuryCash: nextCash,
-      lifetimeCashEarned: state.lifetimeCashEarned + passiveGain + totalTariffIncome,
+      lifetimeCashEarned: state.lifetimeCashEarned + passive.cashGain,
       phase: nextPhase,
-      // REDESIGN: the cash gate is gone — the market now unlocks on the first slam.
-      // Passive income must never be what opens the terminal, or a player who
-      // idles to $10k would get a surprise market they never learned to use.
+      // INVARIANT: [Progression Must Be Earned, Not Idle] passive income must
+      // never open the terminal. See `onboardingEngine`.
       hasMarketAccess: state.hasMarketAccess,
-      // Same invariant as clickDesk: onboarding ends for good at Phase 2.
-      tutorialStepIndex:
-        nextPhase >= 2 && state.tutorialStepIndex < TUTORIAL_CHAIN.length
-          ? TUTORIAL_CHAIN.length
-          : state.tutorialStepIndex,
-      inkLevel: regeneratedInk,
-      tariffRevenuePerSecond: calculatedTariffRev,
-      slopSuspicion: Math.min(100, state.slopSuspicion + retaliatoryHeat),
-      cronyFavor: Math.min(CRONY_FAVOR_MAX, state.cronyFavor + favorWholeUnits),
-      cronyFavorRemainder: favorRemainder,
-      isCapsFrenzy: isFrenzy,
-      capsFrenzySecondsRemaining: Math.max(0, frenzyRemaining),
-      frenzyCooldownSecondsRemaining: Math.max(0, frenzyCooldown),
-      tantrumMeter: Math.max(0, Math.min(100, tantrumAfterTick)),
-      activeCrisis,
-      crisisCooldownSeconds: Math.max(0, crisisCooldown),
-      totalCrisesSuppressed,
+      tutorialStepIndex,
+      inkLevel: passive.inkLevel,
+      tariffRevenuePerSecond: passive.tariffRevenuePerSecond,
+      slopSuspicion: Math.min(100, state.slopSuspicion + tariff.retaliatoryHeat),
+      cronyFavor: clampCronyFavor(state.cronyFavor + passive.favorWholeUnits),
+      cronyFavorRemainder: passive.favorRemainder,
+      isCapsFrenzy: frenzy.isCapsFrenzy,
+      capsFrenzySecondsRemaining: Math.max(0, frenzy.capsFrenzySecondsRemaining),
+      frenzyCooldownSecondsRemaining: Math.max(0, frenzy.frenzyCooldownSecondsRemaining),
+      tantrumMeter: Math.max(0, Math.min(100, frenzy.tantrumMeter)),
+      activeCrisis: crisis.activeCrisis,
+      crisisCooldownSeconds: Math.max(0, crisis.crisisCooldownSeconds),
+      totalCrisesSuppressed: state.totalCrisesSuppressed + (crisis.autoSuppressed ? 1 : 0),
       lastCrisisOutcome: crisisOutcome,
       lastTickTimestamp: Date.now(),
     });
@@ -686,16 +385,13 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
     set({
       treasuryCash: state.treasuryCash + cashEarned,
       lifetimeCashEarned: state.lifetimeCashEarned + cashEarned,
-      // Offline earnings can cross the Phase 2 threshold while the tab is shut.
-      // Onboarding must terminate on that path too, or a returning player who
-      // idled overnight comes back to a tutorial they finished days ago.
-      tutorialStepIndex:
-        state.phase >= 2 && state.tutorialStepIndex < TUTORIAL_CHAIN.length
-          ? TUTORIAL_CHAIN.length
-          : state.tutorialStepIndex,
+      // Offline earnings can cross the Phase 2 threshold while the tab is shut,
+      // so onboarding must terminate on this path too — see `onboardingEngine`.
+      tutorialStepIndex: resolveTutorialIndex(state.phase, state.tutorialStepIndex),
     });
     return cashEarned;
   },
 
-  setGamePhase: (phase: GamePhase) => set({ phase }),
+  // Crisis Call state and actions are declared in `CrisisSlice`. The desk keeps
+  // the phase/tariff/ink/tantrum concerns; the phone keeps its own.
 });

@@ -40,6 +40,29 @@ export const FRENZY_DURATION_SECONDS = 20;
 /** CAPS LOCK FRENZY click multiplier (GDD §3.1: 10x). */
 export const FRENZY_CLICK_MULTIPLIER = 10;
 
+/** Ink consumed by one 3:00 AM Lethal YAP. */
+export const INK_COST_PER_YAP = 20;
+
+/** S.L.O.P. heat added by a targeted YAP, and by a shotgun YAP. */
+export const YAP_HEAT = 12;
+export const YAP_HEAT_SHOTGUN = 16;
+
+/** Seconds the Straddle Squeeze walk-back window stays open after a crash. */
+export const WALK_BACK_WINDOW_SECONDS = 8;
+
+/** Recovery rally applied by a successful Straddle Squeeze. */
+export const WALK_BACK_PUMP_MULTIPLIER = 1.35;
+
+/** 0DTE contract lifetime. */
+export const TRADE_DURATION_MS = 60000;
+
+/** Collateral consumed per synthetic contract. */
+export const COLLATERAL_PER_CONTRACT = 10;
+
+/** S.L.O.P. heat added for opening a contract, by leverage band. */
+export const HEAT_LEVERAGE_HIGH = 5;
+export const HEAT_LEVERAGE_LOW = 1;
+
 /**
  * INVARIANT: [The Cooling-Off Protocol]
  * Seconds the Dealmaker must wait before the tantrum meter can fill again after a

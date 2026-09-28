@@ -93,11 +93,13 @@ To eliminate RSI index finger fatigue from spam clicking, the game must be fully
 
 1. **Multi-Tab Modular Consoles:**
    - Flanking wings must use channel tabs rather than hidden or scrolled content.
-   - Tabs must be keyboard accessible and preserve active channel state in Zustand (`settingsSlice` or `deskSlice`).
+   - Tabs must be keyboard accessible and preserve active channel state in Zustand (`settingsSlice`).
+   - The two wings share `PaneShell`/`TabStrip`/`StatusStrip` and differ only by an `accent` prop. Fork the markup and the two strips will drift.
+   - Never `overflow-hidden` the hotkey list in `HotkeyFooterHUD` — it truncates silently. Scroll or reflow.
 2. **Oligarch Lobbying Upgrade Shop (`[U]` Tab):**
    - Upgrades must provide clear mechanical multipliers (Click Yield, Autopen taps/sec, Tantrum build rate, 0DTE payout multipliers, Broad Daylight Money Printer).
    - Purchased upgrades must disable their buy button, indicate acquired status, and save permanently to local storage.
 3. **Progressive Disclosure:**
-   - Phase 1 (Gate 99B Customs): Left and Right wings are covered in steel roll-up shutters with hazard tape until $\$10,000$ seed cash is accumulated.
-   - Phase 2 (Oval Syndicate): Left wing boots BagHolder Pro.
+   - Phase 1 (Gate 99B Customs): BagHolder Pro and the YAP unlock on the **first slam** (previously a $\$10{,}000$ cash threshold, removed — the core loop must be reachable in the first ten seconds). Individual channels inside each wing still gate on upgrades.
+   - Phase 2 (Oval Syndicate): Left wing boots BagHolder Pro's full tab set.
    - Phase 3 (Fortress America): Right wing unlocks D.U.M.P. and the full Crony Tech Tree.

@@ -2,14 +2,10 @@
  * Prestige, Sovereign Immunity & Ontological Types
  */
 
-export interface PrestigePerk {
-  id: string;
-  name: string;
-  description: string;
-  costInSIS: number;
-  isUnlocked: boolean;
-  multiplier: number;
-}
+/* `PrestigePerk` was removed here. `unlockedPerks` is currently a
+   `Record<string, boolean>`, so this richer shape had no consumer. Promote the
+   record into this interface when perks actually gain cost and multiplier
+   fields — not before. */
 
 export interface OntologicalTariff {
   id: string;

@@ -26,9 +26,7 @@ export interface YapPost {
   impactMultiplier: number;
 }
 
-export interface YapState {
-  recentYaps: YapPost[];
-  isDrafting: boolean;
-  autoYapUnlocked: boolean;
-  totalYapsFired: number;
-}
+/* `YapState` was removed here. It described a "YAP Social Platform" feed
+   (`recentYaps`, `isDrafting`, `autoYapUnlocked`) that has never been built.
+   `YapPost` is live — it backs the decree certificate. Add this back when the
+   reply swarm actually lands, and delete it again if it never does. */

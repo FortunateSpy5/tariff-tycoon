@@ -233,16 +233,10 @@
       0 0 calc(12px / var(--viewport-scale, 1)) rgba(34, 197, 94, 0.35);
   }
 
-  .text-glow-gold {
-    text-shadow: 0 0 calc(10px / var(--viewport-scale, 1)) rgba(251, 191, 36, 0.55);
-  }
-
-  /* Redaction bar — the classified-doc gag. Reusable decoration. */
-  .redaction-bar {
-    background-color: var(--color-redaction-500);
-    color: transparent;
-    user-select: none;
-  }
+  /* NOTE: `.text-glow-gold` and `.redaction-bar` were removed here. Both were
+     declared but had zero call sites, and a redaction bar is now a token
+     (`bg-redaction-500`) composed inline rather than a one-off utility. If you
+     reintroduce either, prefer a token over a bespoke class. */
 
   /* The pressed-stamp look: slightly rotated, hard shadow, no gradient. */
   .stamp-face {
@@ -300,11 +294,6 @@
   58%  { transform: translate3d(0, calc(2px / var(--viewport-scale, 1)), 0) scale(1.02); }
   78%  { transform: translate3d(0, calc(-1px / var(--viewport-scale, 1)), 0) scale(0.995); }
   100% { transform: translate3d(0, 0, 0) scale(1); }
-}
-
-@keyframes stamp-slam-lift {
-  0%   { transform: translate3d(0, calc(22px / var(--viewport-scale, 1)), 0) rotate(-9deg); }
-  100% { transform: translate3d(0, 0, 0) rotate(-3deg); }
 }
 
 /* CALM SLAM [C1]
@@ -390,9 +379,8 @@
   animation: stamp-slam 0.26s cubic-bezier(0.3, 0.9, 0.4, 1) 1;
 }
 
-.animate-stamp-lift {
-  animation: stamp-slam-lift 0.18s cubic-bezier(0.2, 0.8, 0.3, 1) 1;
-}
+/* `.animate-stamp-lift` was removed here — the `stamp-slam-lift` keyframes it
+   referenced are themselves unused, since the lift was folded into `stamp-slam`. */
 
 /* Ink splatter particle: expands and dies. One-shot. */
 @keyframes ink-bloom {

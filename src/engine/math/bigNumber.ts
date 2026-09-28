@@ -29,8 +29,12 @@ const SUFFIXES = [
 
 /**
  * Converts a number, string, or Decimal to a Decimal instance.
+ *
+ * INVARIANT: module-private. It is a coercion helper for `formatCurrency`, not
+ * part of the engine's public surface — exporting it invited callers to build
+ * raw Decimal math in components, which is where big-number bugs come from.
  */
-export function toDecimal(value: number | string | Decimal): Decimal {
+function toDecimal(value: number | string | Decimal): Decimal {
   if (value instanceof Decimal) return value;
   return new Decimal(value);
 }
@@ -59,22 +63,4 @@ export function formatCurrency(value: number | string | Decimal): string {
 
   // Scientific notation for Phase 4 Ontological scale ($10^18 to $10^42)
   return `$${dec.toExponential(2)}`;
-}
-
-/**
- * Formats a raw number without dollar sign.
- */
-export function formatNumber(value: number | string | Decimal): string {
-  const dec = toDecimal(value);
-  if (dec.lt(1000)) return dec.toNumber().toLocaleString();
-
-  const exp = dec.exponent;
-  const suffixIndex = Math.floor(exp / 3);
-
-  if (suffixIndex < SUFFIXES.length) {
-    const scaled = dec.div(Decimal.pow(10, suffixIndex * 3)).toNumber();
-    return `${scaled.toFixed(2)}${SUFFIXES[suffixIndex]}`;
-  }
-
-  return dec.toExponential(2);
 }

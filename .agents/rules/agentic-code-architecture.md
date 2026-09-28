@@ -29,18 +29,35 @@ src/
 │   ├── math/           # Pure KaTeX-annotated formulas (break_infinity, leverage, prestige)
 │   └── systems/        # Procedural YAP generator, causal market volatility, offline engine
 ├── store/              # Zustand state divided into domain slices
-│   ├── slices/         # deskSlice, tradingSlice, dumpSlice, prestigeSlice, settingsSlice
+│   ├── slices/         # 9 slices: desk, trading, settlement, prediction, crisis,
+│   │                   #   deskProps, dump, prestige, settings
 │   └── useGameStore.ts # Root unified store with persistent storage and offline sync
 ├── audio/              # Procedural Web Audio API sound synthesis (zero MP3/WAV assets)
 ├── components/         # Granular React components grouped by functional domain
-│   ├── desk/           # Oval Office stamp/Sharpie, blotter, ink stamina, tantrum meter
+│   ├── desk/           # Oval Office stamp/Sharpie, blotter, ExecutiveGauges, FeedbackLayer
 │   ├── terminal/       # BagHolder Pro ticker, 1000x Put/Call options, lethal YAP modal
-│   ├── dump/           # Agency liquidation drawer, comedic hazards banner
+│   ├── dump/           # Agency liquidation drawer, SituationRoom, comedic hazards banner
+│   ├── share/          # Decree certificate PNG renderer, prestige run summary
+│   ├── onboarding/     # Classified tutorial directives
 │   ├── ticker/         # Breaking news crawl
 │   ├── dialogs/        # Bailout modal, Cayman prestige modal, settings
-│   └── common/         # Atomic UI primitives (Button, Badge, ProgressBar)
-└── hooks/              # Custom hooks (game loop, screen shake, audio trigger bridges)
+│   └── ui/             # Card, PaneShell, TabStrip, StatusStrip, DossierHeader
+└── hooks/              # Custom hooks (game loop, viewport scale, hotkeys)
 ```
+
+### Automatic Enforcement (do not rely on memory)
+Two gates run inside `npm run build` and **fail the build**:
+* `npm run theme:check` — `scripts/check-theme-coverage.mjs`, budget **0**.
+* `npm run size:check` — `scripts/check-file-sizes.mjs`, 400-line hard ceiling.
+
+Run them locally before claiming an invariant holds. If a check is inconvenient,
+that is a signal the check itself is wrong — fix the check, don't raise the budget.
+
+### No Barrel Files
+Import from the concrete module (`../ui/Card`, `../../constants/balance`), never
+from a directory. Nine unused barrels accumulated during the UI redesign because
+a barrel costs nothing until someone imports it and it silently goes stale — one
+of them listed 5 store slices long after the store had 9.
 
 ---
 
@@ -73,7 +90,9 @@ src/
 
 ## 4. Barrel Exports & Import Hygiene
 
-1. Each subdirectory under `src/` (`types/`, `constants/`, `components/*`) must maintain a clean `index.ts` barrel file when containing $\ge 3$ exports.
+1. **No `index.ts` barrels** (this reverses the previous rule). Import from the concrete
+   module — `../ui/Card`, `../../constants/balance` — never from a directory. Barrels
+   cost nothing until something imports them, and then they go silently stale.
 2. Avoid circular dependencies between slices and engines:
    - `types/` imports from nothing.
    - `engine/` imports only from `types/` and `constants/`.
@@ -86,4 +105,8 @@ src/
 
 - Before declaring any task complete or committing code:
   1. Run `npm run build` locally. Zero TypeScript or Vite bundling errors permitted.
+     This also runs `theme:check` and `size:check`, so a clean build means both
+     gates passed.
   2. Verify that no modified or created file exceeds 400 lines.
+  3. Update any documentation the change made false. A stale doc is a defect:
+     if you delete a feature, grep the `*.md` tree for its name and fix every hit.

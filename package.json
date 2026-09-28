@@ -4,9 +4,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && npm run theme:check && vite build",
+    "build": "tsc -b && npm run theme:check && npm run size:check && vite build",
     "lint": "oxlint",
     "theme:check": "node scripts/check-theme-coverage.mjs --budget 0",
+    "size:check": "node scripts/check-file-sizes.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

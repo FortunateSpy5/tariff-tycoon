@@ -23,12 +23,17 @@ Welcome, AI Agent. This repository powers **EXECUTIVE DEGEN: SHORT THE WORLD** (
   - Phase 3: *Fortress America* ($100B to $10^{18}$).
   - Phase 4: *Ontological Protectionism* ($10^{18} \to 10^{42}$ — Taxing the Sun, the Future, and the 2nd Law of Thermodynamics).
 - **Enforce Agentic Code Architecture & Limits:**
-  - Standard files target $\le 250$ lines; hard ceiling of $400$ lines per file.
+  - Standard files target $\le 250$ lines; hard ceiling of $400$ lines per file. **Enforced by `npm run size:check`, which runs inside `npm run build`.**
   - Zero monolithic god-files. Zustand store must use the slice pattern (`src/store/slices/`).
   - Headless mathematical logic must reside in `src/engine/` and include KaTeX formula citations matching `GAME_DESIGN_DOCUMENT.md`.
   - Invariant safety functions must include explicit docstrings.
+  - **No `index.ts` barrels.** Import the concrete module. Barrels go silently stale.
+  - **Enforce the theme, don't just intend it.** `npm run theme:check` runs inside `npm run build` with a budget of 0: no player-facing `bg-stone-*` surface without a themed material or an inline `theme-allow` marker. The region→material table is in `.agents/workflows/UI_REDESIGN_PLAN.md`.
+- **Keep Documentation Honest:**
+  - A stale doc is a defect. If you change or delete behaviour, grep the `*.md` tree for the old claim and fix every hit — GDD, README, knowledge base, audit report, and rules files all drift independently.
+  - Do not document a feature that does not exist. Label it roadmap instead.
 - **Verify Clean Builds Locally:**
-  - Verify zero TypeScript/build errors before marking any feature complete.
+  - Verify zero TypeScript/build errors before marking any feature complete. A clean `npm run build` also means both invariant gates passed.
 
 ### ASK FIRST:
 - **Altering Core Compounding Exponents:** Always consult before modifying the scaling exponents for prestige formulas ($0.18\text{--}0.38$), refill costs ($1.15^n$), or the option volatility multipliers.

@@ -4,6 +4,13 @@
 > **Build status at audit time:** ✅ Clean (`tsc -b && vite build`, exit 0 — 1928 modules, 375.58 kB JS, 58.31 kB CSS).
 > **Method:** Static analysis + grep verification. No code was modified.
 
+> ## ⚠️ This is a point-in-time snapshot, not current state
+> Audited **2026-09-27**, before the UI redesign (`.agents/workflows/UI_REDESIGN_PLAN.md`).
+> Findings below are preserved as a historical record and many are now resolved —
+> see §5 for what was fixed. **File paths and line numbers in §2–§4 are stale**: the
+> refactor split the store into 9 slices and 11 engine modules, so `deskSlice.ts:176`
+> no longer means what it did. Verify against the code before acting on anything here.
+
 ---
 
 ## 1. Executive Summary
@@ -21,11 +28,11 @@ The Phase 1 & 2 vertical slice is **functionally solid and shippable**: the tact
 | # | System | Design Doc Says | Code Actually Does | File |
 |---|--------|-----------------|--------------------|------|
 | D1 | **Prestige SIS formula** | `SIS = floor((LifetimeCash/10^10)^0.32 + 3×(OptionsProfit/10^9)^0.38)`, threshold **$10^10** | `floor((netWorth/10^6)^0.33)`, threshold **$1M** | `engine/math/formulas.ts` |
-| D2 | **Frenzy duration** | 20 seconds | 15 seconds | `store/slices/deskSlice.ts` |
-| D3 | **Ink per click** | 1.25 ink | **2 ink** (UI text still says "1.25") | `deskSlice.ts` / `InkMeter.tsx` |
-| D4 | **Dry-nib tantrum** | +3.5% per click, can fill to 100% | **+3.0%**, capped at **50%** (UI text says "+3.5%") | `deskSlice.ts` / `TantrumMeter.tsx` |
+| D2 | **Frenzy duration** | 20 seconds | 15 seconds | `engine/systems/inkFrenzyEngine.ts` |
+| D3 | **Ink per click** | 1.25 ink | **2 ink** (UI text still says "1.25") | `engine/systems/inkFrenzyEngine.ts` / `ExecutiveGauges.tsx` |
+| D4 | **Dry-nib tantrum** | +3.5% per click, can fill to 100% | **+3.0%**, capped at **50%** (UI text says "+3.5%") | `engine/systems/inkFrenzyEngine.ts` / `ExecutiveGauges.tsx` |
 | D5 | **Ink refill cost** | `$25 × 1.15^n` | base **100**, `×1.15^n`, cap **25,000** | `engine/math/formulas.ts` |
-| D6 | **Crash severity** | capped at 0.92 severity | `max(0.08, 1 − (0.25 + tariff/1000)·frenzy·shotgun)` — floor 0.08 multiplier (≈92% max drop) | `store/slices/tradingSlice.ts` |
+| D6 | **Crash severity** | capped at 0.92 severity | `max(0.08, 1 − (0.25 + tariff/1000)·frenzy·shotgun)` — floor 0.08 multiplier (≈92% max drop) | `engine/systems/yapShockEngine.ts` |
 | D7 | **Prestige reset** | Shell Company seed cash + perk retention | Resets to **Phase 1**, clears **all** access flags, **no** seed cash, **no** perk retention | `store/slices/prestigeSlice.ts` |
 
 > **D3 & D4 are the most user-visible:** the meters literally display numbers the engine does not honor. Either the code or the label must change so the UI never lies to the player.
@@ -34,12 +41,12 @@ The Phase 1 & 2 vertical slice is **functionally solid and shippable**: the tact
 
 ## 3. Economy Dead-Ends (High Priority)
 
-### 3.1 Crony Favor has no faucet ⚠️
-`cronyFavor` initializes to **30** (`tradingSlice.ts:32`, `prestigeSlice.ts:62`) and is **only ever decremented**:
+### 3.1 Crony Favor has no faucet ⚠️ — **RESOLVED, see §5**
+`cronyFavor` initialized to **30** and was **only ever decremented**:
 
-- Subpoena Shredder: `−10` (`deskSlice.ts:176`)
-- Agency liquidation: `−cronyFavorCost` (25 → 1000) (`dumpSlice.ts:52`)
-- Raid bribe: `−50` (`tradingSlice.ts:250`)
+- Subpoena Shredder: `−10` (`deskPropsSlice.ts`)
+- Agency liquidation: `−cronyFavorCost` (25 → 1000) (`dumpSlice.ts`)
+- Raid bribe: `−50` (`slopEngine.ts`)
 
 A grep across the entire `src/` tree found **zero increments**. Consequences:
 - The D.U.M.P. tree (agencies cost 25–1000 favor) is **unreachable** beyond the first cheap agency.
@@ -141,7 +148,7 @@ A new single-source-of-truth module **`src/constants/balance.ts`** was introduce
 | Item | Fix |
 |------|-----|
 | **Crony Favor faucet** (§3.1) | Added three faucets: **+2 per YAP landed** (`tradingSlice.triggerYapMarketShock`), **+0.05/sec passive drip** (`deskSlice.tickDesk`), and a **25% liquidation kickback** (`dumpSlice.liquidateAgency`). Capped at `CRONY_FAVOR_MAX = 9999`. |
-| **UI ↔ engine drift (D3/D4)** | `InkMeter` and `TantrumMeter` now render values imported from `balance.ts` (`INK_PER_CLICK`, `INKED_TANTRUM_PER_CLICK`, `DIET_SODA_TANTRUM_PER_CLICK`, `DRY_TANTRUM_PER_CLICK`). The meters can no longer lie. |
+| **UI ↔ engine drift (D3/D4)** | The ink/tantrum meters now render values imported from `balance.ts` (`INK_PER_CLICK`, `INKED_TANTRUM_PER_CLICK`, `DIET_SODA_TANTRUM_PER_CLICK`, `DRY_TANTRUM_PER_CLICK`). The meters can no longer lie. *(Those two components were `InkMeter` / `TantrumMeter` at the time; they were later replaced by a single `ExecutiveGauges` in the 2026-09-29 redesign, which keeps the same `balance.ts` imports.)* |
 | **Offline double-count** (§3.2) | `partialize` no longer stamps `Date.now()` on every serialization (it now persists the real `lastSavedTimestamp`), and `onRehydrateStorage` stamps `now` after crediting — the offline window can no longer be re-credited on rapid reload. |
 
 ### P1 — Doc Alignment
@@ -161,5 +168,25 @@ A new single-source-of-truth module **`src/constants/balance.ts`** was introduce
 - `totalCashHarvested`, `activeHazardsCount`, `disasterCapitalismRevenue` — surfaced as a stats strip in the D.U.M.P. Agencies tab.
 - `hasSettledYapTrade` — confirmed **already read** in `useGameStore.ts` (not dead).
 
-### Still Open (unchanged by this pass)
-- Inflation Heat / Civil Unrest, D.U.M.P. hazard penalties (`monetizeHazard` still uncalled), Tier 2 prestige UI, Phase 4 ontological tariffs, prestige perk catalog, viral clip generator, streamer integration, and the unused `YapState` / `PrestigePerk` / `OntologicalTariff` types (reserved for those future systems).
+### Still Open
+- Inflation Heat / Civil Unrest, D.U.M.P. hazard penalties (`monetizeHazard` still uncalled), Tier 2 prestige UI, Phase 4 ontological tariffs, and the prestige perk catalog.
+- Viral clip generator (the `viral-clip-director` skill documents the pipeline; only the **PNG decree certificate** ships) and streamer integration. `README.md` now labels both as roadmap rather than as shipped features.
+- The speculative `YapState` and `PrestigePerk` types were **deleted** during the 2026-09-29 cleanup — they described systems that were never built, and a type with no consumer is a lie about what exists. `OntologicalTariff` was kept, since `ontologicalTariffs` is real state for Phase 4.
+
+---
+
+## 9. ✅ UI Redesign Pass (2026-09-29)
+
+Supersedes much of the above. See `.agents/workflows/UI_REDESIGN_PLAN.md` for the full plan.
+
+| Area | Outcome |
+|------|---------|
+| **Core loop reachability** | The `$10,000` market gate (§2, implicit) was **removed** — market + YAP now unlock on the *first slam*, with 3 risk-free paper trades and a 5-step directive tutorial. This was the single biggest playability fix in the project's history: the game's subject was previously unreachable for most players. |
+| **Store architecture** | `deskSlice` 623→~400, `tradingSlice` 504→~345. Split into 9 slices and 11 pure engine modules, each independently testable without a DOM. |
+| **Store contract** | Slice interfaces moved to `types/store.ts` so the store contract is declared once, not inline in each slice. |
+| **Type system** | 7-tier `t-*` scale replaced ~112 arbitrary `text-[Npx]` values and the `[class*="text-[Npx]"]` substring hack that was patching them back up. |
+| **Theme** | Explicit region→material table (desk wood / parchment / classified / phosphor CRT). Went from **81 unthemed stone surfaces to 0**, enforced at build time. |
+| **Motion** | Frenzy judder damped (recoil halved, calm-slam variant above 85% tantrum, strobe pulse → 3.4s glow). `prefers-reduced-motion` extended to animations. |
+| **Bugs fixed** | Fractional Crony Favor display; tutorial card able to pin permanently; paper-trade allowance forfeited on 0DTE expiry; 4 competing centre overlays; footer silently truncating hotkeys. |
+| **Enforcement** | `npm run theme:check` (budget 0) and `npm run size:check` (400-line ceiling) now run inside `npm run build`. |
+| **Docs** | `$10,000` gate, deleted `InkMeter`/`TantrumMeter` refs, and the 5-slice store map corrected across `README.md`, `GAME_DESIGN_DOCUMENT.md`, `PROJECT_KNOWLEDGE_BASE.md`, and the rules files. |

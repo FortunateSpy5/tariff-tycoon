@@ -55,10 +55,34 @@ To achieve this:
 │  │                      │                            │ Oligarch Tech Tree│  │
 │  └──────────────────────┴────────────────────────────┴───────────────────┘  │
 ├─────────────────────────────────────────────────────────────────────────────┤
-│ 3. BOTTOM HOTKEY DOCK (Height: 36px / h-9)                                  │
-│    [SPACE] Stamp  [1-3] Left  [D/U/T/C] Right  [Y] YAP  [W] Walk-Back  [F]  │
+│ 3. BOTTOM HOTKEY DOCK (Height: 32px / h-8)
+│    [SPACE] Stamp  [1-3] Left  [D/U/T/C] Right  [Y] YAP  [W] Walk-Back
+│    [V] Vent  [?] Debug  [M] Mute  [F] Fullscreen      (scrollable, never truncated)
 └─────────────────────────────────────────────────────────────────────────────┘
 ```
+
+### Material System (added 2026-09-29)
+
+The cockpit is not one surface — it is **three distinct materials** so the wings read as
+different *objects* rather than three dark rectangles. This mapping is the source of
+truth and is enforced by `npm run theme:check` (budget 0, runs inside `npm run build`).
+
+| Region | Material | Why |
+|--------|----------|-----|
+| App root / surround | `newsprint-950` desk wood | The player is at a desk, not in a web app |
+| **Centre stage (the desk)** | `newsprint` **parchment** | The GDD already called it a "Parchment Directive" — it was rendering as a grey gradient |
+| Left wing frame | `classified` / `redaction` near-black | Recessed into the desk |
+| Right wing frame | `classified` / `redaction` near-black | Same recess, different content |
+| Cards resting on the desk | `surface-sheet` (paper) | Stacked paperwork |
+| Left wing *interiors* | `surface-terminal` phosphor + scanlines | BagHolder Pro is a CRT. A CRT *is* correct here |
+| Inset wells inside the terminal | `surface-terminal-well` (`phosphor-900`) | Never neutral grey — grey is the smell this system exists to remove |
+| Top status rail | `newsprint` aged paper + double rule | The most screenshot-visible surface in the app |
+| Tab-strip headers | `DossierHeader` — redaction bar + wax-red title | One shared component replaced four hand-written copies |
+
+`<Card>`'s **default material is `sheet`**, not grey. This is load-bearing: a primitive
+whose default is off-theme re-greys every call site that forgets an explicit material.
+`PaneShell` / `TabStrip` / `StatusStrip` own the three-wing frame; the wings differ only
+by an `accent` prop (`phosphor` vs `gold`). Fork that markup and the two drift.
 
 ---
 
@@ -72,10 +96,14 @@ To achieve this:
 * **The Parchment Directive & Core Stamp Button:**
   - Dynamic procedural directive text (`"EXECUTIVE ORDER #8412 // 3:00 AM DIRECTIVE"`).
   - Central kinetic clicker: Phase 1 starts with the Blue Rubber Stamp (`CONFISCATE`); the 24k Golden Sherpie appears at the $1\text{M}$ Oval Office transition.
+  - **Ink-splatter particles and a one-shot slam.** The hero object used to be inert; `AGENTS.md` mandates "screen recoil, ink splatter, procedural squeaks" and the stamp was emitting none of it.
+  - **Motion damping is mandatory, not optional.** Recoil fired on *two* elements at once (±3px each) and `stamp-slam` travelled 14px / scaled 1.16. Fine for one click; during CAPS LOCK FRENZY the player clicks 5–10x/sec and the impacts overlap into a permanent judder. Current values: recoil ±1.5px, `stamp-slam-calm` (6px, scale 1.06) swapped in above 85% Tantrum, and `calm-glow` (3.4s) instead of `animate-pulse` on the frenzy ring. **Damp the feedback; do not delete it** — it is load-bearing game feel.
+  - A single `FeedbackLayer` owns the centre stage with explicit priority (`raid > walkBack > yap > print > crisis`). Four competing `absolute inset-0` overlays previously fought for the same z-index and could stack invisibly.
   - Floating cash yield particles, stamina ink meter, and tantrum fire meter.
 * **The Dual Command Triggers:**
-  - **`[LAUNCH 3:00 AM LETHAL YAP] (Y)`**: Unlocks with BagHolder Pro at $10\text{k}$, generates an unhinged decree, and crashes the selected stock.
+  - **`[LAUNCH 3:00 AM LETHAL YAP] (Y)`**: Unlocks with BagHolder Pro **on the first slam** (previously $10\text{k}), generates an unhinged decree, and crashes the selected stock.
   - **`[WALK-BACK CLARIFICATION] (W)`**: During the 8-second window, activates only after a matching CALL is armed. It pumps the market $+35\%$ and settles that CALL; missing the window returns combo collateral and never reverses settled PUT proceeds.
+  - **`[VENT] (V)`**: Burns the entire Tantrum meter for VEX relief clamped to the baseline. Deliberately *not* optimal — riding to 100% for a 10x FRENZY always beats venting. It is a panic button for calm options pricing, never an efficiency upgrade.
 
 ### 4.2 Left Wing: The Oval Telemetry Console (26% Width)
 * **Tab `[1] STOCKS & 0DTE OPTIONS`**:
@@ -91,7 +119,7 @@ To achieve this:
 * **First trade cue:** The stocks panel guides the player through selecting a ticker, opening a PUT, targeting it with YAP, and settling or attempting the timed CALL/walk-back.
 
 ### 4.3 Right Wing: The Executive Expansion Deck (32% Width)
-* BagHolder Pro opens at $10\text{k}$ during Phase 1. At Phase 2 ($1\text{M}$), D.U.M.P. opens. The first liquidation reveals upgrades; the first upgrade reveals tariffs; the first tariff change reveals Caymans prestige.
+* BagHolder Pro opens on the **first slam** during Phase 1. At Phase 2 ($1\text{M}$), D.U.M.P. opens. The first liquidation reveals upgrades; the first upgrade reveals tariffs; the first tariff change reveals Caymans prestige.
 * **Tab `[D] D.U.M.P. (Chainsaw Liquidations)`**:
   - 10 federal agencies (Weather Bureau, Food & Toxins, Aviation Safety, Postal Service, etc.) to scrap for instant cash payouts and permanent disaster perks.
 * **Tab `[U] CRONY UNLOCKS (Oligarch Tech Tree)`**:
@@ -113,6 +141,7 @@ To achieve this:
 | Key Binding | Primary Action | Target Panel |
 | :--- | :--- | :--- |
 | **`[SPACEBAR]`** or **`[ENTER]`** | Slam Stamp / Sign Directive | Center Desk |
+| **`[R]`** | Refill Ink | Center Desk |
 | **`[1]`, `[2]`, `[3]`** | Switch Stocks, S.L.O.P. (after first YAP), and PolyGrift (after YAP PUT settlement) | Left Wing |
 | **`[D]`** | Switch to **D.U.M.P.** at Phase 2 | Right Wing |
 | **`[U]`** | Switch to **Crony Unlocks** after first liquidation | Right Wing |
@@ -120,15 +149,25 @@ To achieve this:
 | **`[C]`** | Switch to **Caymans Prestige** after first tariff change | Right Wing |
 | **`[Y]`** | Launch 3:00 AM Lethal YAP | Center Desk |
 | **`[W]`** | Walk-Back Clarification (+35% recovery pump) | Center Desk |
+| **`[V]`** | Vent Tantrum (burns the meter for VEX relief) | Center Desk |
 | **`[S]`** | Subpoena Paper Shredder (Heat purge QTE) | Center Desk |
+| **`[I]`** | Ignore / suppress the ringing Red Phone crisis | Global |
 | **`[F]`** / **`[F11]`** | Toggle Native Borderless Fullscreen | Global |
 | **`[M]`** | Toggle Audio Mute | Global |
 | **`[Z]`** | Toggle Screen Shake | Global |
+| **`[`** | Toggle the dev-only debug panel | Global (DEV) |
+
+> **Footer dock invariant:** the hint list is **scrollable, never `overflow-hidden`**. It
+> previously used `overflow-x-hidden` in a 36px row and silently truncated its own keys at
+> 1366px — a hotkey the player cannot see is a hotkey that does not exist. Icon-only
+> controls (mute / shake / fullscreen) carry `aria-pressed` and a `title`.
 
 ---
 
 ## 6. Kinetic Feedback & Motion Invariants
 
 1. **Stationary Hitboxes:** Outer boundaries, tab buttons, header metrics, and stock order buttons must **never** physically shake or translate.
-2. **Isolated Parchment Recoil:** Screen shake is isolated to `.shake-surface` (`transform: translate3d(±3px, ±2px, 0)`) on the interior desk blotter and stamp icon.
-3. **Accessibility:** Honoring `screenShakeEnabled === false` and `prefers-reduced-motion` immediately swaps movement for a subtle gold/red glow pulse.
+2. **Isolated Parchment Recoil:** Motion is confined to the interior desk blotter and the stamp face (`tactical-recoil`, ±1.5px / ±0.25deg). **Recoil must not be applied to two elements at once** — two ±3px animations compound to ~6px of combined travel, which is what made the frenzy judder.
+3. **Amplitude must scale with click rate:** a one-shot impact sized for a single click becomes a permanent vibration at 5–10 clicks/sec. `stamp-slam-calm` exists for exactly this reason and engages above 85% Tantrum.
+4. **Accessibility:** `screenShakeEnabled === false` (`[Z]`) and `prefers-reduced-motion` both swap movement for a subtle gold/red glow pulse. The `prefers-reduced-motion` block must cover `animation-duration` and `animation-iteration-count`, **not just `transition-*`** — the slam, recoil, ink-bloom and glow are animations, so a transition-only block leaves them running at full strength.
+5. **Focus indicators must land on the visible surface.** `CertificateExporter` wraps a rich `Card` in a real `<button>`, so the button has no visible bounds; a global `:focus-visible` outline draws a ring floating in empty space. The ring is forwarded to the child card. Note that programmatic `.focus()` does **not** trigger `:focus-visible` — verify with real Tab navigation or you will get a false negative.

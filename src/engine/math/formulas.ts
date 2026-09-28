@@ -15,6 +15,7 @@ import {
   INK_REFILL_COST_GROWTH,
   DRY_CLICK_JAM_YIELD_MULTIPLIER,
   DRY_CLICK_YIELD_MULTIPLIER,
+  FRENZY_CLICK_MULTIPLIER,
 } from '../../constants/balance';
 
 /**
@@ -51,8 +52,11 @@ export function calculateClickValue(
   const sisMultiplier = 1.0 + sisCount * 0.1;
 
   if (isCapsFrenzy) {
-    // 10x frenzy multiplier on current phase yield
-    return Math.max(cashFloor, baseValue * phaseMultiplier * 10.0 * sisMultiplier);
+    // Frenzy multiplier on current phase yield.
+    // Uses FRENZY_CLICK_MULTIPLIER rather than a literal: the constant was
+    // declared in balance.ts but this site had it hardcoded, so the GDD's
+    // stated 10x existed in two places and changing one silently desynced it.
+    return Math.max(cashFloor, baseValue * phaseMultiplier * FRENZY_CLICK_MULTIPLIER * sisMultiplier);
   }
 
   // Dry clicks retain a token yield (2% when jammed) so the player is never

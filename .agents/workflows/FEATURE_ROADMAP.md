@@ -3,6 +3,13 @@
 This document outlines the development phases for **EXECUTIVE DEGEN: SHORT THE WORLD**.
 
 > ⚠️ **Status note:** Phase 1 & 2 are marked complete below, but a full code audit (see [`.agents/AUDIT_REPORT.md`](../AUDIT_REPORT.md)) found doc↔code drift, an economy dead-end (Crony Favor has no faucet), and several cosmetic-only systems. Treat the checkmarks as "shipped in some form," not "matches spec."
+>
+> **Sprint 2.5 — UI Redesign (2026-09-29, shipped).** Onboarding was rebuilt around the
+> game's actual subject: the $10,000 cash gate is gone (market + YAP unlock on the first
+> slam), plus 3 risk-free paper trades, a 5-step directive tutorial, a newsprint/classified/
+> phosphor material system, and a 1080×1920 decree certificate. Full plan and measurements:
+> [`.agents/workflows/UI_REDESIGN_PLAN.md`](UI_REDESIGN_PLAN.md). Sprint 3 pacing may need
+> re-tuning as a result, since Phase 2 is now reachable far sooner.
 
 ---
 
@@ -42,5 +49,12 @@ This document outlines the development phases for **EXECUTIVE DEGEN: SHORT THE W
 ---
 
 ## Phase 5: Viral Distribution & Streamer Mode (Sprint 5)
-- [ ] **The 9:16 Vertical Senate Hearing Clip Generator:** Split-screen C-SNOOZE / brainrot MP4 renderer.
-- [ ] **Twitch/Kick Live Integration:** Chat polling, `!YAP` tantrum meter, and bit pardon auctions.
+- [x] **The 9:16 Decree Certificate:** 1080×1920 PNG with wax seal, classification banner,
+  redaction bar and portfolio-at-risk. The same renderer draws the prestige run summary,
+  captured before the reset wipes the run. *(This is the shippable half of the vision below.)*
+- [ ] **The 9:16 Vertical Senate Hearing Clip Generator:** Split-screen C-SNOOZE / brainrot
+  MP4 renderer. The `viral-clip-director` skill documents the WebCodecs pipeline; **none of
+  it is implemented.** `README.md` previously advertised a `[LEAK TO C-SNOOZE]` button that
+  does not exist — that claim was removed on 2026-09-29.
+- [ ] **Twitch/Kick Live Integration:** Chat polling, `!YAP` tantrum meter, and bit pardon
+  auctions. **Not implemented**; a dead `streamerMode` store field was removed on 2026-09-29.

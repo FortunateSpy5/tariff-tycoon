@@ -6,7 +6,8 @@ import type { StateCreator } from 'zustand';
 import type { DumpState } from '../../types/dump';
 import type { GameStore } from '../useGameStore';
 import { INITIAL_AGENCIES } from '../../constants/agencies';
-import { CRONY_FAVOR_LIQUIDATION_KICKBACK_RATIO, CRONY_FAVOR_MAX } from '../../constants/balance';
+import { CRONY_FAVOR_LIQUIDATION_KICKBACK_RATIO } from '../../constants/balance';
+import { clampCronyFavor } from '../../engine/systems/slopEngine';
 import { sound } from '../../audio/soundEngine';
 
 export interface DumpSlice extends DumpState {
@@ -54,7 +55,7 @@ export const createDumpSlice: StateCreator<GameStore, [], [], DumpSlice> = (set,
 
     set({
       treasuryCash: state.treasuryCash + targetAgency.liquidationCashYield,
-      cronyFavor: Math.min(CRONY_FAVOR_MAX, state.cronyFavor - targetAgency.cronyFavorCost + favorKickback),
+      cronyFavor: clampCronyFavor(state.cronyFavor - targetAgency.cronyFavorCost + favorKickback),
       slopSuspicion: Math.min(100, state.slopSuspicion + 15),
       passiveCashPerSecond: newPassive,
       agencies: updatedAgencies,

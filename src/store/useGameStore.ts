@@ -9,14 +9,22 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { createDeskSlice, type DeskSlice } from './slices/deskSlice';
+import { createDeskPropsSlice, type DeskPropsSlice } from './slices/deskPropsSlice';
+import { createCrisisSlice, type CrisisSlice } from './slices/crisisSlice';
 import { createTradingSlice, type TradingSlice } from './slices/tradingSlice';
+import { createPredictionSlice, type PredictionSlice } from './slices/predictionSlice';
+import { createSettlementSlice, type SettlementSlice } from './slices/settlementSlice';
 import { createDumpSlice, type DumpSlice } from './slices/dumpSlice';
 import { createPrestigeSlice, type PrestigeSlice } from './slices/prestigeSlice';
 import { createSettingsSlice, type SettingsSlice } from './slices/settingsSlice';
 import { calculateOfflineEarnings } from '../engine/math/formulas';
 
 export type GameStore = DeskSlice &
+  DeskPropsSlice &
+  CrisisSlice &
   TradingSlice &
+  PredictionSlice &
+  SettlementSlice &
   DumpSlice &
   PrestigeSlice &
   SettingsSlice;
@@ -25,7 +33,11 @@ export const useGameStore = create<GameStore>()(
   persist(
     (...a) => ({
       ...createDeskSlice(...a),
+      ...createDeskPropsSlice(...a),
+      ...createCrisisSlice(...a),
       ...createTradingSlice(...a),
+      ...createPredictionSlice(...a),
+      ...createSettlementSlice(...a),
       ...createDumpSlice(...a),
       ...createPrestigeSlice(...a),
       ...createSettingsSlice(...a),
@@ -91,7 +103,6 @@ export const useGameStore = create<GameStore>()(
         activeRightTab: state.activeRightTab,
         isMuted: state.isMuted,
         screenShakeEnabled: state.screenShakeEnabled,
-        streamerMode: state.streamerMode,
         // Persist the ACTUAL last-saved timestamp (refreshed every 5s by updateLastSaved),
         // NOT Date.now(). Overwriting it here on every serialization would reset the offline
         // window to ~0 on each tick, silently disabling the Palm-a-Grifto offline protocol.
