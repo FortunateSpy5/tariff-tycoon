@@ -58,7 +58,17 @@ export const ClickerButton: React.FC = () => {
   );
 
   const isDry = inkLevel <= 0 && !isCapsFrenzy;
+  // C1: the recoil used to fire on BOTH the stamp face and the directive card
+  // at 100% tantrum, and the slam travelled 14px. During CAPS LOCK FRENZY the
+  // player clicks many times a second, so the impacts overlapped into a
+  // continuous judder. At high tantrum we now swap to the damped slam and halve
+  // the recoil: the impact still reads, but it no longer fights the cursor.
   const isRecoilActive = screenShakeEnabled && (isCapsFrenzy || isHighTantrum);
+  const slamClass = isHighTantrum
+    ? 'animate-stamp-slam-calm'
+    : slamNonce % 2 === 0
+    ? 'animate-stamp-slam'
+    : 'animate-stamp-slam-alt';
   const inkColor = isCapsFrenzy ? '#ef4444' : phase === 1 ? '#3b82f6' : '#fbbf24';
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -155,9 +165,9 @@ export const ClickerButton: React.FC = () => {
         onTouchEnd={() => setIsPressed(false)}
         className={`relative group w-44 h-44 sm:w-52 sm:h-52 md:w-60 md:h-60 rounded-full flex flex-col items-center justify-center cursor-pointer stamp-face transition-[transform,box-shadow] duration-75 ${
           isPressed ? 'scale-95' : 'hover:scale-[1.02]'
-        } ${slamNonce % 2 === 0 ? 'animate-stamp-slam' : 'animate-stamp-slam-alt'} ${
+        } ${slamClass} ${
           isCapsFrenzy
-            ? 'bg-gradient-to-br from-red-600 via-amber-600 to-red-700 ring-6 ring-red-500/50 animate-pulse'
+            ? 'bg-gradient-to-br from-red-600 via-amber-600 to-red-700 ring-4 ring-red-500/40 animate-calm-glow'
             : phase === 1
             ? 'bg-gradient-to-br from-blue-700 via-indigo-800 to-blue-950 ring-4 ring-blue-500/30'
             : 'bg-gradient-to-br from-amber-400 via-amber-500 to-amber-700 ring-4 ring-amber-400/40'

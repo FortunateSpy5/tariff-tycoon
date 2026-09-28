@@ -73,11 +73,25 @@ export const CertificateExporter: React.FC<{ children: React.ReactNode }> = ({ c
 
   return (
     <>
+      {/* C3 [Focus Audit]
+          This wraps a rich <Card> in a real <button>, which is correct: it keeps
+          one tab stop, one accessible name, and native Enter/Space activation
+          without nesting interactive elements. The previous focus treatment was
+          the problem — the global `:focus-visible` outline drew around the
+          button's own box, but the button has no visible bounds of its own, so
+          keyboard users saw a ring floating in space around a card that gave no
+          indication it was focused. The arbitrary variant forwards focus to the
+          child card so the surface that looks interactive is the one that lights
+          up. Do not "simplify" this back to a bare outline. */}
       <button
         onClick={handleExport}
         disabled={busy}
         aria-label="Export a shareable 9:16 executive decree certificate as a PNG"
-        className="w-full text-left disabled:opacity-60 disabled:cursor-wait transition-opacity"
+        className="w-full text-left disabled:opacity-60 disabled:cursor-wait transition-opacity
+                   focus:outline-none
+                   focus-visible:[&>div]:ring-2 focus-visible:[&>div]:ring-gold-500
+                   focus-visible:[&>div]:ring-offset-2 focus-visible:[&>div]:ring-offset-newsprint-950
+                   focus-visible:[&>div]:border-gold-500"
       >
         {busy ? (
           <div className="surface-newsprint border border-newsprint-300 rounded-lg p-2.5 flex items-center gap-2">

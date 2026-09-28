@@ -277,11 +277,14 @@
   100% { transform: translateX(-50%); }
 }
 
+/* C1: was +/-3px translate and +/-0.5deg rotate. Two elements carry this at
+   once during a high tantrum (the stamp face and the directive card), so the
+   combined motion was roughly 6px of travel twice per slam. Halved. */
 @keyframes tactical-recoil {
   0% { transform: translate3d(0, 0, 0); }
-  25% { transform: translate3d(-3px, 2px, 0) rotate(-0.5deg); }
-  50% { transform: translate3d(3px, -2px, 0) rotate(0.5deg); }
-  75% { transform: translate3d(-2px, -1px, 0); }
+  25% { transform: translate3d(-1.5px, 1px, 0) rotate(-0.25deg); }
+  50% { transform: translate3d(1.5px, -1px, 0) rotate(0.25deg); }
+  75% { transform: translate3d(-1px, -0.5px, 0); }
   100% { transform: translate3d(0, 0, 0); }
 }
 
@@ -302,6 +305,35 @@
 @keyframes stamp-slam-lift {
   0%   { transform: translate3d(0, calc(22px / var(--viewport-scale, 1)), 0) rotate(-9deg); }
   100% { transform: translate3d(0, 0, 0) rotate(-3deg); }
+}
+
+/* CALM SLAM [C1]
+   The original slam travelled 14px and scaled to 1.16. That reads as a punch on
+   a single click, but during CAPS LOCK FRENZY the player is clicking 5-10x/sec,
+   so the impacts overlap into a permanent judder — the exact "too much shake at
+   the final stage" complaint. This variant keeps the impact *readable* (the
+   press still lands) while cutting displacement by ~40% and scale-back to
+   almost nothing, so fast clicking degrades to a subtle throb instead of a
+   vibrating screen. */
+@keyframes stamp-slam-calm {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  22%  { transform: translate3d(0, calc(6px / var(--viewport-scale, 1)), 0) scale(1.06); }
+  48%  { transform: translate3d(0, calc(-2px / var(--viewport-scale, 1)), 0) scale(0.99); }
+  72%  { transform: translate3d(0, 0, 0) scale(1.005); }
+  100% { transform: translate3d(0, 0, 0) scale(1); }
+}
+
+/* A slow, low-amplitude glow. `animate-pulse` runs at Tailwind's default 2s on
+   a 1s-ish curve and was applied to a 6px saturated red ring during frenzy,
+   which strobes. This breathes at 3.4s with a much smaller radius change, so
+   it signals "something is wrong" without competing for attention. */
+@keyframes calm-glow {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 0.95; }
+}
+
+.animate-calm-glow {
+  animation: calm-glow 3.4s ease-in-out infinite;
 }
 
 @keyframes ring-shake {
@@ -328,6 +360,27 @@
 
 .animate-stamp-slam {
   animation: stamp-slam 0.26s cubic-bezier(0.3, 0.9, 0.4, 1) 1;
+}
+
+/* C1: the damped variant, swapped in when the player is at 100% tantrum. */
+.animate-stamp-slam-calm {
+  animation: stamp-slam-calm 0.2s cubic-bezier(0.3, 0.9, 0.4, 1) 1;
+}
+
+/* INVARIANT: [Reduced Motion Is Not Optional] [C2]
+   The slam, the recoil, the ink bloom and the frenzy ring are all load-bearing
+   game feedback, so they cannot simply be deleted. They are instead damped to
+   a state-change-only version. JS-driven celebration (confetti) is left intact
+   because it is a discrete event, not a continuous loop. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Identical keyframes under a second name. ClickerButton alternates between the

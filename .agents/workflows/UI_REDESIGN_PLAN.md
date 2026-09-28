@@ -217,18 +217,55 @@ that a given instance is legible.** Always re-screenshot after a batch change.
 
 ---
 
-## Phase C — Responsive & polish
+## Phase C — Responsive & polish ✅ COMPLETE
 
-**C1.** Visual pass at 1920×1080, 1600×900, 1366×768, 1280×720. Verify zero
-scroll, no clipped footers, no overlapping overlays at each.
+**C1. The 3 AM shake was too much at the final stage** ✅ FIXED
+*(user-reported: "the 3 am call shake at the final stage is too much")*
 
-**C2.** Keyboard/focus audit — tab order through the new `Card`-wrapped
-interactive elements. `CertificateExporter` wraps a rich card in a `<button>`;
-verify it has one clear focus stop and a sensible accessible name.
+The cause was compounding, not any single animation:
+- `tactical-recoil` fired on **two** elements at once (the stamp face *and* the
+  directive card), each travelling ±3px — so ~6px of combined motion per slam.
+- `stamp-slam` travelled **14px** and scaled to **1.16**. Read as a punch on one
+  click, but during CAPS LOCK FRENZY the player clicks many times a second, so
+  the impacts overlapped into a permanent judder.
+- The frenzy ring used Tailwind's `animate-pulse` (2s, sharp curve) on a 6px
+  saturated red ring — a strobe, not a signal.
 
-**C3.** `prefers-reduced-motion` pass — verify the new `stamp-slam` and
-`ink-bloom` animations degrade correctly under the existing reduced-motion block
-in `index.css`.
+Fixes, all in `index.css` + two components:
+- Recoil amplitude **halved** (±1.5px / ±0.25deg).
+- New `stamp-slam-calm` at **~40% of the travel** (6px, scale 1.06) — swapped in
+  above 85% tantrum so fast clicking degrades to a subtle throb, not a vibration.
+- New `calm-glow` (3.4s, 0.55–0.95 opacity) replaces `animate-pulse` on the
+  frenzy ring, the directive card, and the walk-back button.
+
+**INVARIANT:** the impact must remain *readable*. Damping is the correct fix;
+deleting the feedback is not.
+
+**C2. Responsive pass** ✅ VERIFIED
+1920×1080, 1600×900, 1366×768 and 1280×720 all render with zero scroll, no
+clipped footer and no overlapping overlays. The existing `--viewport-scale`
+mechanism in `useDesktopViewport` (kicks in below 840px height) absorbs the
+smaller targets without new breakpoints.
+
+**C3. Keyboard/focus audit** ✅ FIXED
+`CertificateExporter` wrapping a rich `Card` in a real `<button>` was **correct**
+— one tab stop, one accessible name, native Enter/Space, no nested interactive
+elements. The real defect was the *focus indicator*: the global `:focus-visible`
+outline drew around the button's own box, but the button has no visible bounds
+of its own, so keyboard users saw a ring floating in space around a card that
+gave no indication it was focused.
+
+Fixed by forwarding focus to the child card
+(`focus-visible:[&>div]:ring-2 ring-gold-500`), so the surface that *looks*
+interactive is the one that lights up. Verified with real Tab navigation, not
+programmatic `.focus()` — programmatic focus does not trigger `:focus-visible`
+and produced a false negative on the first check.
+
+**C4. `prefers-reduced-motion`** ✅ ADDED
+The existing block only covered `transition-*`, so the load-bearing animations
+(slam, recoil, ink-bloom, calm-glow) all still ran at full strength. Now covers
+`animation-duration` and `animation-iteration-count` too. Confetti is left intact
+— it is a discrete event, not a continuous loop.
 
 ---
 

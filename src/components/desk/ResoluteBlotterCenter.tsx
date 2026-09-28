@@ -136,7 +136,7 @@ export const ResoluteBlotterCenter: React.FC = () => {
       <div
         className={`surface-sheet border border-newsprint-300 rounded-lg p-2.5 text-center shadow-sm shrink-0 transition-all duration-100 relative ${
           isRecoilActive ? 'animate-recoil' : ''
-        } ${isPulseActive ? 'ring-2 ring-wax-500/60 animate-pulse' : ''}`}
+        } ${isPulseActive ? 'ring-2 ring-wax-500/50 animate-calm-glow' : ''}`}
       >
         <div className="flex items-center justify-center gap-1.5 t-micro font-mono font-bold tracking-widest text-wax-600 uppercase">
           <FileText className="w-3.5 h-3.5" />
@@ -221,7 +221,7 @@ export const ResoluteBlotterCenter: React.FC = () => {
                 : `Arm a matching $${lastTargetStockSymbol} CALL before the window closes`}
               className={`shrink-0 px-3 py-2 font-mono t-micro font-black uppercase transition-all ${
                 hasWalkBackCall
-                  ? 'animate-pulse bg-emerald-600 text-newsprint-50 hover:bg-emerald-500 cursor-pointer'
+                  ? 'animate-calm-glow bg-emerald-600 text-newsprint-50 hover:bg-emerald-500 cursor-pointer'
                   : 'bg-newsprint-300 text-newsprint-800 cursor-not-allowed'
               }`}
             >
