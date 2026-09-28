@@ -78,3 +78,12 @@ For specialized guidelines and detailed mechanics, consult:
 - `procedural-yap-generator` — Generates infinite, legally safe 3:00 AM YAPs, typos, and fake comment swarms.
 - `options-trading-math` — Formulas and balance tools for BagHolder Pro leverage, VEX volatility, and S.L.O.P. suspicion.
 - `viral-clip-director` — Architecture and asset pipeline for the 9:16 vertical C-SNOOZE / brainrot clip generator.
+- `balance-audit` — Dead faucets, degenerate strategies, unreachable gates, and doc↔constant drift. Run before changing any tuning value.
+- `soak-test` — Extended-play windows: uptime leaks, tick drift, the 48h offline wall, prestige loops, and overflow past $10^{42}$.
+
+Skills in `.agents/skills/` are the single source of truth. Agent-specific
+symlinks (`.claude/skills/`) are generated and gitignored — never edit or commit
+them. `skills-lock.json` records upstream provenance for the vendored skills.
+
+**YAML frontmatter must be quoted.** An unquoted `:` in a `description:` (e.g.
+`3:00 AM`) makes the file unparseable and the skill silently fails to load.

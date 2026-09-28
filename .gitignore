@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Agent skill junctions (symlinks into .agents/skills — do not commit links)
+.claude/skills/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

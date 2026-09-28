@@ -1,6 +1,6 @@
 ---
 name: procedural-yap-generator
-description: Generates infinite, legally safe 3:00 AM YAPs, diplomatic begging DMs, and simulated live comment swarms for Executive Degen: Short the World.
+description: "Generates infinite, legally safe 3:00 AM YAPs, diplomatic begging DMs, and simulated live comment swarms for Executive Degen: Short the World."
 ---
 
 # Procedural YAP Generator Skill
