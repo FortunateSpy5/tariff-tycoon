@@ -14,6 +14,17 @@ import {
 } from '../../engine/math/formulas';
 import { INITIAL_CRONY_UPGRADES } from '../../constants/unlocks';
 import { PARODY_NATIONS } from '../../constants/nations';
+import { TUTORIAL_CHAIN } from '../../constants/onboarding';
+import {
+  CRISIS_BOOK,
+  CRISIS_HEAT_PER_TIER,
+  CRISIS_INTERVAL_BY_PHASE,
+  CRISIS_TANTRUM_REWARD,
+  CRISIS_TIER_MULTIPLIERS,
+  CRISIS_WINDOW_SECONDS,
+  crisisBasePayoutForPhase,
+  crisisTierForElapsed,
+} from '../../constants/crisis';
 import {
   INK_PER_CLICK,
   INK_REGEN_PER_SECOND,
@@ -21,11 +32,20 @@ import {
   DIET_SODA_TANTRUM_PER_CLICK,
   DRY_TANTRUM_PER_CLICK,
   FRENZY_DURATION_SECONDS,
+  FRENZY_COOLDOWN_BY_PHASE,
+  FRENZY_COOLDOWN_TANTRUM_DECAY_PER_SECOND,
   DRY_CLICK_JAM_THRESHOLD,
+  INK_REFILL_TREASURY_RATIO,
   CRONY_FAVOR_PASSIVE_PER_SECOND,
   CRONY_FAVOR_MAX,
 } from '../../constants/balance';
 import { sound } from '../../audio/soundEngine';
+import { formatCurrency } from '../../engine/math/bigNumber';
+
+/** Compact cash for short desk notices (e.g. "+$6.00K TREASURY"). */
+function formatCompactCash(value: number): string {
+  return formatCurrency(value);
+}
 
 export interface DeskSlice extends DeskState {
   treasuryCash: number;
@@ -45,11 +65,21 @@ export interface DeskSlice extends DeskState {
   activeUpgrades: string[];
   buyUpgrade: (upgradeId: string) => boolean;
 
+  /** Advance the onboarding chain. Clamped at the end; never wraps. */
+  advanceTutorial: () => void;
+  /** Skip onboarding permanently (players who already know the loop). */
+  skipTutorial: () => void;
+
   // Interactive Desk Props
   triggerRedPhoneBailout: () => boolean;
   sellClassifiedSecrets: () => boolean;
   shredSubpoenas: () => boolean;
   printEmergencyCash: () => boolean;
+
+  // Crisis Call (Red Rotary Phone dial)
+  swearInCrisis: () => boolean;
+  suppressCrisis: () => boolean;
+  dismissCrisisOutcome: () => void;
 
   // Bilateral Tariffs state
   tariffRates: Record<string, number>;
@@ -65,6 +95,7 @@ export interface DeskSlice extends DeskState {
 export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set, get) => ({
   phase: 1,
   hasMarketAccess: false,
+  tutorialStepIndex: 0,
   hasRadarAccess: false,
   hasPolyGriftAccess: false,
   hasCronyUnlocksAccess: false,
@@ -78,6 +109,7 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
   isCapsFrenzy: false,
   capsFrenzySecondsRemaining: 0,
   totalFrenziesTriggered: 0,
+  frenzyCooldownSecondsRemaining: 0,
   dryClicksCount: 0,
   lastClickTimestamp: 0,
   lastShredTimestamp: 0,
@@ -110,6 +142,11 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
   },
 
   activeUpgrades: [],
+  activeCrisis: null,
+  crisisCooldownSeconds: 8,
+  totalCrisesAnswered: 0,
+  totalCrisesSuppressed: 0,
+  lastCrisisOutcome: undefined,
   tariffRates: {
     north_annex: 125,
     nearshore_fed: 150,
@@ -126,6 +163,18 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
         hasPrestigeAccess: state.hasPrestigeAccess || state.tariffRates[nationId] !== rate,
       };
     }),
+
+  /**
+   * ADVANCE TUTORIAL: clamps at the end of the chain so a completed tutorial
+   * can never wrap back to step 0. A function (not a raw setter) so no caller
+   * can corrupt the index into a negative or out-of-range state.
+   */
+  advanceTutorial: () =>
+    set((state) => ({
+      tutorialStepIndex: Math.min(TUTORIAL_CHAIN.length, state.tutorialStepIndex + 1),
+    })),
+
+  skipTutorial: () => set({ tutorialStepIndex: TUTORIAL_CHAIN.length }),
 
   buyUpgrade: (upgradeId: string) => {
     const state = get();
@@ -210,6 +259,57 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
     return true;
   },
 
+  // ===================================================================
+  // THE CRISIS CALL — Red Rotary Phone dial
+  // ===================================================================
+
+  swearInCrisis: () => {
+    const state = get();
+    const crisis = state.activeCrisis;
+    if (!crisis) return false;
+
+    const def = CRISIS_BOOK.find((c) => c.id === crisis.id);
+    if (!def) return false;
+
+    const tier = crisisTierForElapsed(crisis.elapsedSeconds);
+    const tierDef = def.tiers[tier];
+    const payout = Math.round(
+      crisisBasePayoutForPhase(state.phase) * CRISIS_TIER_MULTIPLIERS[tier]
+    );
+    const heat = CRISIS_HEAT_PER_TIER * (tier + 1);
+
+    sound.playChaChing();
+    set({
+      treasuryCash: state.treasuryCash + payout,
+      lifetimeCashEarned: state.lifetimeCashEarned + payout,
+      slopSuspicion: Math.min(100, state.slopSuspicion + heat),
+      tantrumMeter: Math.min(100, state.tantrumMeter + CRISIS_TANTRUM_REWARD),
+      activeCrisis: null,
+      crisisCooldownSeconds: CRISIS_INTERVAL_BY_PHASE[state.phase] ?? 45,
+      totalCrisesAnswered: state.totalCrisesAnswered + 1,
+      lastCrisisOutcome: `SWEAR IN // ${tierDef.severity} // +${formatCompactCash(payout)} TREASURY // +${heat}% HEAT`,
+    });
+    return true;
+  },
+
+  suppressCrisis: () => {
+    const state = get();
+    if (!state.activeCrisis) return false;
+
+    // INVARIANT: suppression is always a legal escape hatch, but it forfeits the
+    // crisis tantrum and resets the phone, so it is a real (if passive) choice.
+    sound.playDeskThud();
+    set({
+      activeCrisis: null,
+      crisisCooldownSeconds: CRISIS_INTERVAL_BY_PHASE[state.phase] ?? 45,
+      totalCrisesSuppressed: state.totalCrisesSuppressed + 1,
+      lastCrisisOutcome: 'SUPPRESSED // Statement issued. Nothing improved. Tantrum wasted.',
+    });
+    return true;
+  },
+
+  dismissCrisisOutcome: () => set({ lastCrisisOutcome: undefined }),
+
   clickDesk: () => {
     const state = get();
     const now = Date.now();
@@ -250,9 +350,16 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
     }
 
     // Tantrum gain:
-    // INVARIANT: Dry scratches enrage the Dealmaker (+3.5% per click) and CAN fill the meter to 100%.
+    // INVARIANT: [The Cooling-Off Protocol]
+    // Tantrum does NOT accumulate during an active FRENZY, and cannot accumulate
+    // at all while the post-frenzy cooldown is running. Without this gate the meter
+    // is already >100% the moment the frenzy timer expires, so frenzy re-triggers
+    // on the same frame and uptime approaches 100%.
     let tantrumDelta = 0;
-    if (isDry) {
+    if (state.isCapsFrenzy || state.frenzyCooldownSecondsRemaining > 0) {
+      // No accumulation during frenzy or while cooling off.
+      tantrumDelta = 0;
+    } else if (isDry) {
       tantrumDelta = DRY_TANTRUM_PER_CLICK;
     } else {
       tantrumDelta = state.activeUpgrades.includes('diet_soda_drip')
@@ -264,15 +371,23 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
     let shouldTriggerFrenzy = state.isCapsFrenzy;
     let frenzyRemaining = state.capsFrenzySecondsRemaining;
     let frenziesCount = state.totalFrenziesTriggered;
+    let nextCooldown = state.frenzyCooldownSecondsRemaining;
     // Ink consumption: normal clicks consume INK_PER_CLICK; during frenzy ink is infinite
     let nextInkLevel = state.isCapsFrenzy ? state.inkLevel : Math.max(0, state.inkLevel - INK_PER_CLICK);
     let nextRefillCount = state.inkRefillCount;
 
-    // Trigger CAPS LOCK FRENZY only when legitimate ink was used
-    if (nextTantrum >= 100 && !state.isCapsFrenzy && !isDry) {
+    // Trigger CAPS LOCK FRENZY only when legitimate ink was used AND the
+    // post-frenzy cooldown has elapsed.
+    if (
+      nextTantrum >= 100 &&
+      !state.isCapsFrenzy &&
+      !isDry &&
+      state.frenzyCooldownSecondsRemaining <= 0
+    ) {
       shouldTriggerFrenzy = true;
       nextTantrum = 0;
       frenzyRemaining = FRENZY_DURATION_SECONDS;
+      nextCooldown = 0;
       frenziesCount += 1;
       // INVARIANT: Frenzy does NOT grant free 100% ink refills. Current ink is preserved.
       nextInkLevel = state.inkLevel;
@@ -292,11 +407,38 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
       sound.playChaChing();
     }
 
+    // REDESIGN: [The Ten-Minute Wall]
+    // BagHolder Pro + YAP now unlock on the VERY FIRST SLAM, not at $10,000.
+    // The causal shorting loop IS the game's subject; hiding it behind 2,000
+    // clicks of the weakest verb meant most players never saw the premise.
+    // `hasMarketAccess` used to be a cash threshold — it is now an event.
+    //
+    // INVARIANT: onboarding gates on the tutorial index, NEVER on
+    // `totalClicks === 0`. A save that already contains clicks (an interrupted
+    // session, a migrated save, a player who skipped onboarding) would
+    // otherwise be permanently stuck on step 1 with no way forward. Keying off
+    // the index makes every advance idempotent and self-healing.
+    const isFirstSlam = state.tutorialStepIndex === 0;
+
+    // INVARIANT: [Onboarding Must Always Terminate]
+    // The final tutorial step is manual ("Seal It"). If a player simply ignores
+    // it, the directive card would sit above the objectives forever. Reaching
+    // the Oval Office is proof the player understood the loop, so promote them
+    // past onboarding automatically. Never nag a player who has demonstrably
+    // graduated.
+    const tutorialStepIndex =
+      nextPhase >= 2 && state.tutorialStepIndex < TUTORIAL_CHAIN.length
+        ? TUTORIAL_CHAIN.length
+        : isFirstSlam
+          ? 1
+          : state.tutorialStepIndex;
+
     set({
       treasuryCash: nextCash,
       lifetimeCashEarned: state.lifetimeCashEarned + earnedCash,
       phase: nextPhase,
-      hasMarketAccess: state.hasMarketAccess || nextCash >= 10000,
+      hasMarketAccess: state.hasMarketAccess || isFirstSlam,
+      tutorialStepIndex,
       totalClicks: state.totalClicks + 1,
       inkLevel: nextInkLevel,
       dryClicksCount: currentDryClicks,
@@ -305,6 +447,7 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
       isCapsFrenzy: shouldTriggerFrenzy,
       capsFrenzySecondsRemaining: frenzyRemaining,
       totalFrenziesTriggered: frenziesCount,
+      frenzyCooldownSecondsRemaining: nextCooldown,
       lastClickTimestamp: now,
     });
     return true;
@@ -312,7 +455,13 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
 
   refillInk: () => {
     const state = get();
-    const cost = calculateInkRefillCost(state.inkRefillCount);
+    const baseCost = calculateInkRefillCost(state.inkRefillCount);
+
+    // INVARIANT: [Ink Is A Cost Center]
+    // Refills cost a flat escalating term PLUS a percentage of treasury, so ink
+    // is a real ongoing tax on earnings at every stage rather than a rounding error.
+    const treasuryTax = state.treasuryCash * INK_REFILL_TREASURY_RATIO;
+    const cost = Math.min(baseCost + treasuryTax, baseCost * 4);
 
     if (state.treasuryCash < cost) {
       return false;
@@ -368,12 +517,31 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
     // Frenzy timer countdown
     let isFrenzy = state.isCapsFrenzy;
     let frenzyRemaining = state.capsFrenzySecondsRemaining;
+    // INVARIANT: [The Cooling-Off Protocol] starting a lockout the moment frenzy ends.
+    let frenzyCooldown = state.frenzyCooldownSecondsRemaining;
+    let tantrumAfterTick = state.tantrumMeter;
 
     if (isFrenzy) {
       frenzyRemaining -= deltaSeconds;
       if (frenzyRemaining <= 0) {
         isFrenzy = false;
         frenzyRemaining = 0;
+        // INVARIANT: [The Cooling-Off Protocol] scales with phase so early game
+        // stays snappy and late game makes frenzy genuinely precious.
+        frenzyCooldown = FRENZY_COOLDOWN_BY_PHASE[state.phase] ?? 15;
+      }
+    } else if (frenzyCooldown > 0) {
+      // Cool down the tantrum meter while locked out so the player is not
+      // sitting on a full meter the instant the lockout expires.
+      frenzyCooldown -= deltaSeconds;
+      if (frenzyCooldown <= 0) {
+        frenzyCooldown = 0;
+        tantrumAfterTick = 0;
+      } else {
+        tantrumAfterTick = Math.max(
+          0,
+          tantrumAfterTick - FRENZY_COOLDOWN_TANTRUM_DECAY_PER_SECOND * deltaSeconds
+        );
       }
     }
 
@@ -384,6 +552,45 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
 
     // Crony Favor passive drip: holding power accrues political capital over time.
     const favorGain = CRONY_FAVOR_PASSIVE_PER_SECOND * deltaSeconds;
+
+    // INVARIANT: [Integer Crony Favor]
+    // The passive faucet grants a fractional trickle (0.05/s). Carrying the
+    // fractional part in `cronyFavorRemainder` and only ever promoting whole
+    // units keeps the displayed counter a clean integer while preserving the
+    // exact 0.05/s rate — no favour is lost to rounding, and the player never
+    // sees "🤝 82.34520000000012" on a currency spent in discrete bribes.
+    const favorPool = favorGain + state.cronyFavorRemainder;
+    const favorWholeUnits = Math.floor(favorPool);
+    const favorRemainder = favorPool - favorWholeUnits;
+
+    // ===================================================================
+    // THE CRISIS CALL — spawn / age / auto-suppress
+    // ===================================================================
+    let activeCrisis = state.activeCrisis;
+    let crisisCooldown = state.crisisCooldownSeconds;
+    let totalCrisesSuppressed = state.totalCrisesSuppressed;
+    let crisisOutcome = state.lastCrisisOutcome;
+
+    if (activeCrisis) {
+      const nextElapsed = activeCrisis.elapsedSeconds + deltaSeconds;
+      if (nextElapsed >= CRISIS_WINDOW_SECONDS) {
+        // INVARIANT: an ignored crisis resolves as a suppression — no payout and
+        // no heat, but the tantrum it would have fed is forfeited.
+        totalCrisesSuppressed += 1;
+        activeCrisis = null;
+        crisisCooldown = CRISIS_INTERVAL_BY_PHASE[state.phase] ?? 45;
+        crisisOutcome = 'SUPPRESSED // The crisis passed. The tantrum is gone.';
+      } else {
+        activeCrisis = { ...activeCrisis, elapsedSeconds: nextElapsed };
+      }
+    } else {
+      crisisCooldown -= deltaSeconds;
+      if (crisisCooldown <= 0) {
+        const def = CRISIS_BOOK[Math.floor(Math.random() * CRISIS_BOOK.length)];
+        activeCrisis = { id: def.id, elapsedSeconds: 0 };
+        crisisCooldown = CRISIS_INTERVAL_BY_PHASE[state.phase] ?? 45;
+      }
+    }
 
     const nextCash = state.treasuryCash + passiveGain + totalTariffIncome;
     let nextPhase = state.phase;
@@ -402,13 +609,28 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
       treasuryCash: nextCash,
       lifetimeCashEarned: state.lifetimeCashEarned + passiveGain + totalTariffIncome,
       phase: nextPhase,
-      hasMarketAccess: state.hasMarketAccess || nextCash >= 10000,
+      // REDESIGN: the cash gate is gone — the market now unlocks on the first slam.
+      // Passive income must never be what opens the terminal, or a player who
+      // idles to $10k would get a surprise market they never learned to use.
+      hasMarketAccess: state.hasMarketAccess,
+      // Same invariant as clickDesk: onboarding ends for good at Phase 2.
+      tutorialStepIndex:
+        nextPhase >= 2 && state.tutorialStepIndex < TUTORIAL_CHAIN.length
+          ? TUTORIAL_CHAIN.length
+          : state.tutorialStepIndex,
       inkLevel: regeneratedInk,
       tariffRevenuePerSecond: calculatedTariffRev,
       slopSuspicion: Math.min(100, state.slopSuspicion + retaliatoryHeat),
-      cronyFavor: Math.min(CRONY_FAVOR_MAX, state.cronyFavor + favorGain),
+      cronyFavor: Math.min(CRONY_FAVOR_MAX, state.cronyFavor + favorWholeUnits),
+      cronyFavorRemainder: favorRemainder,
       isCapsFrenzy: isFrenzy,
       capsFrenzySecondsRemaining: Math.max(0, frenzyRemaining),
+      frenzyCooldownSecondsRemaining: Math.max(0, frenzyCooldown),
+      tantrumMeter: Math.max(0, Math.min(100, tantrumAfterTick)),
+      activeCrisis,
+      crisisCooldownSeconds: Math.max(0, crisisCooldown),
+      totalCrisesSuppressed,
+      lastCrisisOutcome: crisisOutcome,
       lastTickTimestamp: Date.now(),
     });
   },
@@ -422,7 +644,13 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
     set({
       treasuryCash: state.treasuryCash + cashEarned,
       lifetimeCashEarned: state.lifetimeCashEarned + cashEarned,
-      hasMarketAccess: state.hasMarketAccess || state.treasuryCash + cashEarned >= 10000,
+      // Offline earnings can cross the Phase 2 threshold while the tab is shut.
+      // Onboarding must terminate on that path too, or a returning player who
+      // idled overnight comes back to a tutorial they finished days ago.
+      tutorialStepIndex:
+        state.phase >= 2 && state.tutorialStepIndex < TUTORIAL_CHAIN.length
+          ? TUTORIAL_CHAIN.length
+          : state.tutorialStepIndex,
     });
     return cashEarned;
   },

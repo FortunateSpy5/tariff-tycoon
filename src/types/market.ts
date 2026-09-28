@@ -43,6 +43,11 @@ export interface ActiveOptionTrade {
   profitOrLoss: number;
   /** CALL opened during the post-YAP window; refunded if the player misses the clarification */
   isWalkBackCombo?: boolean;
+  /**
+   * Opened while the onboarding allowance was live. Losing settlements refund the
+   * collateral instead of banking a loss. See [Safe Practice Stakes] in tradingSlice.
+   */
+  isPaperTrade?: boolean;
 }
 
 export interface MarketState {
@@ -52,6 +57,14 @@ export interface MarketState {
   slopSuspicion: number; // 0 to 100%. At 100%, triggers Emergency Special Counsel Raid
   vexVolatility: number; // Baseline market volatility index ($VEX)
   cronyFavor: number; // Currency used to bribe S.L.O.P. auditors
+  /**
+   * INVARIANT: [Integer Crony Favor]
+   * Sub-unit trickle remainder (0 <= r < 1) carried between ticks. The passive
+   * faucet grants 0.05/sec, so without a remainder the counter would either show
+   * floats (🤝 82.34520000000012) or silently truncate a favour every tick.
+   * `cronyFavor` is therefore always a whole number and no favour is ever lost.
+   */
+  cronyFavorRemainder: number;
   isWalkBackWindowActive: boolean; // 8-second Straddle Squeeze window
   walkBackSecondsRemaining: number;
   lastWalkBackNotice: string | undefined;

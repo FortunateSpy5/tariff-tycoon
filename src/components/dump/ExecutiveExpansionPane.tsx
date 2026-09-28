@@ -13,6 +13,7 @@ import { DumpAgenciesTab } from './tabs/DumpAgenciesTab';
 import { CronyUnlocksTab } from './tabs/CronyUnlocksTab';
 import { BilateralTariffsTab } from './tabs/BilateralTariffsTab';
 import { CaymansPrestigeTab } from './tabs/CaymansPrestigeTab';
+import { SituationRoom } from './SituationRoom';
 
 export const ExecutiveExpansionPane: React.FC = () => {
   const phase = useGameStore((s) => s.phase);
@@ -21,12 +22,11 @@ export const ExecutiveExpansionPane: React.FC = () => {
   const hasTariffAccess = useGameStore((s) => s.hasTariffAccess);
   const hasPrestigeAccess = useGameStore((s) => s.hasPrestigeAccess);
   const treasuryCash = useGameStore((s) => s.treasuryCash);
+  const totalClicks = useGameStore((s) => s.totalClicks);
   const activeRightTab = useGameStore((s) => s.activeRightTab);
   const setActiveRightTab = useGameStore((s) => s.setActiveRightTab);
 
   const isLocked = phase < 2;
-  const milestoneTarget = hasMarketAccess ? 1000000 : 10000;
-  const milestoneProgress = Math.min(100, (treasuryCash / milestoneTarget) * 100);
 
   const tabs: { id: RightChannelTab; label: string; shortcut: string }[] = [
     { id: 'dump', label: 'D.U.M.P.', shortcut: 'D' },
@@ -42,7 +42,7 @@ export const ExecutiveExpansionPane: React.FC = () => {
   );
 
   return (
-    <div className="h-full bg-stone-900/95 border border-stone-800 rounded-xl flex flex-col justify-between shadow-2xl relative overflow-hidden select-none">
+    <div className="h-full min-h-0 bg-stone-900/95 border border-stone-800 rounded-xl flex flex-col shadow-2xl relative overflow-hidden select-none">
       
       {/* Channel Selector Header */}
       {availableTabs.length > 0 && (
@@ -54,7 +54,7 @@ export const ExecutiveExpansionPane: React.FC = () => {
               key={tab.id}
               onClick={() => setActiveRightTab(tab.id)}
               disabled={isLocked}
-              className={`flex-1 py-1 px-1 text-center rounded font-mono font-bold text-[10px] transition-all cursor-pointer flex items-center justify-center gap-1 ${
+              className={`flex-1 py-1 px-1 text-center rounded font-mono font-bold t-micro transition-all cursor-pointer flex items-center justify-center gap-1 ${
                 isActive
                   ? 'bg-amber-500 text-stone-950 shadow-md font-black'
                   : 'text-stone-400 hover:text-stone-200 hover:bg-stone-900'
@@ -69,57 +69,66 @@ export const ExecutiveExpansionPane: React.FC = () => {
       )}
 
       {/* Main Tab Surface */}
-      <div className="flex-1 min-h-0 p-2.5 overflow-hidden flex flex-col justify-between relative">
-        {activeRightTab === 'dump' && <DumpAgenciesTab />}
-        {activeRightTab === 'unlocks' && <CronyUnlocksTab />}
-        {activeRightTab === 'tariffs' && <BilateralTariffsTab />}
-        {activeRightTab === 'caymans' && <CaymansPrestigeTab />}
-
-        {/* Phase 1 Security Shutter Lock Overlay */}
-        {isLocked && (
-          <div className="absolute inset-0 bg-stone-950/85 z-20 flex flex-col items-center justify-center p-5 text-center border-2 border-dashed border-amber-900/60">
-            <Briefcase className="w-7 h-7 text-amber-500 mb-3" />
-            <span className="font-mono text-[10px] font-bold tracking-widest text-stone-400 uppercase">
-              Phase 1 // Customs Authorization
-            </span>
-            <h4 className="mt-2 font-black text-amber-300 tracking-wider text-sm font-mono">
-              {hasMarketAccess ? 'OVAL OFFICE // $1,000,000' : 'BAGHOLDER PRO // $10,000'}
-            </h4>
-            <p className="text-xs text-stone-300 mt-2 max-w-[250px] leading-relaxed">
-              {hasMarketAccess
-                ? 'The D.U.M.P. cabinet, executive upgrades, tariffs, and Cayman paperwork are waiting on the motorcade.'
-                : 'The market terminal and its accompanying subpoenas are waiting behind the next customs seal.'}
-            </p>
-            <div
-              className="w-full max-w-[280px] mt-5"
-              role="progressbar"
-              aria-label={hasMarketAccess ? 'Oval Office treasury progress' : 'BagHolder Pro treasury progress'}
-              aria-valuemin={0}
-              aria-valuemax={milestoneTarget}
-              aria-valuenow={Math.min(treasuryCash, milestoneTarget)}
-            >
-              <div className="h-2.5 overflow-hidden rounded-full border border-stone-700 bg-stone-900">
+      <div className="flex-1 min-h-0 p-2.5 overflow-hidden flex flex-col relative">
+        {/* REDESIGN: [The Empty Cabinet Problem]
+            The right wing used to render a suitcase icon and a lock message for
+            a new player's entire first session — roughly a third of the cockpit,
+            dead. It now shows the Situation Room: the tutorial directive, live
+            career objectives, and the shareable certificate button. The heavy
+            sealed-cabinet treatment is retained only for the gap between having
+            market access and reaching Phase 2, where it now frames real content
+            instead of replacing it. */}
+        {isLocked ? (
+          <>
+            {hasMarketAccess ? (
+              <SituationRoom />
+            ) : (
+              <div className="flex-1 min-h-0 flex flex-col items-center justify-center p-5 text-center">
+                <Briefcase className="w-7 h-7 text-amber-500 mb-3" />
+                <span className="t-micro font-bold tracking-widest text-stone-500 uppercase">
+                  Phase 1 // Customs Authorization
+                </span>
+                <h4 className="mt-2 font-black text-amber-300 tracking-wider t-read font-mono">
+                  BAGHOLDER PRO // FIRST SLAM
+                </h4>
+                <p className="t-body text-stone-400 mt-2 max-w-[250px] leading-relaxed">
+                  Slam the customs stamp once and the market terminal unseals. The
+                  causal shorting loop is playable from your very first tap.
+                </p>
                 <div
-                  className="h-full bg-gradient-to-r from-amber-600 to-emerald-400 transition-[width] duration-300"
-                  style={{ width: `${milestoneProgress}%` }}
-                />
+                  className="w-full max-w-[280px] mt-5"
+                  role="progressbar"
+                  aria-label="Progress to your first stamp slam"
+                  aria-valuemin={0}
+                  aria-valuemax={1}
+                  aria-valuenow={totalClicks > 0 ? 1 : 0}
+                >
+                  <div className="h-2.5 overflow-hidden rounded-full border border-stone-700 bg-stone-900">
+                    <div
+                      className="h-full bg-gradient-to-r from-amber-600 to-emerald-400 transition-[width] duration-300"
+                      style={{ width: totalClicks > 0 ? '100%' : '0%' }}
+                    />
+                  </div>
+                  <div className="mt-1.5 flex justify-between t-micro font-mono text-stone-300">
+                    <span>{totalClicks > 0 ? 'TERMINAL UNSEALED' : 'AWAITING FIRST SLAM'}</span>
+                    <span>{formatCurrency(treasuryCash)}</span>
+                  </div>
+                </div>
               </div>
-              <div className="mt-1.5 flex justify-between font-mono text-[10px] text-stone-300">
-                <span>{formatCurrency(treasuryCash)}</span>
-                <span>{formatCurrency(milestoneTarget)}</span>
-              </div>
-            </div>
-            {hasMarketAccess && (
-              <p className="mt-4 border-t border-stone-800 pt-3 text-[10px] text-stone-400">
-                First liquidation: $50,000 treasury + 25 Crony Favor.
-              </p>
             )}
-          </div>
+          </>
+        ) : (
+          <>
+            {activeRightTab === 'dump' && <DumpAgenciesTab />}
+            {activeRightTab === 'unlocks' && <CronyUnlocksTab />}
+            {activeRightTab === 'tariffs' && <BilateralTariffsTab />}
+            {activeRightTab === 'caymans' && <CaymansPrestigeTab />}
+          </>
         )}
       </div>
 
       {/* Bottom Panel Status Indicator */}
-      <div className="bg-stone-950 border-t border-stone-800 px-3 py-1.5 flex justify-between items-center text-[10px] font-mono text-stone-500 shrink-0">
+      <div className="bg-stone-950 border-t border-stone-800 px-3 py-1.5 flex justify-between items-center t-micro font-mono text-stone-500 shrink-0">
         <div className="flex items-center gap-1.5">
           <Briefcase className="w-3 h-3 text-amber-400" />
           <span>CABINET GOVERNANCE</span>

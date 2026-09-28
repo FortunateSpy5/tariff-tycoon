@@ -11,6 +11,10 @@ import {
   PRESTIGE_OPTIONS_DIVISOR,
   PRESTIGE_OPTIONS_EXPONENT,
   PRESTIGE_OPTIONS_WEIGHT,
+  INK_REFILL_COST_CAP,
+  INK_REFILL_COST_GROWTH,
+  DRY_CLICK_JAM_YIELD_MULTIPLIER,
+  DRY_CLICK_YIELD_MULTIPLIER,
 } from '../../constants/balance';
 
 /**
@@ -51,8 +55,11 @@ export function calculateClickValue(
     return Math.max(cashFloor, baseValue * phaseMultiplier * 10.0 * sisMultiplier);
   }
 
-  // Dry clicks retain 10% yield (2% when jammed), while the bankruptcy floor remains guaranteed.
-  const inkMultiplier = inkLevel <= 0 ? (isJammed ? 0.02 : 0.1) : 1.0;
+  // Dry clicks retain a token yield (2% when jammed) so the player is never
+  // soft-locked, but they build no tantrum — see DRY_TANTRUM_PER_CLICK = 0.
+  // INVARIANT: [Ink Fuels Frenzy] a dry nib is a safety net, never the optimum.
+  const inkMultiplier =
+    inkLevel <= 0 ? (isJammed ? DRY_CLICK_JAM_YIELD_MULTIPLIER : DRY_CLICK_YIELD_MULTIPLIER) : 1.0;
   const calculatedYield = baseValue * phaseMultiplier * inkMultiplier * sisMultiplier;
 
   return Math.max(cashFloor, calculatedYield);
@@ -66,8 +73,8 @@ export function calculateClickValue(
  * Capped to avoid negative-ROI traps where refills exceed a full ink tank's output.
  */
 export function calculateInkRefillCost(refillCount: number, baseCost: number = 25): number {
-  const exponentialCost = Math.floor(baseCost * Math.pow(1.15, refillCount));
-  return Math.min(exponentialCost, 25000);
+  const exponentialCost = Math.floor(baseCost * Math.pow(INK_REFILL_COST_GROWTH, refillCount));
+  return Math.min(exponentialCost, INK_REFILL_COST_CAP);
 }
 
 /**

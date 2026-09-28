@@ -8,6 +8,7 @@ import type { GameStore } from '../useGameStore';
 import { calculatePrestigeSIS } from '../../engine/math/formulas';
 import { INITIAL_AGENCIES } from '../../constants/agencies';
 import { INITIAL_STOCKS } from '../../constants/stocks';
+import { TUTORIAL_CHAIN } from '../../constants/onboarding';
 import { sound } from '../../audio/soundEngine';
 
 export interface PrestigeSlice extends PrestigeState {
@@ -51,6 +52,12 @@ export const createPrestigeSlice: StateCreator<GameStore, [], [], PrestigeSlice>
       tariffRevenuePerSecond: 0,
       phase: 1,
       hasMarketAccess: false,
+      // A player who has prestiged has demonstrably learned the loop. Resetting
+      // them to the onboarding chain would be a downgrade in respect for their
+      // time, so the tutorial is marked complete instead of replayed.
+      tutorialStepIndex: TUTORIAL_CHAIN.length,
+      paperTradesRemaining: 0,
+      paperTradesWon: 0,
       hasRadarAccess: false,
       hasPolyGriftAccess: false,
       hasCronyUnlocksAccess: false,
@@ -67,6 +74,7 @@ export const createPrestigeSlice: StateCreator<GameStore, [], [], PrestigeSlice>
       activeUpgrades: [],
       slopSuspicion: 0,
       cronyFavor: 30,
+      cronyFavorRemainder: 0,
       vexVolatility: 15.0,
       tariffRates: {
         north_annex: 125,

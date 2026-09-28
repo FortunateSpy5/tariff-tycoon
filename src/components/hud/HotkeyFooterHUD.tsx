@@ -30,7 +30,7 @@ export const HotkeyFooterHUD: React.FC = () => {
   };
 
   return (
-    <footer className="h-9 w-full bg-stone-950 border-t border-stone-800 px-3 flex items-center justify-between font-mono text-[10px] text-stone-400 select-none shrink-0 z-30">
+    <footer className="h-9 w-full bg-stone-950 border-t border-stone-800 px-3 flex items-center justify-between font-mono t-micro text-stone-400 select-none shrink-0 z-30">
       
       {/* Left Hotkey Guides */}
       <div className="flex items-center gap-3 overflow-x-hidden whitespace-nowrap">
@@ -77,7 +77,7 @@ export const HotkeyFooterHUD: React.FC = () => {
           <Maximize2 className="w-3.5 h-3.5" />
         </button>
 
-        <span className="text-[9px] text-stone-600 hidden md:inline">
+        <span className="t-caption text-stone-600 hidden md:inline">
           100% TRANSFORMATIVE SATIRE
         </span>
       </div>

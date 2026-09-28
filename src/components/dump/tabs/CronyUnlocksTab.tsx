@@ -31,9 +31,9 @@ export const CronyUnlocksTab: React.FC = () => {
   };
 
   return (
-    <div className="space-y-2 flex-1 flex flex-col justify-between select-none">
-      <div>
-        <div className="flex items-center justify-between text-[10px] font-mono text-stone-400 border-b border-stone-800 pb-1.5 mb-2">
+    <div className="h-full min-h-0 flex flex-col gap-2 select-none">
+      <div className="shrink-0">
+        <div className="flex items-center justify-between t-micro font-mono text-stone-500 border-b border-stone-800 pb-1.5">
           <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
             <Award className="w-3.5 h-3.5" />
             <span>OLIGARCH LOBBYING UPGRADES</span>
@@ -42,14 +42,15 @@ export const CronyUnlocksTab: React.FC = () => {
         </div>
 
         {!hasTariffAccess && (
-          <p className="mb-2 border-l-2 border-amber-500/70 bg-amber-950/20 px-2 py-1 text-[10px] text-stone-300">
+          <p className="mt-2 border-l-2 border-amber-500/70 bg-amber-950/20 px-2 py-1 t-micro text-stone-400">
             Your first purchase gets you a seat at the tariff dials.
           </p>
         )}
+      </div>
 
-        {/* Upgrades List */}
-        <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-0.5">
-          {INITIAL_CRONY_UPGRADES.map((upg) => {
+      {/* Upgrades List — flexes to fill remaining vertical space */}
+      <div className="flex-1 min-h-0 space-y-2 overflow-y-auto custom-scrollbar pr-0.5">
+        {INITIAL_CRONY_UPGRADES.map((upg) => {
             const isOwned = activeUpgrades.includes(upg.id);
             const canAfford = treasuryCash >= upg.cost;
 
@@ -68,14 +69,14 @@ export const CronyUnlocksTab: React.FC = () => {
                       <span>{upg.name}</span>
                       <Sparkles className="w-2.5 h-2.5 text-amber-400" />
                     </div>
-                    <p className="text-[9px] text-stone-400 font-mono mt-0.5 leading-snug">
+                    <p className="t-caption text-stone-400 font-mono mt-0.5 leading-snug">
                       {upg.description}
                     </p>
                   </div>
 
                   <div className="shrink-0 text-right">
                     {isOwned ? (
-                      <span className="px-2 py-0.5 rounded bg-emerald-950/60 border border-emerald-800/60 text-emerald-400 font-mono text-[9px] font-bold flex items-center gap-1">
+                      <span className="px-2 py-0.5 rounded bg-emerald-950/60 border border-emerald-800/60 text-emerald-400 font-mono t-caption font-bold flex items-center gap-1">
                         <Check className="w-2.5 h-2.5" />
                         ACQUIRED
                       </span>
@@ -83,7 +84,7 @@ export const CronyUnlocksTab: React.FC = () => {
                       <button
                         onClick={() => handleBuy(upg.id, upg.name, upg.cost)}
                         disabled={!canAfford}
-                        className={`px-2.5 py-1 rounded font-mono text-[10px] font-bold transition-all ${
+                        className={`px-2.5 py-1 rounded font-mono t-micro font-bold transition-all ${
                           canAfford
                             ? 'bg-emerald-600 hover:bg-emerald-500 text-stone-950 active:scale-95 shadow cursor-pointer font-black'
                             : 'bg-stone-800 text-stone-500 cursor-not-allowed'
@@ -97,11 +98,10 @@ export const CronyUnlocksTab: React.FC = () => {
               </div>
             );
           })}
-        </div>
       </div>
 
       {feedback && (
-        <div className="p-1.5 rounded bg-stone-950 border border-emerald-500/40 text-center font-mono text-[10px] font-bold text-emerald-300 animate-pulse mt-auto">
+        <div className="shrink-0 p-1.5 rounded bg-stone-950 border border-emerald-500/40 text-center font-mono t-micro font-bold text-emerald-300 animate-pulse">
           {feedback}
         </div>
       )}

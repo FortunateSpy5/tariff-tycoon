@@ -35,18 +35,176 @@
   }
 }
 
+/* ===================================================================
+   DESIGN DIRECTION: [Newsprint & Classified Documents]
+   The satire is a stack of government paperwork. So the UI is built
+   from three material layers rather than a flat dark dashboard:
+     1. NEWSPRINT  — aged paper surfaces, warm off-white, ink-on-paper
+     2. CLASSIFIED — redaction bars, wax seals, stamp bleed
+     3. TERMINAL   — phosphor green BagHolder Pro, monospace telemetry
+   =================================================================== */
+@theme {
+  /* -- Newsprint / paper ------------------------------------------------ */
+  --color-newsprint-50: #f6f1e3;
+  --color-newsprint-100: #ece4d0;
+  --color-newsprint-200: #ddd2b8;
+  --color-newsprint-300: #c4b696;
+  --color-newsprint-800: #4a4133;
+  --color-newsprint-900: #332c22;
+  --color-newsprint-950: #211c15;
+
+  /* -- Classified redaction / stamps ------------------------------------- */
+  --color-redaction-500: #0f0f0f;
+  --color-redaction-700: #050505;
+  --color-wax-500: #9f1239;
+  --color-wax-600: #881337;
+  --color-stampblue-500: #1d4ed8;
+  --color-stampblue-700: #1e3a8a;
+
+  /* -- Terminal phosphor ------------------------------------------------ */
+  --color-phosphor-300: #86efac;
+  --color-phosphor-400: #4ade80;
+  --color-phosphor-500: #22c55e;
+  --color-phosphor-600: #16a34a;
+  --color-phosphor-900: #052e16;
+
+  /* -- Dealmaker gold (the golden Sharpie) ------------------------------ */
+  --color-gold-300: #fcd34d;
+  --color-gold-400: #fbbf24;
+  --color-gold-500: #f59e0b;
+  --color-gold-600: #d97706;
+  --color-gold-900: #78350f;
+}
+
 @layer utilities {
-  .text-stone-500,
+  /* INVARIANT: the app relies on a real 3-step dim hierarchy for visual grouping.
+     These MUST stay distinct — forcing stone-500 and stone-600 to the same value
+     flattens every panel into one undifferentiated grey and reads as visual noise. */
+  .text-stone-500 {
+    color: #78716c; /* muted metadata — ~4.7:1 on stone-950 */
+  }
   .text-stone-600 {
-    color: #a8a29e;
+    color: #57534e; /* de-emphasized / decorative only */
   }
 
-  [class*="text-[9px]"] {
-    font-size: calc(10px / var(--viewport-scale, 1));
+  /* =================================================================
+     TYPE SCALE — the single source of truth for type size.
+     Seven named tiers, sized against the viewport scale so the whole
+     cockpit scales as one unit on sub-1080p laptops.
+
+     INVARIANT: these tiers are the ONLY way to set font size on
+     player-facing UI. Arbitrary values (`text-[9px]`) are banned: they
+     were previously rescued by a `[class*="text-[9px]"]` substring
+     selector in this file, which has been REMOVED. That hack silently
+     rewrote any arbitrary size it matched, so arbitrary values now
+     render at their literal (often illegible) size and no longer scale.
+     Only `src/components/debug/DebugPanel.tsx` still uses them, which is
+     acceptable: it is DEV-only and tree-shaken from production bundles.
+     ================================================================= */
+  .t-caption {
+    font-size: calc(9.5px / var(--viewport-scale, 1));
+    line-height: 1.35;
+  }
+  .t-micro {
+    font-size: calc(10.5px / var(--viewport-scale, 1));
+    line-height: 1.35;
+  }
+  .t-label {
+    font-size: calc(12px / var(--viewport-scale, 1));
+    line-height: 1.3;
+  }
+  .t-body {
+    font-size: calc(14px / var(--viewport-scale, 1));
+    line-height: 1.45;
+  }
+  .t-read {
+    font-size: calc(16px / var(--viewport-scale, 1));
+    line-height: 1.5;
+  }
+  .t-headline {
+    font-size: calc(20px / var(--viewport-scale, 1));
+    line-height: 1.2;
+  }
+  .t-brutal {
+    font-size: calc(28px / var(--viewport-scale, 1));
+    line-height: 1.05;
   }
 
-  [class*="text-[10px]"] {
-    font-size: calc(11px / var(--viewport-scale, 1));
+  /* =================================================================
+     MATERIAL SURFACES
+     ================================================================= */
+
+  /* Aged paper — for documents, certificates, objectives cards. */
+  .surface-newsprint {
+    background-color: var(--color-newsprint-100);
+    background-image:
+      radial-gradient(circle at 18% 12%, rgba(160, 130, 80, 0.13), transparent 45%),
+      radial-gradient(circle at 84% 78%, rgba(120, 95, 55, 0.16), transparent 50%),
+      repeating-linear-gradient(
+        0deg,
+        rgba(90, 70, 40, 0.035) 0px,
+        rgba(90, 70, 40, 0.035) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+    color: var(--color-newsprint-900);
+  }
+
+  /* Classified document header — black bar with a stamped serial. */
+  .surface-classified {
+    background-color: var(--color-redaction-700);
+    background-image: repeating-linear-gradient(
+      45deg,
+      rgba(255, 255, 255, 0.05) 0px,
+      rgba(255, 255, 255, 0.05) 2px,
+      transparent 2px,
+      transparent 6px
+    );
+  }
+
+  /* Phosphor terminal screen — BagHolder Pro, telemetry, S.L.O.P. Radar. */
+  .surface-terminal {
+    background-color: #04140a;
+    background-image:
+      radial-gradient(ellipse at 50% 0%, rgba(34, 197, 94, 0.14), transparent 70%),
+      repeating-linear-gradient(
+        0deg,
+        rgba(0, 0, 0, 0.32) 0px,
+        rgba(0, 0, 0, 0.32) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+    color: var(--color-phosphor-300);
+  }
+
+  /* Faint CRT bloom without a filter (filters kill perf on the hot path). */
+  .text-glow-phosphor {
+    text-shadow:
+      0 0 calc(4px / var(--viewport-scale, 1)) rgba(74, 222, 128, 0.75),
+      0 0 calc(12px / var(--viewport-scale, 1)) rgba(34, 197, 94, 0.35);
+  }
+
+  .text-glow-gold {
+    text-shadow: 0 0 calc(10px / var(--viewport-scale, 1)) rgba(251, 191, 36, 0.55);
+  }
+
+  /* Redaction bar — the classified-doc gag. Reusable decoration. */
+  .redaction-bar {
+    background-color: var(--color-redaction-500);
+    color: transparent;
+    user-select: none;
+  }
+
+  /* The pressed-stamp look: slightly rotated, hard shadow, no gradient. */
+  .stamp-face {
+    box-shadow:
+      0 calc(6px / var(--viewport-scale, 1)) calc(14px / var(--viewport-scale, 1)) rgba(0, 0, 0, 0.65),
+      inset 0 0 0 calc(2px / var(--viewport-scale, 1)) rgba(0, 0, 0, 0.35);
+  }
+
+  /* Hairline divider that reads as a printed rule, not a UI border. */
+  .rule-print {
+    border-bottom: 1px solid rgba(90, 70, 40, 0.28);
   }
 }
 
@@ -78,6 +236,25 @@
   100% { transform: translate3d(0, 0, 0); }
 }
 
+/* INVARIANT: recoil is a ONE-SHOT impact, not a loop.
+   The old `0.12s infinite` never came to rest, so a high-tantrum player
+   watched the stamp vibrate permanently — visual noise that cheapened the
+   actual impact moment. Impact frames now decay to stillness, and the class
+   is re-triggered per click by bumping `animation-name` in ClickerButton. */
+@keyframes stamp-slam {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  18%  { transform: translate3d(0, calc(14px / var(--viewport-scale, 1)), 0) scale(1.16); }
+  38%  { transform: translate3d(0, calc(-5px / var(--viewport-scale, 1)), 0) scale(0.965); }
+  58%  { transform: translate3d(0, calc(2px / var(--viewport-scale, 1)), 0) scale(1.02); }
+  78%  { transform: translate3d(0, calc(-1px / var(--viewport-scale, 1)), 0) scale(0.995); }
+  100% { transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes stamp-slam-lift {
+  0%   { transform: translate3d(0, calc(22px / var(--viewport-scale, 1)), 0) rotate(-9deg); }
+  100% { transform: translate3d(0, 0, 0) rotate(-3deg); }
+}
+
 @keyframes ring-shake {
   0%, 100% { transform: rotate(0deg); }
   20%, 60% { transform: rotate(-10deg); }
@@ -95,7 +272,44 @@
 }
 
 .animate-recoil {
-  animation: tactical-recoil 0.12s ease-in-out infinite;
+  /* BUGFIX: was `0.12s infinite` — the stamp never stopped shaking.
+     Now a single 0.12s impact burst that returns to rest. */
+  animation: tactical-recoil 0.12s ease-in-out 1;
+}
+
+.animate-stamp-slam {
+  animation: stamp-slam 0.26s cubic-bezier(0.3, 0.9, 0.4, 1) 1;
+}
+
+/* Identical keyframes under a second name. ClickerButton alternates between the
+   two on every slam: when the animation *name* changes, CSS restarts the
+   animation, which is how a one-shot impact is retriggered without a key. */
+.animate-stamp-slam-alt {
+  animation: stamp-slam 0.26s cubic-bezier(0.3, 0.9, 0.4, 1) 1;
+}
+
+.animate-stamp-lift {
+  animation: stamp-slam-lift 0.18s cubic-bezier(0.2, 0.8, 0.3, 1) 1;
+}
+
+/* Ink splatter particle: expands and dies. One-shot. */
+@keyframes ink-bloom {
+  0% {
+    opacity: 0.85;
+    transform: translate(-50%, -50%) scale(0.2);
+  }
+  70% {
+    opacity: 0.5;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(1.5);
+  }
+}
+
+.animate-ink-bloom {
+  animation: ink-bloom 0.5s ease-out forwards;
 }
 
 .animate-ring {

@@ -28,17 +28,17 @@ export const GoldBoxProp: React.FC = () => {
         <Archive className="w-4 h-4" />
       </div>
       <div>
-        <div className="flex items-center gap-1 font-mono font-bold text-[10px] text-amber-400 group-hover:text-amber-300">
+        <div className="flex items-center gap-1 font-mono font-bold t-micro text-amber-400 group-hover:text-amber-300">
           <span>GOLD BOX</span>
           <Sparkles className="w-2.5 h-2.5 text-amber-300" />
         </div>
-        <span className="text-[9px] text-stone-500 font-mono block">
+        <span className="t-caption text-stone-500 font-mono block">
           Sell Secrets (+$500)
         </span>
       </div>
 
       {feedback && (
-        <div className="absolute inset-0 bg-stone-950/95 flex items-center justify-center text-[10px] font-mono font-bold text-emerald-400 px-1 text-center">
+        <div className="absolute inset-0 bg-stone-950/95 flex items-center justify-center t-micro font-mono font-bold text-emerald-400 px-1 text-center">
           {feedback}
         </div>
       )}

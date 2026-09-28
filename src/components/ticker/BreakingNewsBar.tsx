@@ -43,7 +43,7 @@ export const BreakingNewsBar: React.FC = () => {
         <span className="font-black text-xs sm:text-sm tracking-wider text-amber-500 uppercase font-mono">
           Executive Degen
         </span>
-        <span className={`text-[10px] px-1.5 py-0.5 rounded font-mono border font-semibold ${
+        <span className={`t-micro px-1.5 py-0.5 rounded font-mono border font-semibold ${
           isCapsFrenzy 
             ? 'bg-red-950 text-red-300 border-red-600 animate-pulse' 
             : 'bg-stone-800 text-stone-400 border-stone-700'
@@ -101,7 +101,7 @@ export const BreakingNewsBar: React.FC = () => {
           <div className="text-xs sm:text-sm font-black text-emerald-400 flex items-baseline justify-end gap-1">
             <span>{formatCurrency(treasuryCash)}</span>
             {passiveCashPerSecond > 0 && (
-              <span className="text-[10px] text-emerald-500/80 font-normal">
+              <span className="t-micro text-emerald-500/80 font-normal">
                 +{formatCurrency(passiveCashPerSecond)}/s
               </span>
             )}
@@ -111,7 +111,7 @@ export const BreakingNewsBar: React.FC = () => {
         {/* Crony Favor */}
         <div className="text-right hidden sm:block">
           <span className="text-xs font-bold text-amber-400 flex items-center gap-1" title="Crony Favor">
-            🤝 {cronyFavor}
+            🤝 {Math.floor(cronyFavor)}
           </span>
         </div>
 

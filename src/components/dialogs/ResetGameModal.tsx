@@ -36,7 +36,7 @@ export const ResetGameModal: React.FC<ResetGameModalProps> = ({ isOpen, onClose 
               <h2 className="font-mono font-black text-sm text-red-100 tracking-wider uppercase">
                 Chapter 7 Insolvency
               </h2>
-              <span className="font-mono text-[10px] text-red-300 block">
+              <span className="font-mono t-micro text-red-300 block">
                 Total Economic Erasure // Hard Reset
               </span>
             </div>
@@ -60,24 +60,24 @@ export const ResetGameModal: React.FC<ResetGameModalProps> = ({ isOpen, onClose 
 
           {/* Incineration Preview */}
           <div className="bg-stone-900/90 border border-stone-800 rounded-lg p-3 space-y-1.5 font-mono text-xs">
-            <span className="text-[10px] text-stone-400 font-bold block uppercase tracking-wider">
+            <span className="t-micro text-stone-400 font-bold block uppercase tracking-wider">
               Assets Marked for Destruction:
             </span>
             <div className="grid grid-cols-2 gap-2 pt-1 text-[11px]">
               <div className="bg-stone-950 p-2 rounded border border-stone-800/80">
-                <span className="text-stone-500 block text-[9px]">CURRENT STAGE</span>
+                <span className="text-stone-500 block t-caption">CURRENT STAGE</span>
                 <span className="text-amber-400 font-bold">Phase {phase}</span>
               </div>
               <div className="bg-stone-950 p-2 rounded border border-stone-800/80">
-                <span className="text-stone-500 block text-[9px]">TREASURY CASH</span>
+                <span className="text-stone-500 block t-caption">TREASURY CASH</span>
                 <span className="text-emerald-400 font-bold">{formatCurrency(treasuryCash)}</span>
               </div>
               <div className="bg-stone-950 p-2 rounded border border-stone-800/80">
-                <span className="text-stone-500 block text-[9px]">LIFETIME CLICKS</span>
+                <span className="text-stone-500 block t-caption">LIFETIME CLICKS</span>
                 <span className="text-stone-300 font-bold">{totalClicks.toLocaleString()}</span>
               </div>
               <div className="bg-stone-950 p-2 rounded border border-stone-800/80">
-                <span className="text-stone-500 block text-[9px]">SOVEREIGN SLIPS</span>
+                <span className="text-stone-500 block t-caption">SOVEREIGN SLIPS</span>
                 <span className="text-indigo-400 font-bold">{sovereignImmunitySlips || 0} 📜</span>
               </div>
             </div>

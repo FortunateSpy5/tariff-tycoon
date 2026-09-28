@@ -23,9 +23,9 @@ export const BilateralTariffsTab: React.FC = () => {
   };
 
   return (
-    <div className="space-y-2 flex-1 flex flex-col justify-between select-none">
-      <div>
-        <div className="flex items-center justify-between text-[10px] font-mono text-stone-400 border-b border-stone-800 pb-1.5 mb-2">
+    <div className="h-full min-h-0 flex flex-col gap-2 select-none">
+      <div className="shrink-0">
+        <div className="flex items-center justify-between t-micro font-mono text-stone-500 border-b border-stone-800 pb-1.5">
           <div className="flex items-center gap-1.5 text-red-400 font-bold">
             <Globe className="w-3.5 h-3.5" />
             <span>BILATERAL TARIFF DIALS</span>
@@ -37,14 +37,15 @@ export const BilateralTariffsTab: React.FC = () => {
         </div>
 
         {!hasPrestigeAccess && (
-          <p className="mb-2 border-l-2 border-amber-500/70 bg-amber-950/20 px-2 py-1 text-[10px] text-stone-300">
+          <p className="mt-2 border-l-2 border-amber-500/70 bg-amber-950/20 px-2 py-1 t-micro text-stone-400">
             Change a dial to qualify for the Cayman reorganization.
           </p>
         )}
+      </div>
 
-        {/* Nations List */}
-        <div className="space-y-2 max-h-[300px] overflow-y-auto custom-scrollbar pr-0.5">
-          {PARODY_NATIONS.map((nation) => {
+      {/* Nations List — flexes to fill remaining vertical space */}
+      <div className="flex-1 min-h-0 space-y-2 overflow-y-auto custom-scrollbar pr-0.5">
+        {PARODY_NATIONS.map((nation) => {
             const currentRate = tariffRates[nation.id] ?? nation.defaultTariffRate;
             const cableText = getBeggingCable(nation, currentRate);
 
@@ -60,14 +61,14 @@ export const BilateralTariffsTab: React.FC = () => {
                     <span className="font-bold text-stone-200 text-xs block">
                       {nation.name}
                     </span>
-                    <span className="text-[9px] text-stone-500 font-mono block">
+                    <span className="t-caption text-stone-500 font-mono block">
                       Chief Exports: {nation.chiefExports.join(', ')}
                     </span>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[9px] text-emerald-400 font-mono font-semibold">
+                      <span className="t-caption text-emerald-400 font-mono font-semibold">
                         Duty: +${nationIncome.toFixed(1)}/s
                       </span>
-                      <span className="text-[9px] text-red-400 font-mono flex items-center gap-0.5">
+                      <span className="t-caption text-red-400 font-mono flex items-center gap-0.5">
                         <TrendingDown className="w-2.5 h-2.5" />
                         Depresses: {nation.linkedStocks.map((s) => `$${s}`).join(', ')}
                       </span>
@@ -82,21 +83,21 @@ export const BilateralTariffsTab: React.FC = () => {
                         {currentRate}%
                       </span>
                       {isPunitive && (
-                        <span className="text-[8px] text-amber-500 font-mono block">+Trade Heat</span>
+                        <span className="t-caption text-amber-500 font-mono block">+Trade Heat</span>
                       )}
                     </div>
                     <div className="flex flex-col gap-0.5">
                       <button
                         onClick={() => handleAdjustTariff(nation.id, 25)}
                         title="Increase tariff by +25%"
-                        className="px-1.5 py-0.5 bg-red-950/80 hover:bg-red-900 border border-red-800 text-red-300 font-mono text-[9px] font-bold rounded cursor-pointer active:scale-95"
+                        className="px-1.5 py-0.5 bg-red-950/80 hover:bg-red-900 border border-red-800 text-red-300 font-mono t-caption font-bold rounded cursor-pointer active:scale-95"
                       >
                         +25%
                       </button>
                       <button
                         onClick={() => handleAdjustTariff(nation.id, -25)}
                         title="Lower tariff by -25%"
-                        className="px-1.5 py-0.5 bg-stone-900 hover:bg-stone-800 border border-stone-700 text-stone-300 font-mono text-[9px] font-bold rounded cursor-pointer active:scale-95"
+                        className="px-1.5 py-0.5 bg-stone-900 hover:bg-stone-800 border border-stone-700 text-stone-300 font-mono t-caption font-bold rounded cursor-pointer active:scale-95"
                       >
                         -25%
                       </button>
@@ -105,17 +106,16 @@ export const BilateralTariffsTab: React.FC = () => {
                 </div>
 
                 {/* Diplomatic Begging Cable */}
-                <div className="bg-stone-900/60 rounded p-1.5 border border-stone-800/80 text-[9px] font-sans italic text-stone-400 flex items-start gap-1.5">
+                <div className="bg-stone-900/60 rounded p-1.5 border border-stone-800/80 t-caption font-sans italic text-stone-400 flex items-start gap-1.5">
                   <MessageSquareQuote className="w-3 h-3 text-amber-500 shrink-0 mt-0.5" />
                   <span>"{cableText}"</span>
                 </div>
               </div>
             );
           })}
-        </div>
       </div>
 
-      <div className="p-2 bg-stone-950/80 border border-stone-800 rounded text-[9px] text-stone-500 italic mt-auto">
+      <div className="shrink-0 p-2 bg-stone-950/80 border border-stone-800 rounded t-micro text-stone-500 italic">
         "Tariffs produce continuous Treasury duties while depressing foreign stock valuations. Tariffs above 250% risk trade war blowback and Heat accumulation."
       </div>
     </div>

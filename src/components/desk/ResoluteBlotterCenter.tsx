@@ -41,6 +41,8 @@ export const ResoluteBlotterCenter: React.FC = () => {
   const inkLevel = useGameStore((s) => s.inkLevel);
   const lastRaidMessage = useGameStore((s) => s.lastRaidMessage);
   const dismissRaidAlert = useGameStore((s) => s.dismissRaidAlert);
+  const lastCrisisOutcome = useGameStore((s) => s.lastCrisisOutcome);
+  const dismissCrisisOutcome = useGameStore((s) => s.dismissCrisisOutcome);
 
   const [printFeedback, setPrintFeedback] = useState<string | null>(null);
   const [yapFeedback, setYapFeedback] = useState<string | null>(null);
@@ -104,11 +106,11 @@ export const ResoluteBlotterCenter: React.FC = () => {
   );
 
   return (
-    <div className="h-full flex flex-col justify-between bg-gradient-to-b from-stone-900 via-stone-900/95 to-amber-950/20 border border-amber-900/40 rounded-xl p-3 shadow-2xl relative overflow-hidden select-none">
+    <div className="h-full min-h-0 flex flex-col gap-2 bg-gradient-to-b from-stone-900 via-stone-900/95 to-amber-950/20 border border-amber-900/40 rounded-xl p-3 shadow-2xl relative overflow-hidden select-none">
       
       {/* Special Counsel Raid / Asset Seizure Alert Banner */}
       {lastRaidMessage && (
-        <div className="bg-red-950/95 border border-red-500 rounded-lg p-2 text-[10px] font-mono font-bold text-red-200 flex items-center justify-between shadow-xl animate-pulse mb-1.5 shrink-0 z-20">
+        <div className="bg-red-950/95 border border-red-500 rounded-lg p-2 t-micro font-mono font-bold text-red-200 flex items-center justify-between shadow-xl animate-pulse shrink-0 z-20">
           <div className="flex items-center gap-1.5">
             <ShieldAlert className="w-4 h-4 text-red-400 shrink-0" />
             <span>{lastRaidMessage}</span>
@@ -123,20 +125,25 @@ export const ResoluteBlotterCenter: React.FC = () => {
         </div>
       )}
 
-      {/* Top Interactive Prop Tray */}
-      <div className="grid grid-cols-3 gap-2 shrink-0">
-        <RedPhoneProp />
+      {/* Interactive Prop Tray
+          The Crisis Call owns a full-width row because it is the primary
+          Phase 1 mechanic and expands substantially while a crisis is ringing.
+          Gold Box and Shredder share the second row. */}
+      <div className="grid grid-cols-2 gap-2 shrink-0">
+        <div className="col-span-2">
+          <RedPhoneProp />
+        </div>
         <GoldBoxProp />
         <SubpoenaShredderProp />
       </div>
 
       {/* Parchment Directive / Seizure Log */}
       <div
-        className={`bg-amber-50/5 border border-amber-500/20 rounded-lg p-2.5 text-center shadow-inner my-1.5 transition-all duration-100 relative ${
+        className={`bg-amber-50/5 border border-amber-500/20 rounded-lg p-2.5 text-center shadow-inner shrink-0 transition-all duration-100 relative ${
           isRecoilActive ? 'animate-recoil' : ''
         } ${isPulseActive ? 'ring-2 ring-amber-400/80 animate-pulse' : ''}`}
       >
-        <div className="flex items-center justify-center gap-1.5 text-[10px] font-mono font-bold tracking-widest text-amber-400 uppercase">
+        <div className="flex items-center justify-center gap-1.5 t-micro font-mono font-bold tracking-widest text-amber-400 uppercase">
           <FileText className="w-3.5 h-3.5" />
           <span>
             {phase === 1
@@ -152,11 +159,11 @@ export const ResoluteBlotterCenter: React.FC = () => {
         </p>
 
         {lastYapPost && (
-          <div className="mt-1 flex items-center justify-center gap-2 text-[9px] font-mono text-amber-500/80">
+          <div className="mt-1 flex items-center justify-center gap-2 t-micro font-mono text-amber-500/80">
             <span>Tariff {lastYapPost.tariffPercentage}%</span>
-            <span className="text-stone-600">·</span>
+            <span className="text-stone-500">·</span>
             <span>Impact ×{lastYapPost.impactMultiplier.toFixed(2)}</span>
-            <span className="text-stone-600">·</span>
+            <span className="text-stone-500">·</span>
             <span>{lastYapPost.viralQuotesCount.toLocaleString()} viral quotes</span>
           </div>
         )}
@@ -169,13 +176,13 @@ export const ResoluteBlotterCenter: React.FC = () => {
       </div>
 
       {/* Center Tactile Stamp / Sherpie Clicker */}
-      <div className="flex-1 flex flex-col items-center justify-center my-auto py-1">
+      <div className="flex-1 min-h-0 flex flex-col items-center justify-center py-1">
         <ClickerButton />
       </div>
 
       {/* Broad Daylight Money Printer (When Unlocked) */}
       {hasMoneyPrinter && (
-        <div className="my-1 shrink-0 relative">
+        <div className="shrink-0 relative">
           <button
             onClick={handlePrintMoney}
             disabled={printerCooldownRemaining > 0}
@@ -186,7 +193,7 @@ export const ResoluteBlotterCenter: React.FC = () => {
             <span>{printerCooldownRemaining > 0 ? `COOLING DOWN (${printerCooldownRemaining}s)` : 'PRINT $BRRR (+$100k, +15% S.L.O.P.)'}</span>
           </button>
           {printFeedback && (
-            <div className="absolute inset-0 bg-stone-950/95 flex items-center justify-center font-mono text-[10px] font-bold text-emerald-400 rounded-lg">
+            <div className="absolute inset-0 bg-stone-950/95 flex items-center justify-center font-mono t-micro font-bold text-emerald-400 rounded-lg">
               {printFeedback}
             </div>
           )}
@@ -194,13 +201,32 @@ export const ResoluteBlotterCenter: React.FC = () => {
       )}
 
       {/* Ink Stamina & Tantrum Gauges */}
-      <div className="grid grid-cols-2 gap-2 my-1 shrink-0">
+      <div className="grid grid-cols-2 gap-2 shrink-0">
         <InkMeter />
         <TantrumMeter />
       </div>
 
+      {/* Crisis Call outcome notice */}
+      {lastCrisisOutcome && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="shrink-0 flex items-center gap-2 rounded border border-red-900/70 bg-red-950/70 px-2 py-1"
+        >
+          <span className="t-micro font-mono font-bold text-red-300 truncate">
+            {lastCrisisOutcome}
+          </span>
+          <button
+            onClick={dismissCrisisOutcome}
+            className="ml-auto shrink-0 text-stone-400 hover:text-stone-100 t-micro font-mono px-1"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* Command Actions: Target Mode Toggle, 3:00 AM Lethal YAP & 8s Walk-Back */}
-      <div className="mt-1 flex shrink-0 flex-col gap-1">
+      <div className="flex shrink-0 flex-col gap-1.5">
         <div className="flex items-center gap-1.5">
         {!hasMarketAccess ? (
           <div className="flex-1 py-2 bg-stone-950/80 border border-stone-800 text-stone-500 font-mono text-center text-xs rounded-lg uppercase tracking-wider">
@@ -213,10 +239,10 @@ export const ResoluteBlotterCenter: React.FC = () => {
               role="status"
               aria-live="polite"
             >
-              <span className="block text-[10px] font-black text-amber-300">
+              <span className="block t-micro font-black text-amber-300">
                 CLARIFICATION WINDOW // {Math.ceil(walkBackSecondsRemaining)}s
               </span>
-              <span className="block text-[10px] leading-snug text-stone-200">
+              <span className="block t-micro leading-snug text-stone-200">
                 {hasWalkBackCall
                   ? `CALL ARMED ON $${lastTargetStockSymbol}. Return the market to the desk.`
                   : `Arm a matching $${lastTargetStockSymbol} CALL in the market terminal, then walk it back.`}
@@ -228,7 +254,7 @@ export const ResoluteBlotterCenter: React.FC = () => {
               title={hasWalkBackCall
                 ? 'Apply the recovery rally and settle the timed CALL [Hotkey: W]'
                 : `Arm a matching $${lastTargetStockSymbol} CALL before the window closes`}
-              className={`shrink-0 px-3 py-2 font-mono text-[10px] font-black uppercase transition-all ${
+              className={`shrink-0 px-3 py-2 font-mono t-micro font-black uppercase transition-all ${
                 hasWalkBackCall
                   ? 'animate-pulse bg-emerald-500 text-stone-950 hover:bg-emerald-400 cursor-pointer'
                   : 'bg-stone-800 text-stone-500 cursor-not-allowed'
@@ -244,7 +270,7 @@ export const ResoluteBlotterCenter: React.FC = () => {
             <button
               onClick={() => setYapTargetMode(yapTargetMode === 'selected' ? 'shotgun' : 'selected')}
               title="Toggle: Short the stock selected on BagHolder Pro vs Unhinged Random Shotgun"
-              className={`px-2.5 py-2 rounded-lg font-mono text-[10px] font-bold border flex items-center gap-1 cursor-pointer transition-all active:scale-95 shrink-0 ${
+              className={`px-2.5 py-2 rounded-lg font-mono t-micro font-bold border flex items-center gap-1 cursor-pointer transition-all active:scale-95 shrink-0 ${
                 yapTargetMode === 'selected'
                   ? 'bg-amber-950/80 border-amber-500/80 text-amber-300 hover:border-amber-400'
                   : 'bg-purple-950/80 border-purple-500/80 text-purple-300 hover:border-purple-400'
@@ -290,7 +316,7 @@ export const ResoluteBlotterCenter: React.FC = () => {
         </div>
 
         {lastWalkBackNotice && !isWalkBackWindowActive && (
-          <p className="w-full min-w-0 border border-emerald-900/60 bg-stone-950/90 px-2 py-1 text-center font-mono text-[9px] leading-snug text-emerald-300 break-words" role="status" aria-live="polite">
+          <p className="w-full min-w-0 border border-emerald-900/60 bg-stone-950/90 px-2 py-1 text-center font-mono t-caption leading-snug text-emerald-300 break-words" role="status" aria-live="polite">
             {lastWalkBackNotice}
           </p>
         )}

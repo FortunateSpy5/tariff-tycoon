@@ -55,7 +55,7 @@ export const TantrumMeter: React.FC = () => {
       </div>
 
       {/* Footer Info */}
-      <div className="flex items-center justify-between text-[10px] text-stone-500 mt-1.5">
+      <div className="flex items-center justify-between t-micro text-stone-500 mt-1.5">
         <span>{isCapsFrenzy ? '💥 10x CASH · INK REFILLED' : `Inked +${hasDietSodaDrip ? DIET_SODA_TANTRUM_PER_CLICK : INKED_TANTRUM_PER_CLICK}% · dry +${DRY_TANTRUM_PER_CLICK}%`}</span>
         <span>{isCapsFrenzy ? 'PURE DEGEN ENERGY' : 'Frenzy triggers at 100%'}</span>
       </div>

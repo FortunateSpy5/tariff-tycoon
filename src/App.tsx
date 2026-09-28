@@ -6,7 +6,7 @@
 
 import React from 'react';
 import { useGameLoop } from './hooks/useGameLoop';
-import { useGameHotkeys } from './hooks/useGameHotkeys';
+import { useGameHotkeys, useDebugOpen } from './hooks/useGameHotkeys';
 import { useDesktopViewport } from './hooks/useDesktopViewport';
 import { useGameStore } from './store/useGameStore';
 import { BreakingNewsBar } from './components/ticker/BreakingNewsBar';
@@ -14,12 +14,14 @@ import { TelemetryConsolePane } from './components/terminal/TelemetryConsolePane
 import { ResoluteBlotterCenter } from './components/desk/ResoluteBlotterCenter';
 import { ExecutiveExpansionPane } from './components/dump/ExecutiveExpansionPane';
 import { HotkeyFooterHUD } from './components/hud/HotkeyFooterHUD';
+import { DebugPanel } from './components/debug/DebugPanel';
 
 export const App: React.FC = () => {
   // Initialize real-time ticks, desktop hotkeys, and sub-1080p scale metrics
   useGameLoop();
   useGameHotkeys();
   const { scaleFactor } = useDesktopViewport();
+  const [debugOpen] = useDebugOpen();
 
   const isCapsFrenzy = useGameStore((s) => s.isCapsFrenzy);
   const rootStyle = {
@@ -70,6 +72,9 @@ export const App: React.FC = () => {
       <footer className="shrink-0 h-9 z-20">
         <HotkeyFooterHUD />
       </footer>
+
+      {/* DEV ONLY: state inspector toggled with `~`. Tree-shaken from prod builds. */}
+      {import.meta.env.DEV && debugOpen && <DebugPanel />}
     </div>
   );
 };

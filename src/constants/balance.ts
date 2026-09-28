@@ -13,20 +13,65 @@ export const INK_PER_CLICK = 1.25;
 /** Passive ink recovery per second (GDD §3.1: 0.5 units/second). */
 export const INK_REGEN_PER_SECOND = 0.5;
 
-/** Tantrum gained per inked click (GDD §3.1: +1.5%). */
+/**
+ * INVARIANT: [Ink Fuels Frenzy]
+ * Tantrum only accrues from INKED clicks. A dry nib still pays a reduced yield so
+ * the player is never soft-locked, but it builds no tantrum — therefore spending
+ * ink is the correct way to reach a CAPS LOCK FRENZY, and running dry is a
+ * fallback rather than an optimisation.
+ */
 export const INKED_TANTRUM_PER_CLICK = 1.5;
 
 /** Tantrum gained per inked click with the Diet Soda Desk Drip upgrade (GDD §3.1: +2.25%). */
 export const DIET_SODA_TANTRUM_PER_CLICK = 2.25;
 
-/** Tantrum gained per dry-nib click (GDD §3.1: +3.5%). Dry clicks can fill the meter to 100%. */
-export const DRY_TANTRUM_PER_CLICK = 3.5;
+/**
+ * INVARIANT: dry nibs build NO tantrum. See [Ink Fuels Frenzy] above.
+ * Retained as an explicit zero so the intent is legible in the click handler.
+ */
+export const DRY_TANTRUM_PER_CLICK = 0;
+
+/** Yield retained by a dry-nib click, as a fraction of full inked yield. */
+export const DRY_CLICK_YIELD_MULTIPLIER = 0.1;
 
 /** CAPS LOCK FRENZY duration in seconds (GDD §3.1: 20s). */
 export const FRENZY_DURATION_SECONDS = 20;
 
 /** CAPS LOCK FRENZY click multiplier (GDD §3.1: 10x). */
 export const FRENZY_CLICK_MULTIPLIER = 10;
+
+/**
+ * INVARIANT: [The Cooling-Off Protocol]
+ * Seconds the Dealmaker must wait before the tantrum meter can fill again after a
+ * FRENZY ends. Without this, tantrum accrued *during* frenzy (the meter is not
+ * gated) leaves it at 100% the instant the timer expires, so frenzy re-triggers
+ * on the same frame and uptime approaches 100%. This lockout makes FRENZY a
+ * genuine, earned burst rather than a permanent state.
+ *
+ * Scales with phase: early game stays snappy, late game makes frenzy precious.
+ */
+export const FRENZY_COOLDOWN_BY_PHASE: Record<number, number> = {
+  1: 15,
+  2: 25,
+  3: 40,
+  4: 60,
+};
+
+/** Tantrum passively bleeds off during the post-frenzy cooldown. */
+export const FRENZY_COOLDOWN_TANTRUM_DECAY_PER_SECOND = 6.0;
+
+/** Multiplier applied to the ink refill cost curve (GDD: 1.15^n → steeper). */
+export const INK_REFILL_COST_GROWTH = 1.35;
+
+/** Ink refill cost ceiling from the flat exponential term. */
+export const INK_REFILL_COST_CAP = 25000;
+
+/**
+ * INVARIANT: [Ink Is A Cost Center]
+ * Refills additionally cost a percentage of current treasury, so ink is a real
+ * ongoing tax on earnings at every stage rather than a flat early-game expense.
+ */
+export const INK_REFILL_TREASURY_RATIO = 0.02;
 
 /** Consecutive dry clicks before the nib jams and dry yield collapses further. */
 export const DRY_CLICK_JAM_THRESHOLD = 30;

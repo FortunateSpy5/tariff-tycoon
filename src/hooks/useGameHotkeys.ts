@@ -4,9 +4,28 @@
  * Uses imperative store access to prevent event listener churn and App-level re-render cascades.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useGameStore } from '../store/useGameStore';
 import { generateProceduralYap } from '../engine/systems/yapEngine';
+
+/** Shared dev-only flag for the debug inspector; mutated by the `~` hotkey. */
+let debugOpen = false;
+const debugListeners = new Set<(open: boolean) => void>();
+function setDebugOpen(next: boolean) {
+  debugOpen = next;
+  debugListeners.forEach((fn) => fn(next));
+}
+export function useDebugOpen(): [boolean, () => void] {
+  const [open, setOpen] = useState(debugOpen);
+  useEffect(() => {
+    const listener = (v: boolean) => setOpen(v);
+    debugListeners.add(listener);
+    return () => {
+      debugListeners.delete(listener);
+    };
+  }, []);
+  return [open, () => setDebugOpen(!debugOpen)];
+}
 
 export function useGameHotkeys() {
   useEffect(() => {
@@ -57,6 +76,18 @@ export function useGameHotkeys() {
         store.shredSubpoenas();
       } else if (e.key === 'r' || e.key === 'R') {
         store.refillInk();
+      } else if (e.key === 'p' || e.key === 'P') {
+        // [P] Answer the ringing 3:00 AM crisis call. Equivalent to SWEAR IN.
+        if (store.activeCrisis) {
+          e.preventDefault();
+          store.swearInCrisis();
+        }
+      } else if (e.key === 'i' || e.key === 'I') {
+        // [I] Ignore / suppress the ringing crisis call.
+        if (store.activeCrisis) {
+          e.preventDefault();
+          store.suppressCrisis();
+        }
       } else if (e.key === 'm' || e.key === 'M') {
         store.toggleMute();
       } else if (e.key === 'z' || e.key === 'Z') {
@@ -66,6 +97,13 @@ export function useGameHotkeys() {
           document.documentElement.requestFullscreen().catch(() => {});
         } else {
           document.exitFullscreen().catch(() => {});
+        }
+      } else if (e.key === '`' || e.key === '~' || e.code === 'Backquote') {
+        // DEV ONLY: toggle the state-inspection panel. Guarded so it can never
+        // activate in a production bundle.
+        if (import.meta.env.DEV) {
+          e.preventDefault();
+          setDebugOpen(!debugOpen);
         }
       }
     };

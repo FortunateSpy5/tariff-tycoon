@@ -16,12 +16,24 @@ import {
   CRONY_FAVOR_MAX,
 } from '../../constants/balance';
 import { calculateOptionReturn } from '../../engine/math/formulas';
+import {
+  PAPER_TRADE_ALLOWANCE,
+  PAPER_TRADE_WIN_TANTRUM,
+} from '../../constants/onboarding';
 import { sound } from '../../audio/soundEngine';
 
 export interface TradingSlice extends MarketState {
   lastYapPost: YapPost | undefined;
   /** Cumulative realized profit from settled option trades this run (drives the prestige SIS formula). */
   lifetimeOptionsProfit: number;
+  /**
+   * Risk-free contracts remaining in the onboarding allowance.
+   * Paper trades still lock collateral and still pay real winnings, but losses
+   * are refunded in full — the player learns the causal loop at zero risk.
+   */
+  paperTradesRemaining: number;
+  /** Total profitable paper trades, surfaced on the run-summary card. */
+  paperTradesWon: number;
   openOptionTrade: (symbol: StockSymbol, type: OptionType, leverage: number, collateral: number) => boolean;
   settleOptionTrade: (tradeId: string) => number;
   triggerYapMarketShock: (yap: YapPost) => { success: boolean; reason?: string; targetSymbol?: StockSymbol; combo?: boolean };
@@ -42,7 +54,10 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
   slopSuspicion: 5.0,
   vexVolatility: 15.0,
   cronyFavor: 30,
+  cronyFavorRemainder: 0,
   lifetimeOptionsProfit: 0,
+  paperTradesRemaining: PAPER_TRADE_ALLOWANCE,
+  paperTradesWon: 0,
   isWalkBackWindowActive: false,
   walkBackSecondsRemaining: 0,
   lastWalkBackNotice: undefined,
@@ -67,6 +82,14 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
     const isWalkBackCombo =
       state.isWalkBackWindowActive && type === 'CALL' && symbol === state.lastTargetStockSymbol;
 
+    // REDESIGN: [Safe Practice Stakes]
+    // While the onboarding allowance is live, contracts are PAPER TRADES. They
+    // behave identically in every way EXCEPT that a losing settlement refunds
+    // the collateral instead of banking a loss. This lets a brand-new player
+    // learn "open PUT -> YAP -> crash -> settle" without being bankrupted by
+    // their own first guess, which was the single biggest early-game churn risk.
+    const isPaperTrade = state.paperTradesRemaining > 0;
+
     // Strike is the price the contract bets on: PUTs profit below entry, CALLs above.
     // Target is the 5% move the degen is praying for.
     const strikePrice =
@@ -89,6 +112,7 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
       isSettled: false,
       profitOrLoss: 0,
       isWalkBackCombo,
+      isPaperTrade,
     };
 
     sound.playChaChing();
@@ -98,6 +122,10 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
       treasuryCash: state.treasuryCash - collateral,
       activeTrades: [...state.activeTrades, newTrade],
       slopSuspicion: Math.min(100, state.slopSuspicion + (leverage > 100 ? 5 : 1)),
+      paperTradesRemaining: isPaperTrade ? state.paperTradesRemaining - 1 : state.paperTradesRemaining,
+      // Tutorial: opening the first contract completes "Open A Paper Put" and
+      // points the player at the YAP button.
+      tutorialStepIndex: state.tutorialStepIndex === 1 ? 2 : state.tutorialStepIndex,
     });
     return true;
   },
@@ -121,23 +149,47 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
 
     const totalPayout = Math.max(0, trade.collateralLocked + netProfit);
 
+    // INVARIANT: [Safe Practice Stakes — losses are training, not punishment]
+    // A paper trade that loses refunds the collateral instead of banking the
+    // loss. The player still feels the miss (the P&L line reads red) and still
+    // burns the allowance, but a wrong first guess can never zero out a brand
+    // new treasury. Wins pay out for real, so the loop still teaches that
+    // front-running yourself WORKS — which is the whole pitch.
+    const isLoss = netProfit < 0;
+    const refundedPaperLoss = trade.isPaperTrade && isLoss;
+    const creditedPayout = refundedPaperLoss ? trade.collateralLocked : totalPayout;
+
     // Credit proceeds back to treasuryCash
     const settledYapPut =
       trade.type === 'PUT' &&
       trade.symbol === state.lastTargetStockSymbol &&
       state.lastYapTimestamp > trade.openedAtTimestamp;
     set({
-      treasuryCash: state.treasuryCash + totalPayout,
+      treasuryCash: state.treasuryCash + creditedPayout,
       lifetimeOptionsProfit: state.lifetimeOptionsProfit + Math.max(0, netProfit),
       activeTrades: state.activeTrades.filter((t) => t.id !== tradeId),
       hasSettledYapTrade: state.hasSettledYapTrade || settledYapPut,
       hasPolyGriftAccess: state.hasPolyGriftAccess || settledYapPut,
+      // Tutorial: settling the first YAP-targeted PUT completes "Settle The Contract".
+      tutorialStepIndex:
+        settledYapPut && state.tutorialStepIndex === 3
+          ? 4
+          : state.tutorialStepIndex,
+      // A profitable paper trade feeds the tantrum, nudging the player toward
+      // their first CAPS LOCK FRENZY using the skill they just proved they have.
+      tantrumMeter:
+        trade.isPaperTrade && netProfit > 0
+          ? Math.min(100, state.tantrumMeter + PAPER_TRADE_WIN_TANTRUM)
+          : state.tantrumMeter,
+      paperTradesWon: state.paperTradesWon + (netProfit > 0 ? 1 : 0),
     });
 
     if (netProfit > 0) {
       sound.playChaChing();
+    } else if (refundedPaperLoss) {
+      sound.playDeskThud();
     }
-    return totalPayout;
+    return creditedPayout;
   },
 
   triggerYapMarketShock: (yap) => {
@@ -211,6 +263,9 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
       lastWalkBackNotice: undefined,
       lastYapTimestamp: now,
       hasRadarAccess: true,
+      // Tutorial: firing the first YAP completes "Open A Paper Put" and shows
+      // "Launch A 3:00 AM YAP". The chain teaches, then hands over the desk.
+      tutorialStepIndex: state.tutorialStepIndex === 2 ? 3 : state.tutorialStepIndex,
       slopSuspicion: Math.min(100, state.slopSuspicion + (isShotgun ? 16 : 12)),
       // Crony Favor faucet: landing a YAP earns political capital.
       cronyFavor: Math.min(CRONY_FAVOR_MAX, state.cronyFavor + CRONY_FAVOR_PER_YAP),
@@ -400,6 +455,13 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
     let netSettledCash = 0;
     let netSettledProfit = 0;
     let returnedComboCollateral = 0;
+    // INVARIANT: [Safe Practice Stakes holds on auto-settle too]
+    // Expiry is a settlement path like any other, so it must honour the paper
+    // refund and restore the allowance. Without this, a player who opened
+    // contracts and let them lapse would silently forfeit both their practice
+    // trades and their refund — the harshest possible lesson for a beginner.
+    let returnedPaperCollateral = 0;
+    let refundedPaperAllowance = 0;
     const remainingTrades: ActiveOptionTrade[] = [];
     const hasDarkPoolFiber = state.activeUpgrades.includes('darkpool_fiber');
 
@@ -421,8 +483,14 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
           state.vexVolatility,
           hasDarkPoolFiber
         );
-        netSettledCash += Math.max(0, trade.collateralLocked + netProfit);
-        netSettledProfit += Math.max(0, netProfit);
+        if (trade.isPaperTrade && netProfit < 0) {
+          // Losing paper trade: refund in full, and hand the allowance back.
+          returnedPaperCollateral += trade.collateralLocked;
+          refundedPaperAllowance += 1;
+        } else {
+          netSettledCash += Math.max(0, trade.collateralLocked + netProfit);
+          netSettledProfit += Math.max(0, netProfit);
+        }
       } else {
         remainingTrades.push(trade);
       }
@@ -431,7 +499,8 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
     // 5. Special Counsel Raid (100% Heat enforcement)
     let currentSuspicion = Math.max(0, state.slopSuspicion - 0.2 * deltaSeconds);
     let currentFavor = state.cronyFavor;
-    let currentTreasury = state.treasuryCash + netSettledCash + returnedComboCollateral;
+    let currentTreasury =
+      state.treasuryCash + netSettledCash + returnedComboCollateral + returnedPaperCollateral;
     let raidMessage = state.lastRaidMessage;
     let raidTimestamp = state.lastRaidTimestamp;
 
@@ -472,6 +541,12 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
       vexVolatility: newVex,
       lastRaidMessage: raidMessage,
       lastRaidTimestamp: raidTimestamp,
+      // Hand back the practice trades that were refunded, capped at the
+      // original allowance so a long-running exploit can never bank extra.
+      paperTradesRemaining: Math.min(
+        PAPER_TRADE_ALLOWANCE,
+        state.paperTradesRemaining + refundedPaperAllowance
+      ),
     });
   },
 

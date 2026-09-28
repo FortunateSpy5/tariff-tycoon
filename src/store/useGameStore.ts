@@ -35,6 +35,9 @@ export const useGameStore = create<GameStore>()(
       partialize: (state) => ({
         phase: state.phase,
         hasMarketAccess: state.hasMarketAccess,
+        tutorialStepIndex: state.tutorialStepIndex,
+        paperTradesRemaining: state.paperTradesRemaining,
+        paperTradesWon: state.paperTradesWon,
         hasRadarAccess: state.hasRadarAccess,
         hasPolyGriftAccess: state.hasPolyGriftAccess,
         hasCronyUnlocksAccess: state.hasCronyUnlocksAccess,
@@ -51,6 +54,9 @@ export const useGameStore = create<GameStore>()(
         isCapsFrenzy: state.isCapsFrenzy,
         capsFrenzySecondsRemaining: state.capsFrenzySecondsRemaining,
         totalFrenziesTriggered: state.totalFrenziesTriggered,
+        frenzyCooldownSecondsRemaining: state.frenzyCooldownSecondsRemaining,
+        totalCrisesAnswered: state.totalCrisesAnswered,
+        totalCrisesSuppressed: state.totalCrisesSuppressed,
         dryClicksCount: state.dryClicksCount,
         inkRefillCount: state.inkRefillCount,
         sovereignImmunitySlips: state.sovereignImmunitySlips,
@@ -60,6 +66,7 @@ export const useGameStore = create<GameStore>()(
         executiveDecrees: state.executiveDecrees,
         americaLLCIncorporated: state.americaLLCIncorporated,
         cronyFavor: state.cronyFavor,
+        cronyFavorRemainder: state.cronyFavorRemainder,
         agencies: state.agencies,
         stocks: state.stocks,
         activeTrades: state.activeTrades,
@@ -123,7 +130,7 @@ export const useGameStore = create<GameStore>()(
       },
       onRehydrateStorage: () => (state) => {
         if (!state) return;
-        state.hasMarketAccess = Boolean(state.hasMarketAccess || state.phase >= 2 || state.treasuryCash >= 10000);
+        state.hasMarketAccess = Boolean(state.hasMarketAccess || state.phase >= 2 || state.totalClicks > 0);
         if (!state.hasMarketAccess) state.activeLeftTab = 'stocks';
         if (state.activeLeftTab === 'radar' && !state.hasRadarAccess) state.activeLeftTab = 'stocks';
         if (state.activeLeftTab === 'polygrift' && !state.hasPolyGriftAccess) state.activeLeftTab = 'stocks';
@@ -167,3 +174,9 @@ export const useGameStore = create<GameStore>()(
     }
   )
 );
+
+// DEV ONLY: expose the store on `window.__game` so the simulation can be driven
+// from the console or automated browser tests. Tree-shaken from production builds.
+if (import.meta.env.DEV) {
+  (window as unknown as Record<string, unknown>).__game = useGameStore;
+}

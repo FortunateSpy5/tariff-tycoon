@@ -54,12 +54,12 @@ export const InkMeter: React.FC = () => {
       {/* Status Warning or Refill Button */}
       <div className="flex items-center justify-between gap-2 mt-1">
         {isDry ? (
-          <div className="flex items-center gap-1 text-[10px] text-red-400 font-semibold animate-pulse">
+          <div className="flex items-center gap-1 t-micro text-red-400 font-semibold animate-pulse">
             <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
             <span>DRY NIB: -90% yield; dry clicks still build Tantrum</span>
           </div>
         ) : (
-          <span className="text-[10px] text-stone-500">
+          <span className="t-micro text-stone-500">
             {isCapsFrenzy
               ? 'Ink restored; none consumed during Frenzy'
               : `Consumes ${INK_PER_CLICK} ink per ${phase === 1 ? 'stamp' : 'signature'}`}

@@ -58,16 +58,16 @@ export const SubpoenaShredderProp: React.FC = () => {
         {isHighHeat ? <AlertTriangle className="w-4 h-4" /> : <FileX2 className="w-4 h-4" />}
       </div>
       <div>
-        <span className={`font-mono font-bold text-[10px] block ${isHighHeat ? 'text-amber-400' : 'text-emerald-400'}`}>
+        <span className={`font-mono font-bold t-micro block ${isHighHeat ? 'text-amber-400' : 'text-emerald-400'}`}>
           SHREDDER
         </span>
-        <span className="text-[9px] text-stone-500 font-mono block">
+        <span className="t-caption text-stone-500 font-mono block">
           {!hasEnoughFavor ? 'Need 10 Favor [S]' : isHighHeat ? 'PURGE HEAT NOW!' : '-25% (10 🤝) [S]'}
         </span>
       </div>
 
       {feedback && (
-        <div className="absolute inset-0 bg-stone-950/95 flex items-center justify-center text-[10px] font-mono font-bold text-emerald-400 px-1 text-center">
+        <div className="absolute inset-0 bg-stone-950/95 flex items-center justify-center t-micro font-mono font-bold text-emerald-400 px-1 text-center">
           {feedback}
         </div>
       )}
