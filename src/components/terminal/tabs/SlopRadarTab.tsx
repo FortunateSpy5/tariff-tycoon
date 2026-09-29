@@ -14,17 +14,16 @@ import { CRONY_FAVOR_PASSIVE_PER_SECOND, CRONY_FAVOR_PER_YAP } from '../../../co
 /** Crony Favor burned per shred. Mirrors `SHRED_FAVOR_COST` in `deskPropsSlice`. */
 const SHRED_FAVOR_COST = 10;
 
-/** Heat points a shred removes. Mirrors `SHRED_HEAT_RELIEF` in `deskPropsSlice`. */
-const SHRED_HEAT_RELIEF = 25;
-
-/** Crony Favor per inquest-lead bribe. Mirrors the call site in `predictionSlice`. */
-const BRIBE_FAVOR_COST = 20;
-
-/** Heat points that bribe removes. Mirrors `predictionSlice`'s 0.8 per favor. */
-const BRIBE_HEAT_REDUCTION = 16;
-
-/** Seconds between sheets. Mirrors `SHRED_COOLDOWN_MS` in `deskPropsSlice`. */
-const SHRED_COOLDOWN_SECONDS = 5;
+// INVARIANT: imported, not re-typed. Five "Mirrors X in Y" locals sat here, and
+// a balance pass in either slice would have left this tab quoting numbers the
+// engine no longer charges — with no type error to catch it. `BRIBE_HEAT_REDUCTION`
+// is now DERIVED from the per-favor rate rather than re-stated as 16, so the two
+// cannot drift apart at all.
+import {
+  SHRED_COOLDOWN_SECONDS,
+  SHRED_HEAT_RELIEF,
+} from '../../../store/slices/deskPropsSlice';
+import { BRIBE_FAVOR_COST, BRIBE_HEAT_REDUCTION } from '../../../store/slices/predictionSlice';
 
 /** Why the shredder is currently refusing, or null when it will fire. */
 type ShredGate = 'phase' | 'cooldown' | 'favor' | null;

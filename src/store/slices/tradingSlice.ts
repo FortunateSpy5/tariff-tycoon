@@ -30,6 +30,7 @@ import {
   HEAT_LEVERAGE_LOW,
 } from '../../constants/balance';
 import { tickMarketPrices } from '../../engine/systems/marketEngine';
+import { directionOf, moveMagnitude, stampPlayerMove } from '../../engine/systems/playerMoveCandles';
 import {
   createOptionTrade,
   extendTradesForOffline,
@@ -159,6 +160,20 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
     sound.playDeskThud();
     if (hasActivePut) sound.playChaChing();
 
+    // INVARIANT: [A Crash Leaves A Scar Where The Player Can See It]
+    // `stampPlayerMove` is the only sanctioned way to mark a candle, and this
+    // is one of the two player-driven paths allowed to call it. The severity is
+    // `shock.crashSeverity` — the value the crash engine actually applied after
+    // its clamp — not a re-derivation, so the marker's size can never disagree
+    // with the price that moved. See `playerMoveCandles`.
+    const crashedCandles = stampPlayerMove(
+      targetStock.candles,
+      newPrice,
+      shock.crashSeverity,
+      directionOf(targetStock.currentPrice, newPrice),
+      now
+    );
+
     set({
       stocks: {
         ...state.stocks,
@@ -166,6 +181,7 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
           ...targetStock,
           currentPrice: newPrice,
           priceHistory: shock.priceHistory,
+          candles: crashedCandles,
         },
       },
       inkLevel: Math.max(0, state.inkLevel - INK_COST_PER_YAP),
@@ -196,6 +212,7 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
 
   executeWalkBack: () => {
     const state = get();
+    const now = Date.now();
     if (!state.isWalkBackWindowActive) return false;
 
     const target = state.lastTargetStockSymbol;
@@ -220,11 +237,30 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
     });
     if (!squeeze.matched) return false;
 
+    // INVARIANT: [A Rally The Player Forced Is Also Causal]
+    // The recovery is the second half of the same player-caused move, so it is
+    // the second path allowed to stamp. Its magnitude is READ BACK off the two
+    // prices `resolveWalkBack` just returned rather than typed here — see
+    // `playerMoveCandles` for why a literal at this call site would rot the
+    // moment `WALK_BACK_PUMP_MULTIPLIER` is tuned.
+    const rallyCandles = stampPlayerMove(
+      targetStock.candles,
+      squeeze.pumpPrice,
+      moveMagnitude(targetStock.currentPrice, squeeze.pumpPrice),
+      directionOf(targetStock.currentPrice, squeeze.pumpPrice),
+      now
+    );
+
     sound.playChaChing();
     set({
       stocks: {
         ...state.stocks,
-        [target]: { ...targetStock, currentPrice: squeeze.pumpPrice, priceHistory: squeeze.priceHistory },
+        [target]: {
+          ...targetStock,
+          currentPrice: squeeze.pumpPrice,
+          priceHistory: squeeze.priceHistory,
+          candles: rallyCandles,
+        },
       },
       treasuryCash: state.treasuryCash + squeeze.comboPayout,
       activeTrades: state.activeTrades.filter((trade) => !comboCalls.some((combo) => combo.id === trade.id)),
@@ -250,7 +286,11 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
     // INVARIANT: $PAIN is excluded from the constituent average because it is
     // derived from that average; including it would let the index define itself.
 
-    const market = tickMarketPrices(state.stocks, state.tariffRates);
+    // INVARIANT: the tick's own `now` is threaded into the price engine so a
+    // candle bucket is opened by the same instant the price was printed. If the
+    // engine reached for its own `Date.now()` the two could straddle a 2s
+    // boundary and file a print into a bucket the player never saw open.
+    const market = tickMarketPrices(state.stocks, state.tariffRates, Math.random, now);
     const updatedStocks = market.stocks;
 
     // Walk-back countdown. INVARIANT: an expired window unwinds combo CALL

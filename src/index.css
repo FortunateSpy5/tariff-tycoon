@@ -441,3 +441,53 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+/* =========================================================================
+   PRICE CHART [PriceChart.tsx]
+   The tape chart is the only place the causal loop is visible: short a PUT,
+   fire a 3:00 AM YAP, watch the sector go red. Its impact treatment is
+   therefore load-bearing feedback, not decoration — but it is feedback on a
+   chart, so it is drawn as an EVENT (a bloom that blooms once and dies) rather
+   than as a shake, and the crash itself is carried by a static marker and a
+   static chip that survive both keyframes being clamped away.
+
+   INVARIANT: [The Bloom Is Scoped To The Impact, Not The Pane]
+   `transform-box: fill-box` matters. The chart SVG stretches with
+   `preserveAspectRatio="none"`, so a bare `transform: scale()` on a `<g>` would
+   scale in the SVG user space — which is fine — but a CSS `transform-origin`
+   of 50% 50% on a group resolves against the VIEWBOX, not the group, and the
+   bloom would fire from the middle of the chart instead of from the candle.
+   `fill-box` pins the origin to the impact marker's own bounding box.
+
+   INVARIANT: [The Impact Marker Is Not Animated]
+   The scar (a magnitude-sized triangle) is drawn WITHOUT a class, so a
+   reduced-motion player — whose global block collapses these two animations to
+   0.01ms — still sees the move, its size, and the chip's measured excursion.
+   Only the bloom is motion, and motion is the dispensable half.
+   ========================================================================= */
+
+/* INVARIANT: [The Flash Is Named For The Event, Not Its Direction]
+   This was `chart-crash-flash` while the walk-back clarification also triggered
+   it — a green rally blooming under a class that said "crash". The renderer now
+   supplies the fill (red for a YAP, green for a clarification), so the keyframes
+   are direction-agnostic and the name says what the animation actually is. */
+@keyframes chart-impact-flash {
+  0% { opacity: 0.85; }
+  100% { opacity: 0; }
+}
+
+.chart-impact-flash {
+  animation: chart-impact-flash 0.25s ease-out 1 forwards;
+}
+
+@keyframes chart-impact-bloom {
+  0% { opacity: 0.3; transform: scale(0.35); }
+  30% { opacity: 1; }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.chart-impact-fresh {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: chart-impact-bloom 0.25s cubic-bezier(0.2, 0.9, 0.3, 1) 1 both;
+}

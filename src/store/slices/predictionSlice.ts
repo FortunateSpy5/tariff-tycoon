@@ -32,6 +32,18 @@ const POLYGRIFT_HEAT_WIN = 3;
 /** Heat added by a losing PolyGrift position. Cheap, or nobody would bet. */
 const POLYGRIFT_HEAT_LOSS = 1;
 
+/**
+ * INVARIANT: [The Slice Is The Single Source For These, Not The Components]
+ * `SlopRadarTab` re-typed `BRIBE_FAVOR_COST = 20` and `BRIBE_HEAT_REDUCTION = 16`
+ * as locals under a "mirrors" comment, and `PolyGriftTab` re-typed the two
+ * heat constants. A tuning pass here silently orphans every tooltip quoting
+ * them. Exported for the same reason `RAID_BRIBE_COST` is.
+ */
+export const BRIBE_FAVOR_COST = 20;
+/** Heat a full bribe removes. Derived, so the two can never disagree. */
+export const BRIBE_HEAT_REDUCTION = Math.round(HEAT_RELIEF_PER_FAVOR * BRIBE_FAVOR_COST);
+export { POLYGRIFT_HEAT_WIN, POLYGRIFT_HEAT_LOSS };
+
 export interface PredictionSlice {
   /** Pay Crony Favor to buy down S.L.O.P. heat. */
   bribeSlopAuditors: (bribeAmount: number) => boolean;

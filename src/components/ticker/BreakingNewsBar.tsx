@@ -172,6 +172,15 @@ export const BreakingNewsBar: React.FC = () => {
         <div className="flex items-center gap-0.5 border-l border-newsprint-300 pl-2">
           <button
             onClick={toggleMute}
+            /* INVARIANT: [aria-pressed Tracks The Button's OWN Action]
+               This shipped `aria-pressed={!isMuted}` — "pressed" when the sound
+               is ON, on a button whose action is to turn it OFF. The sibling
+               shake and hints buttons use `aria-pressed={enabled}`, so a screen
+               reader user tabbing the dock heard "mute, pressed" and "shake, not
+               pressed" and had no consistent way to read the row. Now the name
+               already carries the state ("Unmute audio" / "Mute audio"), and the
+               pressed flag agrees with every other toggle beside it. */
+            aria-pressed={!isMuted}
             {...hint(
               isMuted
                 ? 'Restore the squeaks, the thuds, and the cha-ching on a settled contract. [M]'
@@ -215,7 +224,12 @@ export const BreakingNewsBar: React.FC = () => {
         </div>
       </div>
 
-      <ResetGameModal isOpen={isResetOpen} onClose={() => setIsResetOpen(false)} />
+      <ResetGameModal
+        isOpen={isResetOpen}
+        onClose={() => setIsResetOpen(false)}
+        /* hint-allow: ResetGameModal renders its own buttons, each of which
+           carries its own hint. This call site only passes the close callback. */
+      />
     </div>
   );
 };

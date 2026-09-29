@@ -60,6 +60,19 @@ export const SituationRoom: React.FC = () => {
   });
   const done = rows.filter((r) => r.isDone);
 
+  // INVARIANT: [Promote The NEAREST Objective, Not The First One Declared]
+  // "The next unfinished objective" was `rows.find(r => !r.isDone)`, which is
+  // DECLARATION order — and `CAREER_OBJECTIVES` is ordered by theme
+  // (oval → frenzy → crisis → liquidation), not by distance. On a fresh save
+  // that promoted "Cross the motorcade threshold" with a $1.00M bar, while
+  // "First CAPS LOCK FRENZY" (target: 1) sat below it unpromoted. The panel's
+  // whole job on the first screen is to point at the shortest path, so the
+  // closest-to-done unfinished objective wins. Ties keep declaration order,
+  // because `[...rows].sort` is stable and that is the authored reading order.
+  const nextObjectiveId = rows
+    .filter((r) => !r.isDone)
+    .sort((a, b) => a.current / a.obj.target - b.current / b.obj.target)[0]?.obj.id;
+
   return (
     <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar flex flex-col gap-2">
       <TutorialDirective />
@@ -86,8 +99,8 @@ export const SituationRoom: React.FC = () => {
             // Large currency targets read better as money; counters read as x/N.
             const isMoney = obj.target >= 1_000_000;
             const currentLabel = isMoney ? formatCurrency(current) : `${Math.floor(current)}/${obj.target}`;
-            // The next unfinished objective is the one the player should read.
-            const isNext = !isDone && obj.id === rows.find((r) => !r.isDone)?.obj.id;
+            // The nearest unfinished objective is the one the player should read.
+            const isNext = !isDone && obj.id === nextObjectiveId;
 
             return (
               <div

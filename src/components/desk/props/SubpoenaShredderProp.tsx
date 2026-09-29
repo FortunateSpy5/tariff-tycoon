@@ -29,10 +29,13 @@ import { RAID_BRIBE_COST, SLOP_DECAY_PER_SECOND } from '../../../engine/systems/
 import { CRONY_FAVOR_PASSIVE_PER_SECOND } from '../../../constants/balance';
 import { formatCurrency } from '../../../engine/math/bigNumber';
 import { hint } from '../../ui/hint';
-
-const FAVOR_COST = 10;
-const COOLDOWN_SECONDS = 5;
-const HEAT_RELIEF = 25;
+// INVARIANT: imported, not re-typed. These were locals with a "mirrors" comment,
+// which is a lie waiting for a balance pass — see deskPropsSlice.
+import {
+  SHRED_COOLDOWN_SECONDS as COOLDOWN_SECONDS,
+  SHRED_FAVOR_COST as FAVOR_COST,
+  SHRED_HEAT_RELIEF as HEAT_RELIEF,
+} from '../../../store/slices/deskPropsSlice';
 
 export const SubpoenaShredderProp: React.FC = () => {
   const isHighHeat = useGameStore((s) => s.slopSuspicion > 70);

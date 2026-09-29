@@ -43,6 +43,26 @@ const SHRED_FAVOR_COST = 10;
 const SHRED_COOLDOWN_MS = 5000;
 const SHRED_HEAT_RELIEF = 25;
 
+/**
+ * INVARIANT: [The Slice Is The Single Source For These, Not The Components]
+ * `SubpoenaShredderProp` re-typed `SHRED_FAVOR_COST = 10`, `SHRED_COOLDOWN_SECONDS
+ * = 5` and `SHRED_HEAT_RELIEF = 25` as locals, and `GoldBoxProp` / `SlopRadarTab`
+ * did the same for the sale and bribe constants, each under a "mirrors X in Y"
+ * comment. That is a lie waiting for a balance pass: retune the shred price here
+ * and three tooltips start quoting a number the engine does not charge, with no
+ * type error and no test failure to catch it. `RAID_BRIBE_COST` and
+ * `PRINTER_COOLDOWN_SECONDS` were already promoted out for exactly this reason
+ * and are exported below; these are the same case, one layer behind.
+ *
+ * `COOLDOWN_SECONDS` is exported in SECONDS where the slice keeps MILLISECONDS,
+ * because that is the unit the UI actually shows.
+ */
+export const SHRED_COOLDOWN_SECONDS = SHRED_COOLDOWN_MS / 1000;
+export { SHRED_FAVOR_COST, SHRED_HEAT_RELIEF };
+export { SECRET_SALE_PAYOUT, SECRET_SALE_HEAT };
+export const SECRET_SALE_COOLDOWN_SECONDS = 8;
+export const BROKE_THRESHOLD = SECRET_SALE_BROKE_THRESHOLD;
+
 /** The Money Printer: a big payout on a long cooldown. */
 const PRINTER_COOLDOWN_MS = 60000;
 const PRINTER_PAYOUT = 100000;

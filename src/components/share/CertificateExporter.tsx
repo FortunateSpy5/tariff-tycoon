@@ -86,12 +86,19 @@ export const CertificateExporter: React.FC<{ children: React.ReactNode }> = ({ c
           up. Do not "simplify" this back to a bare outline. */}
       <button
         onClick={handleExport}
-        disabled={busy}
-        aria-label="Export a shareable 9:16 executive decree certificate as a PNG"
+        /* INVARIANT: [aria-Disabled, Not disabled, Even For A Transient Busy]
+           The rule exists because Chromium swallows pointer events on a natively
+           disabled button — which deletes the hover text explaining the very gate
+           that closed it. `busy` is the same gate with a shorter fuse, so it gets
+           the same treatment: the state is announced, the handler refuses, and
+           the explanation stays reachable throughout. */
+        aria-disabled={busy}
         {...hint(
-          'Draws your latest decree — the last YAP you posted, stamped CLASSIFIED at 3:00 AM with your treasury, crony favor, and S.L.O.P. suspicion on the docket — and downloads it as a 1080x1920 PNG sized exactly for Reels. SIDE EFFECT: a ready-made caption is copied to your clipboard, so the post has a line of satire attached. A clipboard denial is handled silently; the image still lands in your downloads.'
+          busy
+            ? 'STAMPING. The canvas is being drawn at 1080x1920 — a beat, not a hang. It resolves on its own; re-clicking just starts it again.'
+            : 'Draws your latest decree — the last YAP you posted, stamped CLASSIFIED at 3:00 AM with your treasury, crony favor, and S.L.O.P. suspicion on the docket — and downloads it as a 1080x1920 PNG sized exactly for Reels. SIDE EFFECT: a ready-made caption is copied to your clipboard, so the post has a line of satire attached. A clipboard denial is handled silently; the image still lands in your downloads.'
         )}
-        className="w-full text-left disabled:opacity-60 disabled:cursor-wait transition-opacity
+        className="w-full text-left aria-disabled:opacity-60 aria-disabled:cursor-wait transition-opacity
                    focus:outline-none
                    focus-visible:[&>div]:ring-2 focus-visible:[&>div]:ring-gold-500
                    focus-visible:[&>div]:ring-offset-2 focus-visible:[&>div]:ring-offset-newsprint-950

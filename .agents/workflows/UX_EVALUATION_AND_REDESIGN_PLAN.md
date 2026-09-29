@@ -470,10 +470,71 @@ near-miss is safe; a verbatim is not.*
 
 ## Phase 1 — Fill the dead space *(surgical, no visual risk)*
 
-- **1.1 Build the chart** *(approved)*. Replace ~5 of 9 watchlist rows with a real
-  candlestick / area chart for the selected ticker. `priceHistory` → SVG polyline +
-  candles. YAP crash animates down over ~250 ms with a red impact flash and a
-  marker on the YAP point. Compact rows to ~30 px so all 9 fit without scrolling.
+### 1.1 Build the chart 🔄 IN PROGRESS
+
+> **Scope note — this supersedes the brief below.** The plan said to draw the
+> chart from `priceHistory`. That is not honest data: `priceHistory` is twenty
+> **closes** at the 10 Hz tick — two seconds of data with no open, high or low.
+> Slicing it into candle-shaped rectangles would have fabricated every wick, so
+> the chart would display a volatility range the simulation never produced, in
+> the one surface whose entire job is to tell the player the truth about their
+> positions. That is Finding A's "lie" problem repeated in a new place.
+>
+> So 1.1 builds the data it actually needs: a real OHLC time-bucketing engine
+> (`candleEngine.ts`, pure, unit-verified) that the 10 Hz tick feeds, so every
+> wick on screen is a price the market actually printed. The crash scar is
+> stamped by `triggerYapMarketShock` and `executeWalkBack` — the engines that
+> *cause* crashes — never inferred by the chart from a suspiciously large red
+> candle, or a tariff drag would wear the mark of a YAP the player did not
+> fire.
+
+- **1.1 Build the chart** ✅ **SHIPPED.** `<PriceChart>` in `src/components/terminal/`,
+  mounted in `StocksOptionsTab` where the mark-only block used to be. Real OHLC
+  candles, 20 × 2s buckets ≈ 40 s of tape. Pure geometry in `chartHaptics.ts`,
+  copy in `chartCopy.ts`, animation keyframes in `index.css`. The mark-only block
+  was **replaced, not stacked** — it printed the live mark twice (once there, once
+  in the chart header), and the chart's header now carries symbol, mark and
+  delta-vs-base. The strip below it keeps only what the chart does not plot: the
+  sector name and `$VEX`, which is a market-wide index, not a property of the
+  ticker, and so does not belong on its price axis.
+
+  **Four defects the chart surfaced, all fixed:**
+
+  1. **A clarification was rendered as a crash.** `stampPlayerMove` marks both
+     player-caused moves, so the walk-back rally was stamped `crash: true` — drawn
+     as a red down-arrow at the candle low, with a chip reading `YAP -0%` on a
+     *green* candle, and an accessible name saying "most recent 1% down". Renamed
+     the field to a neutral `playerMove`, and split verb/sign/colour/anchor by
+     direction. Copy now reads `CLARIFY +2%`.
+  2. **Direction could not be derived from the candle body at all.** The
+     clarification window is 8 s and a bucket is 2 s, so a YAP and its walk-back
+     routinely share one bucket — and that bucket still closes *below* the
+     pre-crash open, because it measures from its own open. Reading `c` vs `o`
+     therefore reported the player's successful squeeze as `YAP -65%`. The
+     stamping engine is the only party that knows which side of the print its own
+     move landed on, so it records `playerMoveDirection` and the renderer reads it.
+  3. **The base price crushed the chart to a 4-pixel sliver.** Forcing
+     `basePrice` into the domain unconditionally is right for a stock that drifted
+     5% and catastrophic for one that drifted 100,000x — which is what the live
+     data showed (GIGA at $23M against a $180 base). The candles became
+     unreadable at exactly the magnitude the game's first phase reaches. The base
+     is now kept only while it costs the plot less than `BASE_SPAN_BUDGET` of its
+     own span, and when dropped the rule is omitted rather than clamped to an edge
+     — drawing it would put a line across the frame implying a price the plot
+     excludes. The header and hover copy say so explicitly.
+  4. **A dead-flat tape pinned itself to the bottom edge.** The `1e-9` absolute
+     range floor is an order of magnitude larger than the padding computed from
+     it, so on a flat tape the padding came out ~6e-11, the domain collapsed to a
+     point, and every candle rendered at the frame's bottom instead of centred.
+     Floored relatively to the price instead, so it is equally invisible on a $2
+     stock and a $2B one. An absolute "is the base near the data" test was tried
+     first and rejected: with a $180 base against a $19M tape, "within 3× the
+     range" is satisfied by a figure 100,000× smaller than the data.
+
+  Also fixed: axis labels clipped out of their 46-unit gutter at 7 digits
+  (`$1982822` → `$1.98M` above $1M; exact figures stay in the header and hover
+  copy, so the abbreviation is never the only source).
+
 - **1.2 Right wing.** Give Caymans and Unlocks real content — the **6 SIS perks
   from GDD §5 are entirely unimplemented** and the perk tree currently renders
   nothing. Add a prestige-progress projection so a sub-$10 B player can see the climb.
@@ -550,8 +611,369 @@ so "no element on screen is unhoverable" is a number rather than an intention.
       to pay on a rejected sale; the prestige label no longer hides that locked
       collateral counts*
 - [ ] Every panel earns its pixels — no surface is empty while an adjacent one scrolls
-- [ ] A YAP visibly crashes a chart, in the same millisecond, on the same screen
+- [x] A YAP visibly crashes a chart, in the same millisecond, on the same screen
+      — *`PriceChart` ships a real OHLC candlestick tape; the impact marker and
+      flash are stamped by the engines that cause the move, and both directions
+      (YAP crash, walk-back clarification) render correctly*
 - [ ] The 20-second frenzy countdown is unmissable
 - [ ] The certificate is one click from anywhere in the game
 - [ ] Zero doc ↔ code drift, enforced by a build gate
 - [x] `npm run build` clean · `oxlint` clean · no file over 400 lines
+
+---
+
+## The price model — FIXED, and it was four bugs, not one
+
+This began as "stock prices scale too much" and turned out to be the most
+consequential defect in the codebase. It is recorded here in full because the
+*shape* of the failure is the lesson: each fix was individually reasonable, and
+three of them made the game worse before the fourth fixed it.
+
+### The symptom
+
+At the shipped 10Hz cadence, one idle hour took a $32 stock to $139M. Measured
+across all nine tickers: `DOOR` at **140,037x** its base, `PAIN` at **645,860x**,
+in a single session.
+
+### Bug 1 — the random walk was not centred
+
+`noise = (rand() - 0.49) * 0.01 * vol`. `Math.random()` has mean 0.5, so this left
+a mean of **+0.01** on a ±0.01 multiplier: a permanent +0.01% drift *every tick*,
+~56x/hour. `$PAIN` had the same bug at `0.495`. Both are now `0.5`.
+
+### Bug 2 — the relief rally paid out for doing nothing
+
+`tariffPressureFor` granted `+0.0002`/tick to any linked nation below 50%. At
+game start *every* nation is below 50% (P0-2 set all six dials to zero), so it was
+unconditional: +0.2%/sec, ~1,378x/hour, for taking no action at all. Making it
+proportional to "distance below 50%" did **not** fix it, because a 0% tariff is
+the *starting* state — so the bonus was maximal precisely when the player had
+done nothing.
+
+The fix is conceptual rather than a smaller number: **50% is the neutral trade
+relationship.** Below it a linked stock's fair value recovers; above it, fair
+value is dragged down. Every term is a signed deviation from neutral, so the
+resting level is always the issue price and *no dial setting can manufacture
+permanent growth*. Relief is deliberately the weaker force — otherwise the
+optimal play is to zero every dial and walk away, which is what the old term was.
+
+### Bug 3 — I rebuilt the original bug inside the fix
+
+Removing the bias was necessary but insufficient: a multiplicative walk with no
+drift still compounds *variance*, so a stock still reached 5.3x base in an idle
+hour. Adding mean reversion fixed that, and then the first attempt at a fair-value
+anchor was `fair * (1 + pressure)` — a one-way integrator, which is Bug 2 again.
+A 10-hour soak reached **52,000x** on `$PAIN`.
+
+### Bug 4 — the anchor, and the one that mattered
+
+`meanReversion` pulls price toward `fairValue`, so **`fairValue` is the expected
+future price**, and every question about whether an option pays reduces to where
+it sits. The first anchor ignored player shocks ("a shock should decay, not be
+absorbed") — which is exactly backwards:
+
+> if the anchor stays at the pre-crash price, then `E[P(60s)]` is the pre-crash
+> price, so a 0DTE PUT struck above it pays **nothing**, however violent the YAP
+> was.
+
+Measured, a 50% crash retained **1%** of itself after 30 seconds. The player's
+1000x position, and the entire causal loop, quietly did not work — with nothing
+on screen to explain why. The next anchor was a full EMA, which follows the price
+completely and therefore chases whatever reversion is pulling toward; the lagged
+feedback rang and every ticker diverged to the floor over 100 hours.
+
+The working shape does both, in opposite directions, which is what a market's
+resting estimate actually does:
+
+- **absorbs** a print (so a crash is immediately the new price), and
+- **relaxes** toward the issue price (so nothing compounds, ever).
+
+`fairValue: fair + (price - fair) * 0.02 + (base - fair) * 0.0005`
+
+Reversion is additionally **graded by how long the current price has held**
+(`SHOCK_GRADING_TICKS = 6000`, ten times the 60s option window): a level the
+market has occupied for minutes is an equilibrium and snaps back hard; a level
+reached one tick ago is a shock and is left alone. The two constants are not
+independent — a grid search over both found only a narrow band where the game
+works, and the window must be far longer than `TRADE_DURATION_MS` or reversion
+reaches full strength exactly when the option settles.
+
+### Verified
+
+| requirement | before | after |
+|---|---|---|
+| 0DTE pays on a 50% YAP | 1% retained at 30s | **100%** of runs at t+60s |
+| 1-hour price band | 56x … 18,000,000x | **0.2x … 3.4x** |
+| 10-hour soak | 52,000x on `$PAIN` | **max 7.3x**, mean 1.26x |
+| 100-hour soak | diverged to the floor | mean 1.26x, all tickers reverting |
+| 0% dials vs 500% | 0% was strictly better | 500% is strictly better |
+
+Confirmed live: a YAP took `$DOOR` from **$155.03 to $61.64** (-60%), fair value
+followed to $137.30, and the price was still **-55.8% at t+45s** — so a 0DTE
+struck before the YAP settles well in profit. The chart read
+`1 impact, most recent a YAP 60% down`.
+
+**The chart's `BASE_SPAN_BUDGET` work is still correct and still needed** — it is
+what let the chart stay honest while this was broken, and it is what keeps a
+legitimately volatile ticker legible.
+
+### Three bugs the LIVE game found, which no simulation had
+
+Each of these passed every offline check and was caught only by watching the
+real thing run. All three are the same shape as the four above: a term that pays
+out for *existing* rather than for a player action.
+
+1. **The shock grade was measured off the wrong clock.** Reversion strength is
+   graded by how long the current price level has held, and the cheap signal for
+   that is the newest candle's `t` — which is the OPEN stamp of a **2-second
+   bucket**, and so advances every two seconds forever. The age could never
+   exceed 20, the grade never rose above 0.3%, and reversion ran at a
+   three-hundredth of its strength: silently off. Now measured from the newest
+   `playerMove` scar, which is the only event that should hold reversion off.
+
+2. **Absorption was 40× relaxation, so "returns to base" was not a property.**
+   At equilibrium `(P − F)·ABSORB = (base − F)·RELAX`, so
+   `F = (AB·P − RL·base)/(AB − RL)`. With `ABSORB = 0.02` and `RELAX = 0.0005`
+   that is a 40:1 ratio and fair value settles at **103% of the price** — the
+   anchor was pinned to the tape it exists to stabilise, and relaxation was a
+   rounding error. The two rates are now **equal**, the smallest relaxation that
+   actually dominates. A `$PAIN` holding a legacy $18,497 level returned to
+   $5,269 against a $5,200 base.
+
+3. **`$PAIN`'s constituent link was ADDITIVE.** The beta term was
+   `(averageConstituent - 100) * 0.04` — **+$2.00 into the index every tick**,
+   unconditional. Identical in kind to the relief rally: a permanent drift paid
+   for existing. It was nearly invisible at a $5,200 base (0.04%/tick) and
+   dominant at a legacy $18,000 one (+4.5% per 40 seconds), so the index climbed
+   and reversion fought it forever. It is now a change-over-change **ratio**: an
+   index moves with its basket, and pays nothing for existing.
+
+After all seven fixes, every one of the nine tickers sits between **0.82x and
+1.11x** of its base price and holds there, and all nine now draw their base rule
+on the chart (before these fixes, seven of nine omitted it).
+
+### The chart's base label, which overflowed
+
+`BASE $220.00` was 63px of text in a 46-unit gutter and was clipped by the
+cockpit's `overflow-hidden`. The word "BASE" was redundant — the label is already
+gold against two phosphor edge labels, the rule it annotates is gold too, and the
+header says "VS BASE" on every frame. Four characters bought no information and
+cost the number's legibility. The tone carries the distinction, which is what
+`AxisLabel.tone` exists for.
+
+Removing it was necessary but not sufficient: `$5,383.17` on `$PAIN` is nine
+characters and still overflowed by 4.7px. The label formatter now abbreviates on
+**measured width** rather than on round-number milestones, with the character
+budget taken from the browser (the `t-caption font-mono` tier advances a uniform
+**5.225px**, measured in-page, so 8 characters is 41.8px against a 44px gutter).
+An earlier attempt budgeted 7 against an *assumed* 5.9px/char — wrong in the safe
+direction, throwing away a character the gutter could hold.
+
+Each suffix is tried at decreasing precision and the first that fits wins, with
+the sign spending its character from the same budget (`-$10.0Qi` is 8ch, not 7).
+The ladder climbs to `Oc` at $1e39 so it covers the GDD's $10^42 ceiling, and
+`$999,999` branches into `M` at `999_000` so it cannot round UP into the longer
+`$1000.0K`. Verified by calling the real function across **61 orders of magnitude
+on both signs** — 366,732 calls, zero overflows, zero malformed output. In the
+live game all nine tickers now show 16.8–27.3px of clearance.
+
+Measuring beat guessing here, and twice: the assumed character width, and the
+assumed sign width, were both wrong in ways only a real measurement exposed.
+
+---
+
+## Phase 1.1 review round
+
+An adversarial QA pass over the whole Phase 0 + 1.1 diff found eleven defects.
+All are fixed; the two it could not confirm are recorded below.
+
+### A copy lie the build could not catch
+
+- **The ink-refill tooltip quoted 4× the button.** `calculateInkRefillTotal`
+  returns `min(base + 0.02·treasury, base·4)`, so when the cap binds the price IS
+  `base·4` — and the hint then multiplied it again, printing **$400** beside a
+  button labelled **$100.00**. It binds at $3,750 of treasury, which is Phase 1.
+  The multiplication is gone; the copy now says the price is pinned at the
+  figure the button shows.
+- **PolyGrift called a 0.1% return "A real edge".** The verdict gated on `ev > 1`
+  in DOLLARS on a $1,000 wager, so the `subpoena_raid` NO side at **+$1.00** and
+  the `brie_ban` YES side at **+$8.00** both claimed a real edge. Now gated on
+  the return RATE, and the rate is printed beside the dollars so the adjective is
+  checkable against the number.
+- **`10x CASH · INK RESTORED` was still on the tantrum meter.** The ink gauge had
+  been corrected to "Ink held — none consumed, none refunded"; this twin label
+  kept promising a refund `inkFrenzyEngine` explicitly forbids. Now
+  `${FRENZY_CLICK_MULTIPLIER}x CASH · INK HELD`.
+
+### A hint layer that froze on the one copy that must not
+
+- **`HintLayer` captured `data-hint` once.** `show()` early-returns when the
+  pointer is already resting on an element, and nothing re-read the attribute —
+  so "Restocking. 8s" sat on 8 for the full eight seconds while the button
+  beside it ticked 7…0. That silently defeats the whole `aria-disabled`-over-
+  `disabled` pattern, whose stated reason for existing is telling the player how
+  long until the gate opens. The text is now read at render time **and** a
+  `MutationObserver` on the attribute forces the re-render, because the layer
+  holds no store subscription and would otherwise recompute the same stale
+  string. Verified in-browser: rewriting the attribute under a resting pointer
+  updates the bubble with no re-hover.
+- **The `--viewport-scale` mirror was the arithmetic backwards.** Every `t-*`
+  tier computes `9.5px / var(--viewport-scale)` and the root then applies
+  `transform: scale(...)`; the two cancel, so cockpit type renders at its
+  authored physical size at any viewport. The portalled bubble gets the division
+  half only. Mirroring the scale onto `<html>` therefore made the tooltip
+  ~19% **larger** than the cockpit at every viewport under 840px tall — including
+  1280×720 and 1366×768, both required sizes. `<html>` is now pinned to `1`.
+
+### The gate could be passed by an unhoverable element
+
+`hover:check` was defeatable three ways. All are closed, and the gate is now
+probed with 16 cases:
+
+- **A handler smuggled through a component.** `<Card onClick={shred} />` passed
+  with zero violations, because capitalised tags were exempt and `Card` spreads
+  `...rest` onto its own `<div>` — a genuinely clickable element with no hint.
+  Component tags carrying an `on*` prop are now judged, and the five call sites
+  that only pass a callback down (`TabStrip`, `WatchlistLadder`,
+  `RunSummaryCard`, `ResetGameModal`) declare a `hint-allow` marker naming the
+  component that renders the hinted button.
+- **`hint-allow` inside a string.** The `//` alternative matched anywhere on the
+  line, so `className="p-2 // hint-allow"` silenced the gate. The root cause was
+  worse than the finding: `blankComments` treated that `//` as a real comment and
+  blanked the REST OF THE LINE, including the `onClick` — so the element stopped
+  being operable and was skipped entirely. The smuggled marker hid the handler
+  too. String literals are now tracked explicitly.
+- **One marker silencing two elements.** The marker is bounded to the tag's own
+  line range plus one line above, since a JSX comment cannot live inside a
+  single-line tag.
+
+Also: `onMouseEnter`/`onFocus`-style handlers no longer count as operable. A
+hover-only or focus-only handler makes an element *react*, not *operate* —
+there is nothing a keyboard or AT user can trigger — and flagging those trained
+developers to sprinkle hints on decorative wrappers. Click, change, submit and
+key handlers all stay in scope.
+
+### Remaining defects
+
+- **Two gated buttons were silent no-ops.** `ExecutiveGauges`' refill and vent
+  were converted from `disabled` to `aria-disabled` and left with a bare
+  `if (!can) return;` — strictly worse than `disabled`, since an `aria-disabled`
+  button still takes focus and still fires on Enter. A keyboard player pressed
+  "Refill $27.00" and got no toast, no announcement, nothing. Both now refuse
+  out loud in a `role="status"` strip, matching every other gate converted in
+  this pass.
+- **`useExpiryClock` served a stale clock for 250ms of every position.** The
+  `useState` initialiser runs once at mount, so after the last position settled
+  the interval was cleared and `now` froze; opening another position showed
+  "1200s left" for a quarter second on the countdown the hook exists to keep
+  honest. Re-seeding in the effect body fixed the staleness and tripped
+  `react/set-state-in-effect`; moving it into the render body tripped
+  `react/purity` instead. Rewritten on `useSyncExternalStore` — the clock is a
+  genuine external mutable source, which is what that hook is for. The component
+  is pure again, the interval is shared and reference-counted, and a settled tab
+  runs no timer.
+- **Career Objectives promoted the FURTHEST goal.** `rows.find(r => !r.isDone)`
+  is declaration order, and `CAREER_OBJECTIVES` is ordered by theme, not by
+  distance — so a fresh save was pointed at "Cross the motorcode threshold"
+  ($1.00M) while "First CAPS LOCK FRENZY" (target: 1) sat unpromoted below it.
+  Now sorted by `current / target`.
+- **Nine constants were re-typed in components** with "mirrors X in Y" comments
+  — the exact hazard `RAID_BRIBE_COST` was promoted out to prevent. All nine now
+  come from `deskPropsSlice` / `predictionSlice`, and `BRIBE_HEAT_REDUCTION` is
+  derived from the per-favor rate rather than restated as `16`.
+- **`GoldBoxProp` never looked gated.** `cursor-pointer` and `active:scale-95`
+  were unconditional on a button that refuses a click for 8s in every 8. It now
+  branches on the cooldown like its sibling prop.
+- **`CertificateExporter` / `RunSummaryCard` used native `disabled`** for a
+  transient `busy`, deleting the hover text that explains the export — the same
+  rule, exempted for a short fuse. Both converted.
+- **The telemetry footer read `BAGHOLDER PRO FEED`** on a pane hosting three
+  channels. `StatusStrip`'s label is non-interactive, so it carries no hint and
+  the mislabel was permanently unfixable from the UI. Now `${TABS.length} CHANNELS`.
+
+### Not fixed — needs a ruling
+
+- **Non-focusable explanatory surfaces are mouse-only.** Six hints sit on bare
+  `<div>`s and `<span>`s: the sealed shredder card, `DirectiveSheet`, the Career
+  Objective rows, the selected-ticker strip, the hotkey dock, and the BagHolder
+  seal. `HintLayer`'s keyboard parity works by listening for `focusin`, which
+  never fires on an element with no `tabIndex`, and `aria-label` on a role-less
+  `<div>` is ignored outright. So a keyboard-only player reaches none of that
+  copy — worst on the hotkey dock, which its own docstring calls "the only manual
+  in the game". This is a real gap but it is a design decision, not a typo: the
+  fix is a visible focus ring on decorative surfaces, or a parallel set of
+  visually-hidden descriptions, and either has a legibility cost in a zero-scroll
+  cockpit. Flagged for Phase 3, where the right wing is being rebuilt anyway.
+
+### Found by the tooltip pass, still open
+
+- **Two gates refuse silently.** `ResoluteBlotterCenter:105` (money printer) and
+  `GoldBoxProp:71` return without a message. The second is the worse: its refusal
+  is a *visible overlay* that is not `role="status"`, so the shortfall is shown
+  to sighted players and silent to everyone else — the exact inversion the
+  AGENTS.md rule exists to prevent.
+- **`BreakingNewsBar:175` ships `aria-pressed={!isMuted}`** — "pressed" when
+  unmuted. Defensible as "sound is on", but it reads inverted next to the shake
+  and hints buttons, which use `aria-pressed={enabled}`.
+- **`chartHint` lost the marker-colour glossary** when it was shortened. The two
+  clauses ("a red spike under the low is a YAP, a green one over the high is a
+  walk-back clarification") were true and were the most confusing pair in the
+  game. The honest home for them is `describeChart`, which is the accessible
+  name and has no length budget.
+
+## Phase 1.2 — the hint layer, revisited
+
+Three defects, all reported from play rather than from the audit, all fixed in
+`HintTooltip.tsx` / `chartCopy.ts` / `settingsSlice.ts`.
+
+### The bubble painted over the control it described
+
+`position: fixed` plus a two-axis viewport clamp guarantees the bubble is *inside*
+the window. It says nothing about what is underneath it, and for a control pinned
+to an edge — the hotkey dock along the bottom, a column button against the right
+wall — the only vertical slot left is the one the anchor occupies. The clamp is
+what pushed the bubble there in the first place, and the `opacity` fade sold the
+overlap as intentional.
+
+Overlap is now treated as a placement *failure* and retried on the horizontal
+axis, which is where the cockpit has slack: the desk is a three-column grid, so
+the gutter beside a centre-stage button is routinely 300px wide. The side is only
+taken when the full bubble width fits in that gutter — picking the roomier side
+unconditionally and clamping afterwards produces the identical defect one axis
+over. When neither gutter can hold the bubble the function returns
+`branch: 'unplaceable'` and keeps the vertical slot: there is no honest answer on
+a viewport narrower than the bubble plus the anchor, and the bubble is scrollable,
+so the copy stays readable. The arithmetic is pure and lives in
+`src/components/ui/hintPlacement.ts`, because keeping it inline put
+`HintTooltip.tsx` on the 400-line hard ceiling.
+
+### The longest hint was the first thing to be cut, not the first thing read
+
+`chartHint` ran to ~600 characters and opened on "tape, last N seconds — not a
+session", burying the live mark under two sentences of mechanism. It is now ~230
+characters and opens on the mark and its drift. The four things that survive are
+the four that are not visible anywhere else: the window is seconds, the base rule
+may be absent, only the player's own actions spike the tape, and the last candle
+can trail the header by up to one bucket. What went is duplication, not truth —
+candle anatomy, the severity bound, the excursion arithmetic and the window
+high/low are all drawn by the chart or carried by `describeChart`.
+
+`MAX_WIDTH_PX` 288 → 260 and `MAX_HEIGHT_RATIO` 0.6 → 0.5. The ratio is not a
+comfort setting: a bubble capped at half the viewport is what guarantees a
+candidate is either fully above or fully below its anchor, which is the property
+the no-overlap branch above depends on.
+
+### A toggle, and what it deliberately does not switch off
+
+`settingsSlice.hintsEnabled` (dock lightbulb, persisted). The decision that
+matters is that it is a **comfort** setting, not an accessibility switch: with
+hints off the bubble is clipped to a 1px box rather than unmounted, so
+`aria-describedby` still resolves and every control still has its spoken
+description. The alternative — dropping the attribute — leaves a dangling
+`idref`, and `display: none` / `visibility: hidden` / `hidden` all remove the node
+from the accessibility tree, which would silently undo the decision.
+
+The four `hint(text, name)` families — `ClickerButton`, `WatchlistLadder`,
+`ResetGameModal` and the dock's icon buttons — keep their names. With the bubble
+off, those names are all a screen-reader user has, and a gated control with no
+name explains nothing at all.

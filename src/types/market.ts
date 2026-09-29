@@ -16,6 +16,62 @@ export type StockSymbol =
 
 export type OptionType = 'PUT' | 'CALL';
 
+/**
+ * One OHLC bucket of market history — the unit the desk chart draws.
+ *
+ * INVARIANT: [A Candle Is Recorded, Never Reconstructed]
+ * `priceHistory` is twenty CLOSES at the 10 Hz tick, which is two seconds of
+ * data and carries no open/high/low at all. Slicing it into candle-shaped
+ * rectangles would have been fabricating the parts that make a candlestick
+ * mean anything — the wick would be invented, so the chart would show range
+ * the simulation never produced. Instead the tick accumulates real OHLC into
+ * time buckets, and the crash flag is set by the engine that actually caused
+ * the crash.
+ */
+export interface PriceCandle {
+  /** Price at the moment the bucket opened. */
+  o: number;
+  /** Highest price seen inside the bucket. */
+  h: number;
+  /** Lowest price seen inside the bucket. */
+  l: number;
+  /** Most recent price inside the bucket. */
+  c: number;
+  /** `Date.now()` when the bucket opened. */
+  t: number;
+  /**
+   * Set when a PLAYER-CAUSED move landed in this bucket — a YAP crash or a
+   * walk-back clarification rally. This is the causal marker the chart renders:
+   * the payoff moment the whole design is built around, finally visible at the
+   * instant it happens.
+   *
+   * INVARIANT: the field is NEUTRAL (`playerMove`), not `crash`, because both
+   * sanctioned moves set it and a clarification moves the price UP. A field
+   * named `crash` would force the chart either to draw a red down-arrow scar on
+   * a green recovery candle, or to lie in the type instead.
+   */
+  playerMove?: boolean;
+  /**
+   * Magnitude of the player-caused move that landed here, 0..1. Drives the
+   * marker's size, so a 90% crash reads as a bigger scar than a 30% one.
+   */
+  playerMoveMagnitude?: number;
+  /**
+   * Which way the PLAYER'S move went: `1` pumped the price, `-1` dumped it.
+   *
+   * INVARIANT: [The Engine Records The Direction, The Renderer Never Re-derives It]
+   * This cannot be read off the candle's `c`-vs-`o`, because a bucket measures
+   * from ITS OWN open, not from before the move. The clarification window is 8s
+   * and a bucket is 2s, so a YAP and its walk-back routinely share one bucket:
+   * the rally genuinely prints higher, but the bucket still closes below the
+   * pre-crash open, so a body-derived direction reported the player's
+   * successful squeeze as "YAP -65%" — a red down-arrow on the one move in the
+   * game that goes up. The stamping engine is the only party that knows which
+   * side of the print its own move landed on, so it records that here.
+   */
+  playerMoveDirection?: 1 | -1;
+}
+
 export interface StockDefinition {
   symbol: StockSymbol;
   name: string;
@@ -23,8 +79,39 @@ export interface StockDefinition {
   description: string;
   basePrice: number;
   currentPrice: number;
+  /**
+   * The level the market has SETTLED at: the anchor the price random-walks
+   * around, and the reference the chart's dashed rule is measured from.
+   *
+   * INVARIANT: [THE ANCHOR MUST ABSORB THE SHOCK, SLOWLY]
+   * The price is `fairValue` plus a random walk plus mean reversion toward
+   * `fairValue`. So `fairValue` IS the expected future price, and every question
+   * about whether an option pays reduces to where it sits.
+   *
+   * An earlier version deliberately did NOT move it on a YAP, reasoning that a
+   * shock should decay rather than be absorbed. That is exactly backwards, and
+   * the arithmetic is unforgiving: if the anchor stays at the pre-crash price,
+   * then `E[P(60s)]` is the pre-crash price, so a 0DTE PUT struck above it pays
+   * nothing no matter how violent the YAP was. Measured, a 50% crash retained 1%
+   * of itself after 30 seconds. The player's 1000x position, and the entire
+   * causal loop the game is built on, quietly did not work — with nothing on
+   * screen to say why.
+   *
+   * So the anchor follows the price, but slowly (`FAIR_VALUE_PULL`), which is
+   * what a market actually does: a crash is immediately the new price, and the
+   * expectation of where the price sits drifts back over minutes. The separation
+   * that matters is not shock-vs-no-shock but fast-vs-slow — the 60s option
+   * window is far shorter than the anchor's relaxation, so a position opened on a
+   * YAP settles on that YAP.
+   *
+   * `undefined` on a save written before this field existed; the tick seeds it
+   * from the issue price on the first print.
+   */
+  fairValue?: number;
   priceHistory: number[];
   volatilityMultiplier: number;
+  /** Time-bucketed OHLC series for the desk chart. See [A Candle Is Recorded]. */
+  candles?: PriceCandle[];
 }
 
 export interface ActiveOptionTrade {

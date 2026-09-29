@@ -77,6 +77,9 @@ export const ExecutiveExpansionPane: React.FC = () => {
           activeId={activeRightTab}
           onSelect={(id) => setActiveRightTab(id as RightChannelTab)}
           accent="gold"
+          /* hint-allow: TabStrip renders the buttons, and each one carries its
+             own hint from CHANNEL_PURPOSE inside PaneShell. This call site only
+             passes the selection callback down. */
         />
       }
       footer={

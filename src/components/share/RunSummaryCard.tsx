@@ -80,11 +80,17 @@ export const RunSummaryCard: React.FC<{
 
       <button
         onClick={handleExport}
-        disabled={busy}
+        /* INVARIANT: [aria-Disabled, Not disabled] — a native `disabled` button
+           swallows pointer events in Chromium, deleting the hover text on the
+           very control that explains the export. `busy` is a transient gate, not
+           an exemption from the rule. */
+        aria-disabled={busy}
         {...hint(
-          'Stamps the Certificate of Structural Damage: the flight number, peak treasury, lifetime confiscations, options profit, slips awarded, total stamp slams, and every CAPS LOCK FRENZY. Downloads as a 1080x1920 PNG. It is a snapshot taken before the reset, so it is the only copy of this run that will ever exist.'
+          busy
+            ? 'STAMPING. The certificate is being drawn at 1080x1920 — a beat, not a hang. It resolves on its own.'
+            : 'Stamps the Certificate of Structural Damage: the flight number, peak treasury, lifetime confiscations, options profit, slips awarded, total stamp slams, and every CAPS LOCK FRENZY. Downloads as a 1080x1920 PNG. It is a snapshot taken before the reset, so it is the only copy of this run that will ever exist.'
         )}
-        className="mt-2.5 w-full t-micro font-mono font-black uppercase tracking-widest py-1.5 rounded bg-newsprint-900 text-newsprint-50 hover:bg-wax-500 disabled:opacity-60 transition-colors"
+        className="mt-2.5 w-full t-micro font-mono font-black uppercase tracking-widest py-1.5 rounded bg-newsprint-900 text-newsprint-50 hover:bg-wax-500 aria-disabled:opacity-60 transition-colors"
       >
         {busy ? 'Stamping…' : 'Export Certificate (9:16 PNG)'}
       </button>

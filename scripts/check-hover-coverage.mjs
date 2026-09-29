@@ -78,7 +78,35 @@ const OPERABLE_PROPS = ['contentEditable', 'contenteditable', 'tabIndex', 'tabin
  * particles in `ClickerButton` remove themselves on `onAnimationEnd` — and
  * demanding a hover tooltip of them would be demanding copy for an effect.
  */
-const NON_USER_HANDLERS = new Set(['onAnimationEnd', 'onAnimationStart', 'onAnimationIteration', 'onTransitionEnd', 'onTransitionStart', 'onLoad', 'onError']);
+const NON_USER_HANDLERS = new Set([
+  'onAnimationEnd',
+  'onAnimationStart',
+  'onAnimationIteration',
+  'onTransitionEnd',
+  'onTransitionStart',
+  'onLoad',
+  'onError',
+  // INVARIANT: [Hover And Focus Are Not Acts]
+  // A pointer-only or focus-only handler makes an element *react*, not *operate*:
+  // there is no click, no activation, nothing a keyboard or AT user can trigger,
+  // so requiring a hint on one is a false positive that trains developers to
+  // sprinkle hints on decorative wrappers. Click, change, submit and key handlers
+  // all stay in scope, and so does `onKeyDown`/`onKeyUp` — a keyboard shortcut is
+  // an act. Anything that can be ACTIVATED still gets judged.
+  'onMouseEnter',
+  'onMouseLeave',
+  'onMouseOver',
+  'onMouseOut',
+  'onMouseMove',
+  'onPointerEnter',
+  'onPointerLeave',
+  'onPointerOver',
+  'onPointerOut',
+  'onPointerMove',
+  'onFocus',
+  'onBlur',
+  'onContextMenu',
+]);
 
 const budgetArg = process.argv.indexOf('--budget');
 const BUDGET = budgetArg > -1 ? Number(process.argv[budgetArg + 1]) : 0;
@@ -94,13 +122,58 @@ function walk(dir, out = []) {
 
 /**
  * Blank comments while PRESERVING line count, so reported line numbers are real.
- * The `//` form explicitly refuses a preceding `:` or quote so a URL inside a
- * string is not mistaken for a comment.
+ *
+ * INVARIANT: [A `//` Inside A String Is Not A Comment]
+ * The original rule was "refuse a preceding `:` or quote", which handled a URL
+ * in a string but not an arbitrary one. That is not a theoretical gap: with
+ * `className="p-2 // hint-allow"` the `//` was treated as a line comment and the
+ * REST OF THE LINE WAS BLANKED — including the closing quote and any `onClick`
+ * after it. The element then stopped being operable, so the gate skipped it
+ * entirely and the smuggled marker worked *and* hid the handler. String
+ * literals are now tracked explicitly, so a `//` in a string is just characters.
+ *
+ * A `//` in a REGEX literal (`/^\\/\\//`) is still ambiguous without a parser; the
+ * closing delimiter is used as the boundary, which is why `blankStrings` exists
+ * separately and why `hint-allow` is additionally required to survive a
+ * string-blanked span.
  */
 function blankComments(src) {
   return src
     .replace(/\/\*[\s\S]*?\*\//g, (m) => m.replace(/[^\n]/g, ' '))
-    .replace(/(^|[^:"'`])(\/\/[^\n]*)/g, (m, p1, p2) => p1 + ' '.repeat(p2.length));
+    .split('\n')
+    .map(blankLineCommentsOutsideStrings)
+    .join('\n');
+}
+
+/** Blank `//` runs on one line, but only those outside a string literal. */
+function blankLineCommentsOutsideStrings(line) {
+  let out = '';
+  let quote = null;
+  for (let i = 0; i < line.length; i += 1) {
+    const c = line[i];
+    if (quote) {
+      if (c === '\\') {
+        out += c + (line[i + 1] ?? '');
+        i += 1;
+      } else {
+        if (c === quote) quote = null;
+        out += c;
+      }
+      continue;
+    }
+    if (c === '"' || c === "'" || c === '`') {
+      quote = c;
+      out += c;
+      continue;
+    }
+    if (c === '/' && line[i + 1] === '/') {
+      // A genuine line comment: blank the rest, keeping the line length intact.
+      out += ' '.repeat(line.length - i);
+      return out;
+    }
+    out += c;
+  }
+  return out;
 }
 
 /**
@@ -174,6 +247,38 @@ function attributeNames(own) {
   return [...new Set([...named, ...bare])];
 }
 
+/**
+ * Blank out the CONTENTS of string literals, leaving the quotes.
+ *
+ * Used on the raw source span before the `hint-allow` test. A marker inside a
+ * string is a marker a developer can type by accident, or by copy-paste, and an
+ * escape hatch that opens itself is not an escape hatch.
+ */
+function blankStrings(s) {
+  let out = '';
+  let quote = null;
+  for (let i = 0; i < s.length; i += 1) {
+    const c = s[i];
+    if (quote) {
+      if (c === '\\') {
+        out += '  ';
+        i += 1;
+      } else if (c === quote) {
+        quote = null;
+        out += c;
+      } else {
+        out += ' ';
+      }
+    } else if (c === '"' || c === "'" || c === '`') {
+      quote = c;
+      out += c;
+    } else {
+      out += c;
+    }
+  }
+  return out;
+}
+
 const TAG_START = /<([A-Za-z][A-Za-z0-9.]*)\b/g;
 
 /**
@@ -187,7 +292,18 @@ const TAG_START = /<([A-Za-z][A-Za-z0-9.]*)\b/g;
 const HINT_SPREAD = /\{\s*\.\.\.hint\((?!\s*['"`]\s*['"`])/;
 const LITERAL_DATA_HINT = /data-hint\s*=\s*['"`][^'"`]+['"`]/;
 
-/** `hint-allow` counts only inside a real comment. */
+/**
+ * `hint-allow` counts only inside a real comment.
+ *
+ * INVARIANT: [The Marker Is Not Findable Inside A String]
+ * The `//` alternative used to match anywhere on the line, so
+ * `className="p-2 // hint-allow"` silenced the gate for an element with no hint
+ * at all — the eleven characters simply had to appear in a string, which is
+ * exactly the defence this check claims to provide against a lazy
+ * `className`. Strings inside the tag's span are blanked before this test runs;
+ * a real `//` or `/* *\/` comment survives `blankComments`, because the
+ * `ALLOW_IN_COMMENT` test reads the RAW line range, not the blanked source.
+ */
 const ALLOW_IN_COMMENT = /\/\*(?:(?!\*\/)[^*]|\*(?!\/))*hint-allow|\/\/[^\n]*hint-allow/s;
 
 const violations = [];
@@ -214,15 +330,21 @@ for (const file of walk(ROOT)) {
     if (!opened) continue;
 
     const names = attributeNames(opened.own);
-    // INVARIANT: [Only DOM Elements Can Be Judged Here] — a capitalised tag is a
-    // React component, and the gate cannot see the markup it renders. `<TabStrip
-    // onSelect={...} />` is not itself operable: it passes a callback down, and
-    // the button it renders carries its own hint. Judging the invocation would
-    // flag every composed component in the tree. So the handler/role/tabIndex
-    // tests apply to lowercase DOM tags only; a native control is judged either
-    // way.
+    // INVARIANT: [A Capitalised Tag With An `on*` Prop Is Judged] — a component
+    // tag is normally invisible to this gate, because the checker cannot see the
+    // markup it renders. But that exemption had a hole: `Card` spreads `...rest`
+    // onto its own `<div>`, so `<Card onClick={shred} material="paper" />` is a
+    // genuinely clickable div with no `data-hint` anywhere, and it passed with
+    // zero violations. Composed components that only *pass a callback down*
+    // (`<TabStrip onSelect={...} />`) are still exempt, via an explicit
+    // `hint-allow` marker — that is the honest way to declare "the button this
+    // renders carries its own hint", because it is a claim a human can check.
     const isDomTag = /^[a-z]/.test(tagName);
-    const hasReactHandler = isDomTag && names.some((n) => /^on[A-Z]/.test(n) && !NON_USER_HANDLERS.has(n));
+    const passesHandlerDown = !isDomTag && names.some((n) => /^on[A-Z]/.test(n) && !NON_USER_HANDLERS.has(n));
+    const hasReactHandler =
+      isDomTag || passesHandlerDown
+        ? names.some((n) => /^on[A-Z]/.test(n) && !NON_USER_HANDLERS.has(n))
+        : false;
     const roleMatch = isDomTag ? opened.own.match(/role\s*=\s*['"`]([a-z]+)['"`]/) : null;
     const isOperable =
       NATIVE_CONTROLS.has(tagName) ||
@@ -235,9 +357,19 @@ for (const file of walk(ROOT)) {
 
     const startLine = src.slice(0, match.index).split('\n').length;
     // The marker may sit anywhere in the tag's line range — developers put it
-    // next to the `onClick`, not necessarily on the `<` line.
+    // next to the `onClick`, not necessarily on the `<` line. It may ALSO sit on
+    // the line(s) directly above the tag, because a JSX comment cannot live
+    // inside a single-line tag and the natural place to explain an exemption is
+    // above it. Bounded to one line back so an unrelated marker on the previous
+    // element cannot silence this one.
     const endLine = src.slice(0, match.index + opened.tag.length).split('\n').length;
-    const span = rawLines.slice(startLine - 1, endLine).join('\n');
+    const spanFrom = Math.max(0, startLine - 2);
+    // Read the RAW span (so genuine comments are visible) but with every string
+    // literal blanked, so `hint-allow` cannot be smuggled through a className.
+    // This is also the ONLY exemption for a component that merely passes a
+    // callback down: without the marker, `<TabStrip onSelect={...} />` is judged
+    // and must either carry a hint or declare why the rendered button has one.
+    const span = blankStrings(rawLines.slice(spanFrom, endLine).join('\n'));
     if (ALLOW_IN_COMMENT.test(span)) continue;
 
     total += 1;

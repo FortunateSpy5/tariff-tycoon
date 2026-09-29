@@ -83,7 +83,12 @@ export const CaymansPrestigeTab: React.FC = () => {
     <div className="h-full min-h-0 flex flex-col gap-2.5 select-none">
       <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar space-y-2.5 pr-0.5">
         {runSummary && (
-          <RunSummaryCard snapshot={runSummary} onDismiss={() => setRunSummary(null)} />
+          <RunSummaryCard
+            snapshot={runSummary}
+            onDismiss={() => setRunSummary(null)}
+            /* hint-allow: RunSummaryCard renders its own dismiss button, which
+               carries its own hint. This call site only passes the callback. */
+          />
         )}
         <DossierHeader
           icon={<Palmtree className="w-3.5 h-3.5 text-gold-500" />}

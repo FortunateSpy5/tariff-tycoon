@@ -102,7 +102,16 @@ export const ResoluteBlotterCenter: React.FC = () => {
     // The button is `aria-disabled` rather than `disabled` so the hover can
     // explain the cooldown (see HintTooltip). The guard is therefore the only
     // thing stopping the print, and must mirror the button's own gate.
-    if (printerCooldownRemaining > 0) return;
+    // INVARIANT: [Every Gate Refuses Out Loud] — an `aria-disabled` control still
+    // takes focus and still fires on Enter, so a bare `return` is SILENCE, which
+    // is the one outcome a control must never produce. The hover explains the
+    // cooldown, but hover is pointer-only: a keyboard player pressing this got
+    // nothing at all, with no announcement to say the press had landed.
+    if (printerCooldownRemaining > 0) {
+      setPrintFeedback(`PRINTER COOLING // ${Math.ceil(printerCooldownRemaining)}s LEFT`);
+      setTimeout(() => setPrintFeedback(null), 2000);
+      return;
+    }
     const success = printEmergencyCash();
     if (success) {
       setPrintFeedback('BRRR! +$100,000 CASH (+15 S.L.O.P. SUSPICION)');

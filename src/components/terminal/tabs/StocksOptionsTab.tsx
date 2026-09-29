@@ -12,6 +12,7 @@ import { calculateOptionReturn } from '../../../engine/math/formulas';
 import { formatCurrency } from '../../../engine/math/bigNumber';
 import { Card } from '../../ui/Card';
 import { hint } from '../../ui/hint';
+import { PriceChart } from '../PriceChart';
 import { useExpiryClock } from './useExpiryClock';
 import { WatchlistLadder } from './WatchlistLadder';
 import { callHint, collateralHint, leverageHint, putHint, sectorLinkageHint, settleHint } from './stockHint';
@@ -118,45 +119,30 @@ export const StocksOptionsTab: React.FC = () => {
           {nextUnlockHint && <span className="mt-1 block t-caption font-mono text-gold-400/90">{nextUnlockHint}</span>}
         </div>
 
-        {/* Selected Ticker Mark. Not a chart and not labelled as one: it prints the
-            live mark, the base, and the drift since base, which is all it can
-            honestly claim. A candlestick view is roadmap, not shipped behaviour. */}
+        {/* Phase 1.1: the tape. This REPLACES the old mark-only block, which could
+            honestly claim only a live mark, a base, and a drift — and printed the
+            mark twice, once here and once in the chart header. The chart's header
+            now carries symbol, live mark and delta-vs-base, so the strip below
+            keeps only the two facts the chart does not plot: the sector name and
+            $VEX, which is a market-wide index rather than a property of this
+            ticker and so does not belong on its price axis. */}
+        <PriceChart
+          candles={activeStock?.candles}
+          basePrice={activeStock?.basePrice ?? 0}
+          currentPrice={activeStock?.currentPrice ?? 0}
+          symbol={selectedStock}
+        />
+
         <div
-          className="surface-terminal-well rounded-lg p-2 flex items-center justify-between"
+          className="surface-terminal-well rounded px-2 py-1 flex items-center justify-between gap-2"
           {...hint(
             activeStock ? sectorLinkageHint(selectedStock, activeStock) : 'No mark loaded for this ticker.',
           )}
         >
-          <div>
-            <div className="flex items-center gap-1.5">
-              <span className="font-mono font-bold t-micro text-phosphor-300">${selectedStock}</span>
-              <span className="t-micro text-phosphor-600 font-mono truncate max-w-[120px]">
-                {activeStock?.name}
-              </span>
-            </div>
-            <span className="t-caption text-phosphor-600 font-mono block">
-              Base: ${activeStock?.basePrice.toFixed(2)} // $VEX Volatility: {vexVolatility.toFixed(0)}%
-            </span>
-          </div>
-          <div className="text-right">
-            <span className="font-mono font-bold t-body block text-gold-400">
-              ${activeStock?.currentPrice.toFixed(2)}
-            </span>
-            {activeStock && (
-              <span
-                className={`t-caption font-mono flex items-center justify-end gap-0.5 ${
-                  activeStock.currentPrice >= activeStock.basePrice ? 'text-emerald-400' : 'text-red-400'
-                }`}
-              >
-                {activeStock.currentPrice >= activeStock.basePrice ? (
-                  <TrendingUp className="w-2.5 h-2.5" />
-                ) : (
-                  <TrendingDown className="w-2.5 h-2.5" />
-                )}
-                {(activeStock.currentPrice - activeStock.basePrice).toFixed(2)}
-              </span>
-            )}
-          </div>
+          <span className="t-micro font-mono text-phosphor-600 truncate min-w-0">
+            {activeStock?.name} · {activeStock?.sector}
+          </span>
+          <span className="t-micro font-mono text-phosphor-600 shrink-0">$VEX {vexVolatility.toFixed(0)}%</span>
         </div>
       </div>
 
@@ -166,6 +152,9 @@ export const StocksOptionsTab: React.FC = () => {
         selectedStock={selectedStock}
         tariffRates={tariffRates}
         onSelect={setSelectedStock}
+        /* hint-allow: WatchlistLadder renders one button per ticker, and each
+           carries its own hint from the sector-linkage copy. This call site only
+           passes the selection callback down. */
       />
 
       {/* Active Open Option Trades & Early Settlement */}

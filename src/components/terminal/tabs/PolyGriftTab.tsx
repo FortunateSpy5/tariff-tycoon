@@ -36,11 +36,26 @@ function expectedValue(bet: PolyGriftBet, choice: Choice): number {
   return ((p / 100) * odds - 1) * WAGER_AMOUNT;
 }
 
-/** The honest one-line verdict on whether this side is a good deal. */
+/**
+ * The honest one-line verdict on whether this side is a good deal.
+ *
+ * INVARIANT: [The Threshold Is A RATE, Not A Dollar Figure]
+ * This gated on `ev > 1` in DOLLARS, on a $1,000 wager — so 0.1% counted as "A
+ * real edge" while the number printed beside it was $1.00, the same order of
+ * magnitude as the rounding. A verdict that flatters its own figure by 1000x is
+ * the prediction-market version of a lying label: the player reads "edge" and
+ * sizes their heat accordingly. Gating on the RETURN RATE keeps the words
+ * proportionate to the money — and states the rate, so the number and the
+ * adjective can be checked against each other on screen.
+ */
+const REAL_EDGE_RATE = 0.05;
+
 function evVerdict(ev: number): string {
-  if (ev > 1) return `A real edge: +${formatCurrency(ev)} per slip.`;
-  if (ev >= -1) return 'Priced to the cent — a coin flip, not a trade.';
-  return `A bad deal at these odds: ${formatCurrency(ev)} per slip.`;
+  const rate = ev / WAGER_AMOUNT;
+  if (rate >= REAL_EDGE_RATE) return `A real edge: +${formatCurrency(ev)} per slip, ${(rate * 100).toFixed(1)}% on the stake.`;
+  if (rate > 0) return `A thin edge at best: +${formatCurrency(ev)} per slip, ${(rate * 100).toFixed(1)}% on the stake — heat decides before this does.`;
+  if (rate >= -REAL_EDGE_RATE) return 'Priced to the cent — a coin flip, not a trade.';
+  return `A bad deal at these odds: ${formatCurrency(ev)} per slip, ${(rate * 100).toFixed(1)}% on the stake.`;
 }
 
 /**

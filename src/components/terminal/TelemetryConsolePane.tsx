@@ -74,6 +74,9 @@ export const TelemetryConsolePane: React.FC = () => {
           activeId={activeLeftTab}
           onSelect={(id) => setActiveLeftTab(id as LeftChannelTab)}
           accent="phosphor"
+          /* hint-allow: TabStrip renders the buttons, and each one carries its
+             own hint from CHANNEL_PURPOSE inside PaneShell. This call site only
+             passes the selection callback down. */
         />
       }
       footer={
@@ -87,7 +90,15 @@ export const TelemetryConsolePane: React.FC = () => {
         <StatusStrip
           accent="phosphor"
           icon={<Activity className="w-3 h-3 text-gold-400" aria-hidden />}
-          label="BAGHOLDER PRO FEED"
+          /* INVARIANT: [The Label Names All Three Channels It Hosts]
+             This pane hosts Stocks / S.L.O.P. / PolyGrift, so "BAGHOLDER PRO
+             FEED" named one of the three. `StatusStrip`'s label is a
+             non-interactive readout, so it carries no hint and the
+             mislabel would have been permanently unhoverable and unfixable
+             from the UI — decoration that is also wrong, which is worse than
+             the `CITADULL HFT FEED` it replaced. Counted from TABS so it
+             cannot drift when a channel is added. */
+          label={`${TABS.length} CHANNELS`}
           right={
             <>
               <Radio className="w-3 h-3 text-phosphor-400 animate-pulse" aria-hidden />

@@ -26,7 +26,7 @@
  */
 
 import React from 'react';
-import { Maximize2, Volume2, VolumeX, Vibrate } from 'lucide-react';
+import { Lightbulb, Maximize2, Volume2, VolumeX, Vibrate } from 'lucide-react';
 import { useGameStore } from '../../store/useGameStore';
 import { INK_REFILL_COST_CAP, INK_REFILL_COST_GROWTH } from '../../constants/balance';
 import { hint } from '../ui/hint';
@@ -156,6 +156,8 @@ export const HotkeyFooterHUD: React.FC = () => {
   const toggleMute = useGameStore((s) => s.toggleMute);
   const screenShakeEnabled = useGameStore((s) => s.screenShakeEnabled);
   const toggleScreenShake = useGameStore((s) => s.toggleScreenShake);
+  const hintsEnabled = useGameStore((s) => s.hintsEnabled);
+  const toggleHints = useGameStore((s) => s.toggleHints);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -216,6 +218,30 @@ export const HotkeyFooterHUD: React.FC = () => {
           className={`${iconBtn} ${isMuted ? 'text-wax-400' : 'text-newsprint-400 hover:text-newsprint-100'}`}
         >
           {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
+        </button>
+
+        {/* INVARIANT: [The Hints Toggle Explains What It Does NOT Switch Off]
+         * The trap here is writing "turn off the explanations" and letting a
+         * player conclude the game got quieter for everyone. It does not: the
+         * hotkeys above keep working, and `aria-describedby` — the sentence a
+         * screen reader reads for this very button — stays wired, because
+         * `HintLayer` clips the bubble to 1px rather than unmounting it. Stating
+         * both explicitly is what keeps the copy from being a lie by omission.
+         * The cost is stated too: a gated control like the money printer or the
+         * ink refill says WHY it is shut only in that bubble, so a player who
+         * dismisses this is choosing to hover-blind themselves. */}
+        <button
+          onClick={toggleHints}
+          {...hint(
+            hintsEnabled
+              ? 'Hover bubbles are ON. Every button, chip and row states what it costs before you risk money on it. Switching this off hides the bubbles only — the hotkeys keep working and screen readers still hear every explanation, so a player who cannot see the bubble loses nothing. A gated control says why it is shut only in the bubble, though: the printer, the ink refill and the trade slip all go mute.'
+              : 'Hover bubbles are OFF — nothing explains a control before you press it. Hotkeys and screen-reader descriptions are untouched, so the keys in this dock and the spoken explanations still work. Turn it back on before you trade real money: a gated button such as the money printer or the ink refill states its shortfall only in the bubble.',
+            'Toggle hover hint bubbles'
+          )}
+          aria-pressed={hintsEnabled}
+          className={`${iconBtn} ${hintsEnabled ? 'text-gold-400' : 'text-newsprint-600'}`}
+        >
+          <Lightbulb className="w-3.5 h-3.5" />
         </button>
 
         <button

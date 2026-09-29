@@ -30,12 +30,14 @@ import { Archive, Sparkles } from 'lucide-react';
 import { useGameStore } from '../../../store/useGameStore';
 import { formatCurrency } from '../../../engine/math/bigNumber';
 import { hint } from '../../ui/hint';
-
-const COOLDOWN_SECONDS = 8;
-const PAYOUT = 500;
-const HEAT = 8;
-/** Mirrors `SECRET_SALE_BROKE_THRESHOLD` in `deskPropsSlice` — the waiver. */
-const BROKE_THRESHOLD = 50;
+// INVARIANT: imported, not re-typed. These were locals with a "mirrors" comment,
+// which is a lie waiting for a balance pass — see deskPropsSlice.
+import {
+  BROKE_THRESHOLD,
+  SECRET_SALE_COOLDOWN_SECONDS as COOLDOWN_SECONDS,
+  SECRET_SALE_HEAT as HEAT,
+  SECRET_SALE_PAYOUT as PAYOUT,
+} from '../../../store/slices/deskPropsSlice';
 
 export const GoldBoxProp: React.FC = () => {
   const sellClassifiedSecrets = useGameStore((s) => s.sellClassifiedSecrets);
@@ -67,8 +69,11 @@ export const GoldBoxProp: React.FC = () => {
 
   const handleClick = () => {
     if (!sellClassifiedSecrets()) {
-      setFeedback('BOX RESTOCKING');
-      setTimeout(() => setFeedback(null), 1200);
+      // INVARIANT: the shortfall is NAMED, not just signalled. "BOX RESTOCKING"
+      // said that something was wrong and nothing about how long, which is the
+      // half a player cannot guess.
+      setFeedback(`BOX RESTOCKING // ${remaining}s`);
+      setTimeout(() => setFeedback(null), 1800);
       return;
     }
     setFeedback(`+${formatCurrency(PAYOUT)} CASH (+${HEAT}% HEAT)`);
@@ -90,7 +95,17 @@ export const GoldBoxProp: React.FC = () => {
             )}/s of pure heat.`
           : `Sell a classified bathroom blueprint offshore: +${formatCurrency(PAYOUT)} cash and +${HEAT}% S.L.O.P. suspicion, which is what invites the raids. ${COOLDOWN_SECONDS}s cooldown. You seed with $100 and the cheapest order the terminal takes locks $500, so one blueprint roughly doubles your buying power — a nudge, not a faucet.`
       )}
-      className="p-2 rounded-lg bg-newsprint-900 border border-newsprint-800 hover:border-gold-500/60 transition-all flex items-center gap-2 text-left cursor-pointer group relative overflow-hidden select-none active:scale-95"
+      className={`p-2 rounded-lg bg-newsprint-900 border border-newsprint-800 transition-all flex items-center gap-2 text-left group relative overflow-hidden select-none ${
+        // INVARIANT: [A Gated Prop Must LOOK Gated]
+        // The cooldown is 8s and the refills 8s, so a box that is `aria-disabled`
+        // a third of the time cannot keep `cursor-pointer` and `active:scale-95`
+        // unconditionally — it squashed under the cursor while refusing the
+        // click. `SubpoenaShredderProp` already branches this; the sibling prop
+        // was the one that did not.
+        isRestocking
+          ? 'border-newsprint-700 cursor-not-allowed opacity-70'
+          : 'border-newsprint-800 hover:border-gold-500/60 cursor-pointer active:scale-95'
+      }`}
     >
       <div className="p-1.5 rounded-md bg-amber-950/60 border border-amber-500/30 text-amber-400 group-hover:scale-110 transition-transform">
         <Archive className="w-4 h-4" aria-hidden />
@@ -105,8 +120,18 @@ export const GoldBoxProp: React.FC = () => {
         </span>
       </div>
 
+      {/* INVARIANT: [The Refusal Is Announced, Not Just Painted]
+          This overlay was a plain div. It is the ONLY thing that says a sale was
+          refused, and being unroled it was visible to sighted players and silent
+          to everyone else — the exact inversion the AGENTS.md gate rule exists to
+          prevent. `role="status"` puts it in the live region so the refusal
+          reaches a screen-reader user and is announced on change, not on hover. */}
       {feedback && (
-        <div className="absolute inset-0 bg-newsprint-950 flex items-center justify-center t-micro font-mono font-bold text-gold-400 px-1 text-center">
+        <div
+          role="status"
+          aria-live="polite"
+          className="absolute inset-0 bg-newsprint-950 flex items-center justify-center t-micro font-mono font-bold text-gold-400 px-1 text-center"
+        >
           {feedback}
         </div>
       )}

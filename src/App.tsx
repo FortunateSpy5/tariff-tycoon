@@ -37,15 +37,22 @@ export const App: React.FC = () => {
       : {}),
   } as React.CSSProperties;
 
-  // INVARIANT: [Portalled Content Must Inherit The Viewport Scale]
-  // The whole cockpit shrinks below 1080p via `--viewport-scale`, which every
-  // `t-*` tier divides by. `--viewport-scale` was set only on the root <div> —
-  // and <HintLayer> portals its bubble to `document.body`, OUTSIDE that div, so
-  // the tooltip was the one thing on screen rendering at full size against a
-  // scaled-down cockpit. Mirroring the variable onto <html> makes it inherit.
+  // INVARIANT: [Portalled Content Must NOT Inherit The Viewport Scale]
+  // Every `t-*` tier computes `font-size: calc(9.5px / var(--viewport-scale))`
+  // and the cockpit root then applies `transform: scale(scaleFactor)`. Those two
+  // cancel: the type is authored at 9.5px and renders at 9.5px PHYSICAL, at any
+  // viewport. <HintLayer> portals its bubble to `document.body`, outside that
+  // transform, so it only ever gets the division half.
+  //
+  // An earlier version mirrored `--viewport-scale` onto <html>, reasoning that
+  // the bubble "should inherit the scale". That is the arithmetic backwards, and
+  // it made the tooltip ~19% LARGER than the cockpit at every viewport under
+  // 840px tall — 1280x720 and 1366x768, both required sizes. The value for
+  // untransformed portalled content is therefore 1, not the scale factor: the
+  // bubble renders at the same physical size as the text it sits beside.
   useEffect(() => {
-    document.documentElement.style.setProperty('--viewport-scale', String(scaleFactor));
-  }, [scaleFactor]);
+    document.documentElement.style.setProperty('--viewport-scale', '1');
+  }, []);
 
   return (
     <div

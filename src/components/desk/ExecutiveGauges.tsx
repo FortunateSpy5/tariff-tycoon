@@ -20,7 +20,7 @@
  * for calm options pricing — never an efficiency upgrade. See balance.ts.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Droplet, RefreshCw, AlertTriangle, Flame, Siren, Wind } from 'lucide-react';
 import { useGameStore } from '../../store/useGameStore';
 import { formatCurrency } from '../../engine/math/bigNumber';
@@ -49,6 +49,20 @@ import {
 
 export const ExecutiveGauges: React.FC = () => {
   const phase = useGameStore((s) => s.phase);
+  // INVARIANT: [A Gated Button Must Say Something]
+  // These two were converted from `disabled` to `aria-disabled` and left with a
+  // bare `if (!can) return;`. That is strictly WORSE than `disabled`: a disabled
+  // button at least looks inert, whereas an `aria-disabled` one still takes
+  // focus and still fires on Enter/Space, so a keyboard player pressed a button
+  // labelled "Refill $27.00" and got no toast, no announcement, no visual
+  // change — silence is the one outcome a control must never produce. Every
+  // other gate converted in this pass got a refusal message; these two did not.
+  const [refusal, setRefusal] = useState<string | null>(null);
+  const sayNo = (message: string) => {
+    setRefusal(message);
+    window.setTimeout(() => setRefusal(null), 2000);
+  };
+
   const inkLevel = useGameStore((s) => s.inkLevel);
   const maxInk = useGameStore((s) => s.maxInk);
   const inkRefillCount = useGameStore((s) => s.inkRefillCount);
@@ -104,7 +118,16 @@ export const ExecutiveGauges: React.FC = () => {
             </span>
             <button
               onClick={() => {
-                if (!canRefill) return;
+                if (!canRefill) {
+                  sayNo(
+                    inkPercent >= 100
+                      ? 'TANK FULL. The nib is wet; slam before you refill.'
+                      : `SHORT ${formatCurrency(refillCost - treasuryCash)}. You hold ${formatCurrency(
+                          treasuryCash
+                        )}. Sell a blueprint from the GOLD BOX, or bank a settled position.`
+                  );
+                  return;
+                }
                 refillInk();
               }}
               aria-disabled={!canRefill}
@@ -117,9 +140,9 @@ export const ExecutiveGauges: React.FC = () => {
                     )} — the price climbs ${INK_REFILL_COST_GROWTH}× per purchase AND carries a 2% tax on your treasury, so refills are a real running cost, not a rounding error.`
                   : `Refill the tank for ${formatCurrency(refillCost)}. That is the base curve (climbing ${INK_REFILL_COST_GROWTH}× per refill) plus 2% of your treasury${
                       atRefillCap
-                        ? ` — and the ${INK_REFILL_HARD_CAP_MULTIPLE}× ceiling has now swallowed that 2% entirely, so the price is pinned at ${formatCurrency(
-                            refillCost * INK_REFILL_HARD_CAP_MULTIPLE
-                          )} no matter how rich you get`
+                        ? ` — except the ${INK_REFILL_HARD_CAP_MULTIPLE}× ceiling has now swallowed that 2% entirely, so ${formatCurrency(
+                            refillCost
+                          )} is pinned there no matter how rich you get`
                         : ''
                     }. The free alternative is to stop slamming and wait ${INK_REGEN_PER_SECOND}/s.`
               )}
@@ -203,7 +226,18 @@ export const ExecutiveGauges: React.FC = () => {
             </span>
             <button
               onClick={() => {
-                if (!canVent) return;
+                if (!canVent) {
+                  sayNo(
+                    isCapsFrenzy
+                      ? 'FRENZY ACTIVE. The meter is already paying out — venting it now throws the multiplier away.'
+                      : isCoolingOff
+                      ? `COOLING OFF ${Math.ceil(
+                          frenzyCooldownSecondsRemaining
+                        )}s. The protocol cannot be dodged by venting the meter that caused it.`
+                      : `NOTHING TO VENT. Needs ${TANTRUM_VENT_MIN_TANTRUM}% tantrum; you hold ${tantrumPercent}%.`
+                  );
+                  return;
+                }
                 ventTantrum();
               }}
               aria-disabled={!canVent}
@@ -251,7 +285,16 @@ export const ExecutiveGauges: React.FC = () => {
         <div className="flex items-center justify-between gap-2 mt-0.5">
           <span className="t-caption text-newsprint-800 truncate">
             {isCapsFrenzy
-              ? '10x CASH · INK RESTORED'
+              ? // INVARIANT: [The Frenzy Label Must Not Promise A Refund]
+                // This still read "10x CASH · INK RESTORED" after the ink
+                // gauge above was corrected to "Ink held — none consumed, none
+                // refunded". `inkFrenzyEngine` FREEZES the tank during a
+                // frenzy; a free refill would make the burst self-sustaining
+                // and break the drain the frenzy is supposed to cost. A visible
+                // label is worse than a tooltip: the player plans a refill
+                // budget around it. The multiplier is the real prize and it
+                // stays.
+                `${FRENZY_CLICK_MULTIPLIER}x CASH · INK HELD`
               : isCoolingOff
               ? `Cooling off: ${Math.ceil(frenzyCooldownSecondsRemaining)}s`
               : `Inked +${hasDietSodaDrip ? DIET_SODA_TANTRUM_PER_CLICK : INKED_TANTRUM_PER_CLICK}% · dry +${DRY_TANTRUM_PER_CLICK}%`}
@@ -262,6 +305,19 @@ export const ExecutiveGauges: React.FC = () => {
             </span>
           )}
         </div>
+
+        {/* Announced, not just painted: the refusal is the ONLY thing that
+            changes when a keyboard user activates a gated gauge button, since
+            the click is swallowed by the handler guard. */}
+        {refusal && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="t-caption text-center font-mono font-bold text-gold-400 animate-pulse"
+          >
+            {refusal}
+          </div>
+        )}
       </Card>
     </div>
   );

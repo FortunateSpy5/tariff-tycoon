@@ -84,6 +84,16 @@ export const useGameStore = create<GameStore>()(
         cronyFavor: state.cronyFavor,
         cronyFavorRemainder: state.cronyFavorRemainder,
         agencies: state.agencies,
+        // `candles` rides inside each `StockDefinition`, so persisting `stocks`
+        // already persists the chart — no separate persist key exists or is
+        // needed. INVARIANT: [A Legacy Save Degrades To An Empty Series]
+        // A save written before `candles` existed rehydrates with the field
+        // absent, so every read path here treats it as optional and the pure
+        // engine seeds the first bucket from the live price on the next tick
+        // (see `accumulateCandle`). Bumping `version` and writing a migration
+        // would be the wrong fix: it would stamp synthetic history onto every
+        // returning player's chart, and the chart's whole claim is that every
+        // wick is a price the simulation actually printed.
         stocks: state.stocks,
         activeTrades: state.activeTrades,
         hasSettledYapTrade: state.hasSettledYapTrade,
@@ -107,6 +117,14 @@ export const useGameStore = create<GameStore>()(
         activeRightTab: state.activeRightTab,
         isMuted: state.isMuted,
         screenShakeEnabled: state.screenShakeEnabled,
+        // INVARIANT: [A Comfort Setting Is Not An Economy Setting, But It Is
+        // Still A Setting] — persisted with the rest of the cockpit's
+        // preferences so a reload cannot re-arm a layer the player deliberately
+        // switched off. A save written before this key existed restores
+        // `undefined`, and zustand's `merge` keeps the slice default (`true`)
+        // rather than inventing a falsy value, so an old save upgrades to hints
+        // ON — see `hintsEnabled` in `settingsSlice.ts`.
+        hintsEnabled: state.hintsEnabled,
         // Persist the ACTUAL last-saved timestamp (refreshed every 5s by updateLastSaved),
         // NOT Date.now(). Overwriting it here on every serialization would reset the offline
         // window to ~0 on each tick, silently disabling the Palm-a-Grifto offline protocol.
