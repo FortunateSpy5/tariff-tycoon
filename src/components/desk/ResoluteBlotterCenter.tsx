@@ -6,16 +6,28 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { FileText, Send, RotateCcw, Printer, Crosshair, Sparkles } from 'lucide-react';
+import { Send, RotateCcw, Printer, Crosshair, Sparkles } from 'lucide-react';
 import { useGameStore } from '../../store/useGameStore';
 import { ClickerButton } from './ClickerButton';
 import { ExecutiveGauges } from './ExecutiveGauges';
 import { FeedbackLayer } from './FeedbackLayer';
+import { DirectiveSheet } from './DirectiveSheet';
 import { RedPhoneProp, GoldBoxProp, SubpoenaShredderProp } from './props';
 import { generateProceduralYap } from '../../engine/systems/yapEngine';
+import {
+  INK_COST_PER_YAP,
+  WALK_BACK_PUMP_MULTIPLIER,
+  WALK_BACK_WINDOW_SECONDS,
+  YAP_HEAT,
+  YAP_HEAT_SHOTGUN,
+  VEX_GAIN_SELECTED,
+  VEX_GAIN_SHOTGUN,
+} from '../../constants/balance';
+import { SHOTGUN_CRASH_BONUS } from '../../engine/systems/yapShockEngine';
+import { PRINTER_HEAT } from '../../store/slices/deskPropsSlice';
+import { hint } from '../ui/hint';
 
 export const ResoluteBlotterCenter: React.FC = () => {
-  const phase = useGameStore((s) => s.phase);
   const hasMarketAccess = useGameStore((s) => s.hasMarketAccess);
   const triggerYapMarketShock = useGameStore((s) => s.triggerYapMarketShock);
   const executeWalkBack = useGameStore((s) => s.executeWalkBack);
@@ -36,7 +48,6 @@ export const ResoluteBlotterCenter: React.FC = () => {
   const selectedStock = useGameStore((s) => s.selectedStock);
   const lastYapTimestamp = useGameStore((s) => s.lastYapTimestamp);
   const lastPrinterTimestamp = useGameStore((s) => s.lastPrinterTimestamp);
-  const lastYapPost = useGameStore((s) => s.lastYapPost);
   const yapCooldownSeconds = useGameStore((s) => s.yapCooldownSeconds);
   const inkLevel = useGameStore((s) => s.inkLevel);
   // Raid + crisis feedback moved to <FeedbackLayer> (see the priority note there).
@@ -88,6 +99,10 @@ export const ResoluteBlotterCenter: React.FC = () => {
   };
 
   const handlePrintMoney = () => {
+    // The button is `aria-disabled` rather than `disabled` so the hover can
+    // explain the cooldown (see HintTooltip). The guard is therefore the only
+    // thing stopping the print, and must mirror the button's own gate.
+    if (printerCooldownRemaining > 0) return;
     const success = printEmergencyCash();
     if (success) {
       setPrintFeedback('BRRR! +$100,000 CASH (+15 S.L.O.P. SUSPICION)');
@@ -132,37 +147,11 @@ export const ResoluteBlotterCenter: React.FC = () => {
         <SubpoenaShredderProp />
       </div>
 
-      {/* Parchment Directive / Seizure Log — a stamped sheet on the blotter. */}
-      <div
-        className={`surface-sheet border border-newsprint-300 rounded-lg p-2.5 text-center shadow-sm shrink-0 transition-all duration-100 relative ${
-          isRecoilActive ? 'animate-recoil' : ''
-        } ${isPulseActive ? 'ring-2 ring-wax-500/50 animate-calm-glow' : ''}`}
-      >
-        <div className="flex items-center justify-center gap-1.5 t-micro font-mono font-bold tracking-widest text-wax-600 uppercase">
-          <FileText className="w-3.5 h-3.5" />
-          <span>
-            {phase === 1
-              ? 'CUSTOMS SEIZURE LOG // AGENT 412 // GATE 99B'
-              : 'EXECUTIVE ORDER // 3:00 AM UNILATERAL DIRECTIVE'}
-          </span>
-        </div>
-        <p className="text-newsprint-800 italic text-xs mt-1 line-clamp-2 font-serif px-2">
-          {lastYapPost?.rawText ??
-            (phase === 1
-              ? '"Foreign brie and uninspected produce confiscated for emergency redistribution."'
-              : '"By authority vested in the Dealmaker-in-Chief, international trade is officially canceled."')}
-        </p>
-
-        {lastYapPost && (
-          <div className="mt-1 flex items-center justify-center gap-2 t-micro font-mono text-newsprint-800">
-            <span className="text-wax-600">Tariff {lastYapPost.tariffPercentage}%</span>
-            <span className="opacity-40">·</span>
-            <span>Impact ×{lastYapPost.impactMultiplier.toFixed(2)}</span>
-            <span className="opacity-40">·</span>
-            <span>{lastYapPost.viralQuotesCount.toLocaleString()} viral quotes</span>
-          </div>
-        )}
-      </div>
+      {/* Parchment Directive / Seizure Log — a stamped sheet on the blotter.
+          Extracted to <DirectiveSheet>: it is a named, self-explaining wire
+          with its own identity, not an anonymous slab of markup competing for
+          the file's line budget. */}
+      <DirectiveSheet isRecoilActive={isRecoilActive} isPulseActive={isPulseActive} />
 
       {/* Center Tactile Stamp / Sherpie Clicker */}
       <div className="flex-1 min-h-0 flex flex-col items-center justify-center py-1">
@@ -174,8 +163,12 @@ export const ResoluteBlotterCenter: React.FC = () => {
         <div className="shrink-0 relative">
           <button
             onClick={handlePrintMoney}
-            disabled={printerCooldownRemaining > 0}
-            title={printerCooldownRemaining > 0 ? `Printer cooling down: ${printerCooldownRemaining}s` : 'Print $100,000 and raise suspicion by 15%'}
+            aria-disabled={printerCooldownRemaining > 0}
+            {...hint(
+              printerCooldownRemaining > 0
+                ? `Printer cooling down: ${printerCooldownRemaining}s. One tray, one pull a minute.`
+                : `Print $100,000 of emergency cash and raise suspicion by ${PRINTER_HEAT}%. 60s between pulls. It is the loudest button in the game and the heaviest single hit of S.L.O.P. heat you will find outside a shotgun YAP.`,
+            )}
             className={`w-full py-1.5 px-3 text-newsprint-950 font-black rounded-lg font-mono uppercase tracking-wider text-[11px] shadow-lg flex items-center justify-center gap-2 transition-all border border-emerald-700/60 ${printerCooldownRemaining > 0 ? 'bg-newsprint-300 text-newsprint-800 cursor-not-allowed' : 'bg-gradient-to-r from-emerald-700 via-gold-500 to-emerald-700 hover:opacity-95 text-newsprint-50 cursor-pointer active:scale-95'}`}
           >
             <Printer className={`w-3.5 h-3.5 ${printerCooldownRemaining > 0 ? '' : 'animate-bounce'}`} />
@@ -194,7 +187,12 @@ export const ResoluteBlotterCenter: React.FC = () => {
       <div className="flex shrink-0 flex-col gap-1.5">
         <div className="flex items-center gap-1.5">
         {!hasMarketAccess ? (
-          <div className="flex-1 py-2 bg-newsprint-200/70 border border-newsprint-400 text-newsprint-800 font-mono text-center text-xs rounded-lg uppercase tracking-wider">
+          <div
+            {...hint(
+              `SEALED CHANNEL — BagHolder Pro. It opens on your FIRST SLAM, not on a cash threshold. The causal shorting loop (open a PUT, fire a YAP, settle the crash) is the entire game, so it cannot sit behind a grind you have to earn your way to.`
+            )}
+            className="flex-1 py-2 bg-newsprint-200/70 border border-newsprint-400 text-newsprint-800 font-mono text-center text-xs rounded-lg uppercase tracking-wider"
+          >
             SLAM THE STAMP ONCE TO UNSEAL BAGHOLDER PRO
           </div>
         ) : isWalkBackWindowActive ? (
@@ -214,11 +212,17 @@ export const ResoluteBlotterCenter: React.FC = () => {
               </span>
             </div>
             <button
-              onClick={executeWalkBack}
-              disabled={!hasWalkBackCall}
-              title={hasWalkBackCall
-                ? 'Apply the recovery rally and settle the timed CALL [Hotkey: W]'
-                : `Arm a matching $${lastTargetStockSymbol} CALL before the window closes`}
+              onClick={() => {
+                if (!hasWalkBackCall) return;
+                executeWalkBack();
+              }}
+              aria-disabled={!hasWalkBackCall}
+              {...hint(
+                hasWalkBackCall
+                  ? `Apply the ${WALK_BACK_PUMP_MULTIPLIER}x recovery rally and settle the timed CALL on $${lastTargetStockSymbol}. This is the game's only genuinely timed skill expression: you have ${Math.ceil(walkBackSecondsRemaining)}s left to decide whether to double down. [Hotkey: W]`
+                  : `The clarification window is open but no CALL is armed. Go to BagHolder Pro and arm a $${lastTargetStockSymbol} CALL within ${WALK_BACK_WINDOW_SECONDS}s — a PUT alone cannot be walked back.`,
+                'Walk back the YAP'
+              )}
               className={`shrink-0 px-3 py-2 font-mono t-micro font-black uppercase transition-all ${
                 hasWalkBackCall
                   ? 'animate-calm-glow bg-emerald-600 text-newsprint-50 hover:bg-emerald-500 cursor-pointer'
@@ -234,7 +238,13 @@ export const ResoluteBlotterCenter: React.FC = () => {
             {/* Target Mode Toggle */}
             <button
               onClick={() => setYapTargetMode(yapTargetMode === 'selected' ? 'shotgun' : 'selected')}
-              title="Toggle: Short the stock selected on BagHolder Pro vs Unhinged Random Shotgun"
+              aria-pressed={yapTargetMode === 'selected'}
+              {...hint(
+                yapTargetMode === 'selected'
+                  ? `Targeted: your YAP will hit $${selectedStock}, the ticker you picked in BagHolder Pro. This is the honest way to play — you can only front-run a crash you can see coming, and only a PUT on the same ticker pays out.`
+                  : `Shotgun: hits a random ticker ${Math.round((SHOTGUN_CRASH_BONUS - 1) * 100)}% harder, dumps ${YAP_HEAT_SHOTGUN} heat instead of ${YAP_HEAT}, and spikes VEX by ${VEX_GAIN_SHOTGUN} instead of ${VEX_GAIN_SELECTED}. Bigger numbers, no edge — you are firing blind and hoping your short happens to be on the stock that falls.`,
+                'YAP target mode'
+              )}
               className={`px-2.5 py-2 rounded-lg font-mono t-micro font-bold border flex items-center gap-1 cursor-pointer transition-all active:scale-95 shrink-0 ${
                 yapTargetMode === 'selected'
                   ? 'bg-gold-500/25 border-gold-600 text-gold-900 hover:border-gold-700'
@@ -257,8 +267,15 @@ export const ResoluteBlotterCenter: React.FC = () => {
             {/* Launch Lethal YAP Button */}
             <button
               onClick={handleLaunchYap}
-              disabled={cooldownRemaining > 0 || inkLevel < 20}
-              title="Crash targeted stock and harvest short profits [Hotkey: Y] (Costs 20 Ink, 10s cooldown)"
+              aria-disabled={cooldownRemaining > 0 || inkLevel < 20}
+              {...hint(
+                cooldownRemaining > 0
+                  ? `YAP on cooldown for ${cooldownRemaining}s. The post has to be drafted, filed, and let the tape digest it. This is the window where a PUT you are already holding is drifting.`
+                  : inkLevel < 20
+                  ? `A YAP is a signed order, so it costs ink: ${INK_COST_PER_YAP} needed, ${inkLevel.toFixed(0)} in the tank. Slam the stamp to sign more, or wait for the tank to refill.`
+                  : `Crash ${yapTargetMode === 'selected' ? `$${selectedStock}` : 'a random ticker'} and harvest the short profits. Costs ${INK_COST_PER_YAP} ink, ${yapCooldownSeconds}s cooldown, and spikes VEX — which pays MORE on every position that is winning and burns the losing ones faster. Fire it while short; fire it holding a CALL and you are accelerating your own liquidation. [Hotkey: Y]`,
+                'Launch a 3AM YAP'
+              )}
               className={`flex-1 py-2 rounded-lg font-mono uppercase tracking-wider flex items-center justify-center gap-1.5 text-xs font-black transition-all shadow-lg ${
                 cooldownRemaining > 0
                   ? 'bg-newsprint-300 text-newsprint-800 border border-newsprint-400 cursor-not-allowed'

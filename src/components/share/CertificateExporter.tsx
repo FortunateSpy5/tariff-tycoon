@@ -15,6 +15,7 @@ import React, { useState, useCallback } from 'react';
 import { useGameStore } from '../../store/useGameStore';
 import { formatCurrency } from '../../engine/math/bigNumber';
 import { decreeDataFromYap, downloadBlob, renderDecreeCard } from './decreeCard';
+import { hint } from '../ui/hint';
 
 const PHASE_LABEL: Record<number, string> = {
   1: 'PHASE 1 // THE CUSTOMS DESK',
@@ -87,6 +88,9 @@ export const CertificateExporter: React.FC<{ children: React.ReactNode }> = ({ c
         onClick={handleExport}
         disabled={busy}
         aria-label="Export a shareable 9:16 executive decree certificate as a PNG"
+        {...hint(
+          'Draws your latest decree — the last YAP you posted, stamped CLASSIFIED at 3:00 AM with your treasury, crony favor, and S.L.O.P. suspicion on the docket — and downloads it as a 1080x1920 PNG sized exactly for Reels. SIDE EFFECT: a ready-made caption is copied to your clipboard, so the post has a line of satire attached. A clipboard denial is handled silently; the image still lands in your downloads.'
+        )}
         className="w-full text-left disabled:opacity-60 disabled:cursor-wait transition-opacity
                    focus:outline-none
                    focus-visible:[&>div]:ring-2 focus-visible:[&>div]:ring-gold-500

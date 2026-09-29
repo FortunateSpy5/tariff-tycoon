@@ -4,7 +4,7 @@
  * Enforces strict desktop zero-scroll invariants; line count strictly under 120 lines.
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useGameLoop } from './hooks/useGameLoop';
 import { useGameHotkeys, useDebugOpen } from './hooks/useGameHotkeys';
 import { useDesktopViewport } from './hooks/useDesktopViewport';
@@ -14,6 +14,7 @@ import { TelemetryConsolePane } from './components/terminal/TelemetryConsolePane
 import { ResoluteBlotterCenter } from './components/desk/ResoluteBlotterCenter';
 import { ExecutiveExpansionPane } from './components/dump/ExecutiveExpansionPane';
 import { HotkeyFooterHUD } from './components/hud/HotkeyFooterHUD';
+import { HintLayer } from './components/ui/HintTooltip';
 import { DebugPanel } from './components/debug/DebugPanel';
 
 export const App: React.FC = () => {
@@ -35,6 +36,16 @@ export const App: React.FC = () => {
         }
       : {}),
   } as React.CSSProperties;
+
+  // INVARIANT: [Portalled Content Must Inherit The Viewport Scale]
+  // The whole cockpit shrinks below 1080p via `--viewport-scale`, which every
+  // `t-*` tier divides by. `--viewport-scale` was set only on the root <div> —
+  // and <HintLayer> portals its bubble to `document.body`, OUTSIDE that div, so
+  // the tooltip was the one thing on screen rendering at full size against a
+  // scaled-down cockpit. Mirroring the variable onto <html> makes it inherit.
+  useEffect(() => {
+    document.documentElement.style.setProperty('--viewport-scale', String(scaleFactor));
+  }, [scaleFactor]);
 
   return (
     <div
@@ -73,6 +84,13 @@ export const App: React.FC = () => {
       <footer className="shrink-0 h-8 z-20">
         <HotkeyFooterHUD />
       </footer>
+
+      {/* INVARIANT: [No Element On Screen May Be Unhoverable]
+          One delegated layer serves every `data-hint` element in the cockpit,
+          mounted once at the root. It must stay the ONLY tooltip host — a
+          second implementation would be the drift this primitive exists to
+          prevent. Enforced by `npm run hover:check`. */}
+      <HintLayer />
 
       {/* DEV ONLY: state inspector toggled with `~`. Tree-shaken from prod builds. */}
       {import.meta.env.DEV && debugOpen && <DebugPanel />}

@@ -2,13 +2,22 @@
  * D.U.M.P. Agencies Tab
  * Chainsaw list of federal agencies to liquidate for sequential multi-million dollar cash injections.
  * Enforces sequential gating so higher-tier agencies unlock progressively.
+ *
+ * INVARIANT: [The Guillotine Is Sequential]
+ * Agency N+1 is unreachable until N is scrapped. That rule lived only in the
+ * render branch that swapped in a lock badge — a real rule with no handler-side
+ * check, so any future caller of `liquidateAgency` could skip it. It is now also
+ * enforced in `handleLiquidate`.
  */
 
 import React, { useState } from 'react';
 import { Scissors, AlertTriangle, CheckCircle, Lock, Handshake } from 'lucide-react';
 import { useGameStore } from '../../../store/useGameStore';
 import { formatCurrency } from '../../../engine/math/bigNumber';
+import { CRONY_FAVOR_LIQUIDATION_KICKBACK_RATIO } from '../../../constants/balance';
 import { DossierHeader } from '../DossierHeader';
+import { hint } from '../../ui/hint';
+import type { AgencyLiquidation } from '../../../types/dump';
 
 export const DumpAgenciesTab: React.FC = () => {
   const agencies = useGameStore((s) => s.agencies);
@@ -23,7 +32,25 @@ export const DumpAgenciesTab: React.FC = () => {
   const disasterCapitalismRevenue = useGameStore((s) => s.disasterCapitalismRevenue);
   const [alertMsg, setAlertMsg] = useState<string | null>(null);
 
-  const handleLiquidate = (agencyId: string, name: string, yieldAmt: number, favorCost: number, minCash: number) => {
+  /** Favor actually spent: the committee kickbacks a quarter of the bribe. */
+  const netFavorCost = (cost: number) => cost - Math.floor(cost * CRONY_FAVOR_LIQUIDATION_KICKBACK_RATIO);
+
+  const handleLiquidate = (
+    agencyId: string,
+    name: string,
+    yieldAmt: number,
+    favorCost: number,
+    minCash: number
+  ) => {
+    // INVARIANT: [The Guillotine Is Sequential] — re-check the prerequisite here,
+    // not only in the render branch. The store will happily scrap any agency by
+    // id, so the ordering rule has to be enforced by the caller that owns it.
+    const index = agencies.findIndex((a) => a.id === agencyId);
+    if (index > 0 && !agencies[index - 1].isLiquidated) {
+      setAlertMsg(`The committee will not skip a letter. ${agencies[index - 1].acronym} first.`);
+      setTimeout(() => setAlertMsg(null), 2500);
+      return;
+    }
     if (cronyFavor < favorCost) {
       setAlertMsg(`Needs ${favorCost} Crony Favor to bribe liquidation committee!`);
       setTimeout(() => setAlertMsg(null), 2500);
@@ -39,7 +66,38 @@ export const DumpAgenciesTab: React.FC = () => {
     if (cash > 0) {
       setAlertMsg(`SCRAPPED ${name}! Injected +${formatCurrency(yieldAmt)} (+15% Heat)!`);
       setTimeout(() => setAlertMsg(null), 2500);
+    } else {
+      // INVARIANT: [Never Fail Silently] — `liquidateAgency` also refuses below
+      // Phase 2, which this handler does not mirror. A store refusal that
+      // produces no message at all is the worst version of the silent-no-op
+      // bug: the button animates and nothing happens.
+      setAlertMsg('The guillotine jammed. Nothing happened.');
+      setTimeout(() => setAlertMsg(null), 2500);
     }
+  };
+
+  /**
+   * Hover text for one scrapping.
+   *
+   * INVARIANT: names the favor cost, the net cost after kickback, the net-worth
+   * gate, the cash yield, the heat, and the sequential prerequisite — because
+   * the button itself only ever showed a bare `+$cash`, which is the number the
+   * player is about to gain and none of the numbers they must first pay.
+   */
+  const scrapHint = (agency: AgencyLiquidation, index: number, prev: AgencyLiquidation | null) => {
+    const gate =
+      index === 0
+        ? 'It is first in the book, so nothing stands in front of it.'
+        : `Locked until ${prev?.acronym ?? 'the previous agency'} is scrapped — the guillotine runs one letter at a time.`;
+    return (
+      `Scrap the ${agency.acronym} (${agency.name}). Pays ${formatCurrency(agency.liquidationCashYield)} ` +
+      `into the Treasury and scales passive income by ${agency.passivePerkMultiplier}x for the rest of the run. ` +
+      `Costs ${agency.cronyFavorCost} Crony Favor — the committee kickbacks ` +
+      `${Math.round(CRONY_FAVOR_LIQUIDATION_KICKBACK_RATIO * 100)}%, so the true cost is ` +
+      `${netFavorCost(agency.cronyFavorCost)} — plus +15% S.L.O.P. heat, and a new standing hazard. Requires ` +
+      `${formatCurrency(agency.minNetWorthRequired)} in the bank. ${gate} ` +
+      `Perk: ${agency.perkDescription}. Hazard: ${agency.hazardDescription}.`
+    );
   };
 
   return (
@@ -131,6 +189,16 @@ export const DumpAgenciesTab: React.FC = () => {
                     ) : isUnlocked ? (
                       <button
                         onClick={() => handleLiquidate(agency.id, agency.acronym, agency.liquidationCashYield, agency.cronyFavorCost, agency.minNetWorthRequired)}
+                        // INVARIANT: [Gated Controls Use aria-Disabled, Not disabled]
+                        // A native `disabled` swallows pointer events, which would
+                        // delete the hover text naming the very gate that closed
+                        // this button. The guard in `handleLiquidate` is the real
+                        // enforcement. See `HintTooltip`.
+                        aria-disabled={!canAfford}
+                        {...hint(
+                          scrapHint(agency, index, previousAgency),
+                          `Scrap the ${agency.acronym} for ${formatCurrency(agency.liquidationCashYield)}`
+                        )}
                         className={`px-2.5 py-1 rounded font-mono t-micro font-bold transition-all shadow ${
                           canAfford
                             ? 'bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 text-newsprint-950 font-black active:scale-95 cursor-pointer'

@@ -1,16 +1,34 @@
 /**
  * Dual-Phase Clicker Button
- * Phase 1: Heavy Blue Rubber Stamp [CONFISCATED - BY ORDER OF AGENT 412] at Gate 99B.
- * Phase 2+: Oversized 24k Golden Sherpie signing executive orders on the Resolute blotter.
+ * Phase 1: Heavy Blue Rubber Stamp [CONFISCATED - BY ORDER OF AGENT 412] at the
+ *   Deeply Terminal Annex.
+ * Phase 2+: Oversized 24k Golden Sherpie signing executive orders on the Resolute
+ *   blotter.
  * Compact fluid layout guarantees zero overflow on 720p/768p laptop viewports.
+ *
+ * INVARIANT: [The Verb On The Stamp Must Be True]
+ * The Phase 2+ face read `SIGN TARIFF`, but clicking it set no tariff — the YAP
+ * button does that. Two buttons, one verb, one of them lying. It now reads
+ * `SIGN ORDER`, which is exactly what the click does: cash, plus tantrum.
  */
 
 import React, { useState, useRef } from 'react';
 import { PenTool, Stamp, Sparkles } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useGameStore } from '../../store/useGameStore';
-import { calculateClickValue } from '../../engine/math/formulas';
+import { calculateClickValue, calculateInkRefillTotal } from '../../engine/math/formulas';
 import { formatCurrency } from '../../engine/math/bigNumber';
+import {
+  INK_PER_CLICK,
+  INK_REGEN_PER_SECOND,
+  FRENZY_DURATION_SECONDS,
+  FRENZY_CLICK_MULTIPLIER,
+  DRY_CLICK_YIELD_MULTIPLIER,
+  DRY_CLICK_JAM_YIELD_MULTIPLIER,
+  DRY_CLICK_JAM_THRESHOLD,
+} from '../../constants/balance';
+import { CUSTOMS_STAMP_NAME } from '../../constants/setting';
+import { hint } from '../ui/hint';
 
 interface FloatingNumber {
   id: number;
@@ -37,6 +55,7 @@ export const ClickerButton: React.FC = () => {
   const screenShakeEnabled = useGameStore((s) => s.screenShakeEnabled);
   const isHighTantrum = useGameStore((s) => s.tantrumMeter > 85);
   const sovereignImmunitySlips = useGameStore((s) => s.sovereignImmunitySlips);
+  const treasuryCash = useGameStore((s) => s.treasuryCash);
   const tutorialStepIndex = useGameStore((s) => s.tutorialStepIndex);
 
   const [isPressed, setIsPressed] = useState(false);
@@ -58,6 +77,30 @@ export const ClickerButton: React.FC = () => {
   );
 
   const isDry = inkLevel <= 0 && !isCapsFrenzy;
+
+  // The hint states the whole contract of the button: cost, yield, and the
+  // thing the player is actually chasing (the tantrum meter behind it). The
+  // hero control had NO hover text at all, which meant its two real rules —
+  // ink is a stamina bar, and a dry nib pays almost nothing — were invisible.
+  //
+  // INVARIANT: the hint must describe the SAME verb the stamp face shows.
+  // Phase 1's face reads CONFISCATE, so a hint that said "issue an executive
+  // order" would be the same lie `SIGN TARIFF` was — a second control using a
+  // different verb, with the hover contradicting the label this time.
+  const verb = phase === 1 ? 'Confiscate contraband' : 'Sign an executive order';
+  // INVARIANT: the dry branch must state the JAMMED yield too. "10% of the inked
+  // yield" is only true for the first 30 dry clicks; after that the nib jams and
+  // the engine pays 2%. The player who has been dry long enough to read this
+  // tooltip is the one reading a number that has already stopped being true.
+  const clickerHint = isDry
+    ? `DRY NIB. Empty tank: ${Math.round(DRY_CLICK_YIELD_MULTIPLIER * 100)}% yield, no tantrum — and after ${DRY_CLICK_JAM_THRESHOLD} consecutive dry clicks the nib JAMS and it drops to ${Math.round(
+        DRY_CLICK_JAM_YIELD_MULTIPLIER * 100
+      )}%. Refill at ${formatCurrency(calculateInkRefillTotal(0, treasuryCash))}, or wait out ${INK_REGEN_PER_SECOND}/s.`
+    : isCapsFrenzy
+    ? `${verb}. CAPS LOCK FRENZY — ${FRENZY_CLICK_MULTIPLIER}x for ${FRENZY_DURATION_SECONDS} more seconds. Ink is held, not topped up, so the tank you brought is the tank you get back.`
+    : `${verb}. Costs ${INK_PER_CLICK} ink and regains ${INK_REGEN_PER_SECOND}/s. Every inked slam builds Tantrum — 100% triggers CAPS LOCK FRENZY, ${FRENZY_CLICK_MULTIPLIER}x yield for ${FRENZY_DURATION_SECONDS}s.`;
+  const clickerName = isDry ? 'Dry stamp' : verb;
+
   // C1: the recoil used to fire on BOTH the stamp face and the directive card
   // at 100% tantrum, and the slam travelled 14px. During CAPS LOCK FRENZY the
   // player clicks many times a second, so the impacts overlapped into a
@@ -163,6 +206,7 @@ export const ClickerButton: React.FC = () => {
         onMouseLeave={() => setIsPressed(false)}
         onTouchStart={() => setIsPressed(true)}
         onTouchEnd={() => setIsPressed(false)}
+        {...hint(clickerHint, clickerName)}
         className={`relative group w-44 h-44 sm:w-52 sm:h-52 md:w-60 md:h-60 rounded-full flex flex-col items-center justify-center cursor-pointer stamp-face transition-[transform,box-shadow] duration-75 ${
           isPressed ? 'scale-95' : 'hover:scale-[1.02]'
         } ${slamClass} ${
@@ -186,7 +230,7 @@ export const ClickerButton: React.FC = () => {
             <>
               <Stamp className={`w-10 h-10 sm:w-12 sm:h-12 text-blue-200 mb-1 drop-shadow-md group-hover:rotate-6 transition-transform ${isRecoilActive ? 'animate-recoil' : ''}`} />
               <span className="font-mono t-micro font-black tracking-widest text-blue-300 uppercase">
-                Gate 99B Customs
+                {CUSTOMS_STAMP_NAME}
               </span>
               <span className="text-lg sm:text-xl font-black text-white tracking-wider uppercase mt-0.5">
                 CONFISCATE
@@ -202,7 +246,7 @@ export const ClickerButton: React.FC = () => {
                 Resolute Desk
               </span>
               <span className="text-lg sm:text-xl font-black text-newsprint-950 tracking-wider uppercase mt-0.5">
-                {isDry ? 'DRY SCRATCH' : 'SIGN TARIFF'}
+                {isDry ? 'DRY SCRATCH' : 'SIGN ORDER'}
               </span>
               <span className="t-micro font-mono text-newsprint-900/80 mt-0.5">
                 24k Golden Sherpie
@@ -218,14 +262,16 @@ export const ClickerButton: React.FC = () => {
         </div>
       </button>
 
-      {/* Helper caption — copy must never lie about the economy (see audit: UI vs code drift) */}
+      {/* Helper caption — copy must never lie about the economy (see audit: UI vs
+          code drift). In Phase 1 it names the actual location, because "the
+          customs desk" is not a place a player can picture. */}
       <span className="mt-1.5 t-caption font-mono text-newsprint-800 text-center">
         {phase === 1
           ? tutorialStepIndex < 1
-            ? 'Slam the stamp to seize contraband. Tap once to unseal BagHolder Pro.'
+            ? 'Slam the stamp to seize contraband. One tap unseals BagHolder Pro.'
             : 'BagHolder Pro is live. Open a PUT, fire a YAP, settle the crash.'
           : isCapsFrenzy
-          ? 'CAPS LOCK FRENZY: 10x REVENUE // CLICK AS FAST AS POSSIBLE'
+          ? `CAPS LOCK FRENZY: ${FRENZY_CLICK_MULTIPLIER}x REVENUE // CLICK AS FAST AS POSSIBLE`
           : 'Slam Sherpie to issue executive orders & build tantrum'}
       </span>
     </div>

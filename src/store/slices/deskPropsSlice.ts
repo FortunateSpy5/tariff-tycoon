@@ -46,7 +46,12 @@ const SHRED_HEAT_RELIEF = 25;
 /** The Money Printer: a big payout on a long cooldown. */
 const PRINTER_COOLDOWN_MS = 60000;
 const PRINTER_PAYOUT = 100000;
-const PRINTER_HEAT = 15;
+/**
+ * Exported because the printer button quotes it in its hover copy, and a
+ * tuning change must not leave the tooltip describing a different number than
+ * the button charges. Same reasoning as `RAID_BRIBE_COST`.
+ */
+export const PRINTER_HEAT = 15;
 
 export interface DeskPropsSlice {
   /** Timestamp of the last classified-secrets sale (cooldown gate). */

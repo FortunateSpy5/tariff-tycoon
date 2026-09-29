@@ -51,14 +51,21 @@ export const TUTORIAL_CHAIN: readonly TutorialStep[] = [
   {
     id: 0,
     title: 'Slam The Stamp',
-    body: 'Gate 99B is yours. Confiscate brie, contraband avionics, and anything else that snuck through customs. The ink is your stamina — run dry and the stamp jams.',
+    body: 'The Deeply Terminal Annex is yours. Confiscate brie, contraband avionics, and anything else that snuck through customs. The ink is your stamina — run dry and the stamp jams.',
     focus: 'desk',
     mode: 'auto',
   },
   {
     id: 1,
     title: 'Open A Paper Put',
-    body: 'BagHolder Pro is live on your first slam. Pick a ticker and SHORT a PUT. The next three contracts are PAPER TRADES — if you are wrong, you lose nothing. Learn the verb first.',
+    // The order slip DEFAULTS to the $1k chip, which a new player holding $100
+    // cannot afford — so step 1 used to walk them into a rejection toast with no
+    // explanation. The cheapest chip ($500) is the one that actually works, so
+    // the step names it, and names the Gold Box as the way to reach even that.
+    // VERIFIED in-browser: seed $100 + one blueprint = $630, which buys the $500
+    // chip and nothing more. Do not tell a player to "sell a blueprint" as if one
+    // covered $1,000 — it does not.
+    body: 'BagHolder Pro is live on your first slam. Pick a ticker, set Collateral to $500, and SHORT a PUT. You start on $100, so sell a blueprint from the GOLD BOX on the desk first. The next three contracts are PAPER TRADES: if you are wrong, you lose nothing.',
     focus: 'left',
     hotkey: '1',
     mode: 'auto',
@@ -74,7 +81,7 @@ export const TUTORIAL_CHAIN: readonly TutorialStep[] = [
   {
     id: 3,
     title: 'Settle The Contract',
-    body: 'Settle the PUT and bank the crash. Payout scales with leverage and with VEX volatility — a YAP spikes VEX, so the same crash pays more right after you post.',
+    body: 'Settle the PUT and bank the crash. Payout scales with leverage and with VEX volatility — a YAP spikes VEX, which amplifies whatever the position is already doing. That is why you post the YAP first and settle second.',
     focus: 'left',
     mode: 'auto',
   },
@@ -100,6 +107,7 @@ export interface Objective {
     totalFrenziesTriggered: number;
     totalCrisesAnswered: number;
     activeUpgrades: string[];
+    agencies: ReadonlyArray<{ isLiquidated: boolean }>;
     slopSuspicion: number;
   }) => number;
 }
@@ -131,6 +139,11 @@ export const CAREER_OBJECTIVES: readonly Objective[] = [
     label: 'Liquidate An Agency',
     detail: 'Sign a D.U.M.P. hatchet order for instant cash and a permanent perk.',
     target: 1,
-    read: (s) => s.activeUpgrades.length,
+    // INVARIANT: [An Objective Must Measure What Its Label Says]
+    // This read `activeUpgrades.length`, so the row "Liquidate An Agency" ticked
+    // over the moment you bought ANY upgrade — and the D.U.M.P. tab is the only
+    // place that sells upgrades, so it was masked. It was one cascade away from
+    // completing without the player ever touching an agency. Read the agencies.
+    read: (s) => s.agencies.filter((a) => a.isLiquidated).length,
   },
 ] as const;

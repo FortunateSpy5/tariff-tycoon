@@ -20,6 +20,7 @@ import React from 'react';
 import { ShieldAlert, Flame, Printer, Siren, X, RotateCcw } from 'lucide-react';
 import { useGameStore } from '../../store/useGameStore';
 import { resolveFeedback, type FeedbackTone } from './feedbackPriority';
+import { hint } from '../ui/hint';
 
 const TONE: Record<FeedbackTone, { bg: string; border: string; text: string }> = {
   red: { bg: 'bg-red-950/95', border: 'border-red-500', text: 'text-red-200' },
@@ -71,7 +72,14 @@ export const FeedbackLayer: React.FC<{
       {(feedback.kind === 'raid' || feedback.kind === 'crisis') && (
         <button
           onClick={feedback.kind === 'raid' ? dismissRaidAlert : dismissCrisisOutcome}
-          title="Dismiss notification"
+          {...hint(
+            'Clear the banner and the strip of desk it is covering. It only mutes the message — the raid cooldown and the crisis resolution are already settled in the store and keep running. The next message takes the slot immediately.',
+            // INVARIANT: an icon-only button has no visible text, so its
+            // accessible name must be explicit. `hint(text)` alone leaves this
+            // nameless to a screen reader — the one control in the file with
+            // hover text and still no name.
+            'Dismiss this alert'
+          )}
           className="ml-auto shrink-0 text-stone-400 hover:text-stone-100 p-0.5 cursor-pointer"
         >
           <X className="w-3.5 h-3.5" />

@@ -17,6 +17,54 @@
 
 import React from 'react';
 import { Lock } from 'lucide-react';
+import { hint } from './hint';
+
+/**
+ * What each cockpit channel IS, keyed by tab id. A bare "STOCKS" label tells a
+ * new player nothing about what the channel is for, and the two wings are
+ * driven by different panes, so the copy cannot be inferred from the label.
+ */
+const CHANNEL_PURPOSE: Record<string, string> = {
+  stocks: 'BagHolder Pro. The 0DTE desk: leveraged PUTs and CALLs, collateral locks, and settlement into whatever the last YAP broke.',
+  radar: 'S.L.O.P. Radar. Live suspicion heat, raid timers, and the inquest lead who takes a bribe in crony favor.',
+  // INVARIANT: [Do Not Imply Causality The Engine Denies] — `predictionSlice`
+  // states in terms that this is "deliberately NOT causal" and is "a casino
+  // floor bolted onto a market game"; resolution is a raw `Math.random()` roll
+  // against a frozen `probYes`. The first draft said wagers were "priced by how
+  // the trade war is actually resolving", which is the one claim in the whole
+  // channel that the YAP loop is not built on.
+  polygrift:
+    'Poly-Grift. Prediction markets on the de-dollarization thesis. The house sets these prices and they never move — the only question is whether the house guessed your position right.',
+  brief: 'The Situation Room. Where the run stands, what the next milestone costs, and what is currently bleeding.',
+  dump: 'The D.U.M.P. liquidation tree. Hatchet your own agency for instant cash and a permanent perk, and take a quarter of the favor price back as kickback.',
+  // Corrected: the shop sells the tungsten nib, autopen interns, the diet-soda
+  // drip, dark-pool fiber and the money printer — the shredder is a free desk
+  // prop, not an upgrade — and `buyUpgrade` spends TREASURY CASH, not favor.
+  unlocks:
+    'Oligarch Lobbying Upgrades. The tungsten nib, the autopen interns, the diet-soda drip, dark-pool fiber and the money printer, bought with treasury cash. The first purchase is also what opens the tariff dials.',
+  // Corrected: autopen interns and every liquidated agency also pay while the
+  // tab is shut, so "the only faucet that keeps paying" was false from Phase 2.
+  tariffs:
+    'Bilateral tariff dials across the six parodied blocs. One faucet that needs no clicking and no attention — but it starts at zero on every run, so until you turn a dial nothing at all pays while you sleep.',
+  caymans: 'Tier 1 prestige. File Chapter 11 and convert lifetime cash into permanent Sovereign Immunity Slips that outlive the reset.',
+};
+
+/** Appended to a tab whose channel is still sealed. */
+const SEALED_SUFFIX =
+  ' Sealed. Selecting it is free and exposes nothing — the pane shows the dossier that tells you what opens it.';
+
+/**
+ * What to say about a tab this table has never heard of.
+ *
+ * INVARIANT: [Never Fall Back To The Visible Label]
+ * The obvious `CHANNEL_PURPOSE[tab.id] ?? tab.label` silently produces a hover
+ * that is a verbatim restatement of the button's own text for any id added to a
+ * tab list without a matching entry — which is precisely what the hover rule
+ * forbids, and nothing would catch it. A new channel must be NAMED here, or
+ * this says so out loud.
+ */
+const UNDOCUMENTED_CHANNEL =
+  'This channel has no explanation attached yet. If a developer added this tab, they owe this string a paragraph.';
 
 export interface PaneShellProps {
   /** Tab strip rendered in the header. Omit for a pane with no tabs. */
@@ -78,7 +126,9 @@ export const TabStrip: React.FC<{
              See [The Seal Is a Promise, Not a Wall]. The `locked` flag is presentational
              only; it must never be wired to `disabled`. */
           aria-pressed={isActive}
-          title={tab.locked ? `${tab.label} — sealed. Select to see what opens it.` : tab.label}
+          /* INVARIANT: the visible `[1] STOCKS` text is already a sufficient
+             accessible name, so only `data-hint` is written here. See `hint()`. */
+          {...hint((CHANNEL_PURPOSE[tab.id] ?? UNDOCUMENTED_CHANNEL) + (tab.locked ? SEALED_SUFFIX : ''))}
           className={`flex min-w-0 flex-1 items-center justify-center gap-1 rounded px-1 py-1 text-center font-mono t-micro font-bold transition-colors ${
             isActive
               ? `${active} font-black shadow-md`
@@ -100,15 +150,28 @@ export const TabStrip: React.FC<{
 /**
  * StatusStrip — the shared footer row for a pane.
  *
- * @param accent dot/icon colour so the left terminal reads phosphor and the
- *               right deck reads gold, without forking the markup.
+ * Non-interactive: the label is a readout, not a control, so it carries no hint
+ * of its own. Anything that IS a control in `right` is the caller's
+ * responsibility and must bring its own `hint()`.
+ *
+ * INVARIANT: use this, do not hand-roll a footer. The left wing had one, and
+ * that fork is why its two labels had drifted out of step with the right wing's.
+ * Like `TabStrip`, the wings differ only by `accent` — `phosphor` for the CRT,
+ * `gold` for the classified deck — never by forked markup.
  */
 export const StatusStrip: React.FC<{
   icon?: React.ReactNode;
   label: string;
   right?: React.ReactNode;
-}> = ({ icon, label, right }) => (
-  <div className="flex shrink-0 items-center justify-between border-t border-redaction-700 bg-redaction-700 px-3 py-1.5 font-mono t-micro text-newsprint-400">
+  /** Label colour, so the left terminal reads phosphor and the deck gold. */
+  accent?: 'phosphor' | 'gold';
+  className?: string;
+}> = ({ icon, label, right, accent = 'gold', className = '' }) => (
+  <div
+    className={`flex shrink-0 items-center justify-between border-t px-3 py-1.5 font-mono t-micro ${
+      accent === 'phosphor' ? 'border-phosphor-600/30 bg-newsprint-950 text-phosphor-300/70' : 'border-redaction-700 bg-redaction-700 text-newsprint-400'
+    } ${className}`}
+  >
     <div className="flex min-w-0 items-center gap-1.5">
       {icon}
       <span className="truncate">{label}</span>

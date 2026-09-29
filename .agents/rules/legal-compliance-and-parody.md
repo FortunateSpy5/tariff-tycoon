@@ -34,6 +34,35 @@ To preserve absolute legal immunity:
    - Denmark / Greenland $\to$ *Future State #52*
    - Switzerland $\to$ *The Secrecy Haven*
 
+5. **Real place names must be unmistakable inventions.**
+   A short, plausible-sounding proper noun reads as a real location even when the
+   surrounding gag is clearly fictional. `Gate 99B` was a composite of JFK
+   Terminal 4 and JFK Tower's "Gate 40s" numbering — a real gate number in a real
+   airport, which is the one string in Phase 1 that a screenshot alone could not
+   be distinguished from reportage.
+
+   **Ruling:** the location is now **GATE 99B, THE DEEPLY TERMINAL ANNEX** — a
+   name that is internally absurd and cannot be read as a real terminal.
+   "Liberty International Airport" is likewise fictional and stays, but the gate
+   no longer travels on its own.
+
+   The general test: *could this string appear, unironically, on a sign in the
+   real world?* If yes, it needs a joke welded onto it that could not survive a
+   straight reading.
+
+   This applies to **acronyms** as much as to names, and short ones are the
+   worst offenders. The ten liquidatable agencies in `constants/agencies.ts` are
+   invented — `N.O.C.L.O.U.D.` is not NOAA, `F.A.T.` is not FDA, `S.M.O.G.` is
+   not EPA, `C.O.U.G.H.` is not CDC, and most are ordinary English words.
+
+   The exception was `D.O.E.-N.U.K.E.`: `D.O.E.` is the real, exact, two-letter
+   acronym of the US **Department of Energy**, and the expansion sat one word from
+   the real one ("En**ergetic**" vs "En**ergy**"). Short + exact + near-legible is
+   the combination to avoid. Renamed to `D.E.E.P.-N.U.K.E.`, keeping the pun.
+
+   The test for an acronym: *is this exact letter sequence already in use by a
+   real body?* If yes, change a letter — a near-miss is safe, a verbatim is not.
+
 ---
 
 ## 2. Platform Censorship Evasion Guidelines

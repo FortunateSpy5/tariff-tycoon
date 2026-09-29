@@ -19,7 +19,8 @@ import { useGameStore } from '../../store/useGameStore';
 import type { LeftChannelTab } from '../../types/unlocks';
 import { isLeftTabUnlocked, type UnlockState } from '../../engine/systems/unlockEngine';
 import { LEFT_TAB_DEMANDS } from '../../constants/tabDemands';
-import { PaneShell, TabStrip, SealedDossier } from '../ui';
+import { PaneShell, TabStrip, StatusStrip } from '../ui/PaneShell';
+import { SealedDossier } from '../ui/SealedDossier';
 import { StocksOptionsTab } from './tabs/StocksOptionsTab';
 import { PolyGriftTab } from './tabs/PolyGriftTab';
 import { SlopRadarTab } from './tabs/SlopRadarTab';
@@ -76,18 +77,24 @@ export const TelemetryConsolePane: React.FC = () => {
         />
       }
       footer={
-        <div className="flex shrink-0 items-center justify-between border-t border-phosphor-600/30 bg-newsprint-950 px-3 py-1.5 font-mono t-micro text-phosphor-300/70">
-          <div className="flex items-center gap-1.5">
-            <Radio className="w-3 h-3 text-phosphor-400 animate-pulse" />
-            <span>CITADULL HFT FEED</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Activity className="w-3 h-3 text-gold-400" />
-            <span className="text-phosphor-300 font-bold">
-              {isSealed ? 'CHANNEL SEALED' : '0ms LATENCY'}
-            </span>
-          </div>
-        </div>
+        /* PRUNED [0.1]: this hand-rolled its own footer instead of using the
+           shared <StatusStrip>, and it carried two labels. `CITADULL HFT FEED`
+           was pure decoration — it never changed and described nothing the
+           player could act on. `0ms LATENCY` is kept because it is LIVE: it
+           flips to CHANNEL SEALED, so it is actually reporting the pane's state.
+           One honest readout beats two, and routing it through StatusStrip
+           removes the last fork of the pane-footer markup. */
+        <StatusStrip
+          accent="phosphor"
+          icon={<Activity className="w-3 h-3 text-gold-400" aria-hidden />}
+          label="BAGHOLDER PRO FEED"
+          right={
+            <>
+              <Radio className="w-3 h-3 text-phosphor-400 animate-pulse" aria-hidden />
+              <span className="text-gold-400 font-bold">{isSealed ? 'CHANNEL SEALED' : '0ms LATENCY'}</span>
+            </>
+          }
+        />
       }
     >
       {isSealed ? (

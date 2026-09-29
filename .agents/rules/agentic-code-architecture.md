@@ -46,8 +46,9 @@ src/
 ```
 
 ### Automatic Enforcement (do not rely on memory)
-Two gates run inside `npm run build` and **fail the build**:
+Three gates run inside `npm run build` and **fail the build**:
 * `npm run theme:check` — `scripts/check-theme-coverage.mjs`, budget **0**.
+* `npm run hover:check` — `scripts/check-hover-coverage.mjs`, budget **0**.
 * `npm run size:check` — `scripts/check-file-sizes.mjs`, 400-line hard ceiling.
 
 Run them locally before claiming an invariant holds. If a check is inconvenient,
@@ -105,8 +106,8 @@ of them listed 5 store slices long after the store had 9.
 
 - Before declaring any task complete or committing code:
   1. Run `npm run build` locally. Zero TypeScript or Vite bundling errors permitted.
-     This also runs `theme:check` and `size:check`, so a clean build means both
-     gates passed.
+     This also runs `theme:check`, `hover:check` and `size:check`, so a clean
+     build means all three gates passed.
   2. Verify that no modified or created file exceeds 400 lines.
   3. Update any documentation the change made false. A stale doc is a defect:
      if you delete a feature, grep the `*.md` tree for its name and fix every hit.

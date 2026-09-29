@@ -40,6 +40,43 @@ export interface TariffRevenueResult {
 }
 
 /**
+ * The Laffer multiplier for a tariff rate: linear up to the trade-war
+ * threshold, then diminishing returns and smuggling, floored at 0.3.
+ * KaTeX: \lambda(r) = r/100 \quad \text{for}\ r \le 250
+ * KaTeX: \lambda(r) = \max\left(0.3,\ 2.5 - 0.004(r - 250)\right) \quad \text{for}\ r > 250
+ *
+ * INVARIANT: [One Definition Of The Laffer Curve]
+ * `BilateralTariffsTab` re-implemented these constants verbatim so its
+ * per-nation `Duty: +$X/s` readout and its hover copy could show the same
+ * number. `phaseEngine` exists precisely because duplicating a threshold across
+ * two files once let manual clicking and passive income disagree — and a tuning
+ * change here would have left every dial hover quoting a curve the engine no
+ * longer used while the readout silently updated. The UI imports this.
+ */
+export function lafferRateMultiplier(rate: number): number {
+  if (rate <= TRADE_WAR_THRESHOLD) return rate / 100;
+  return Math.max(0.3, 2.5 - ((rate - TRADE_WAR_THRESHOLD) / 100) * 0.4);
+}
+
+/** What a nation's base export yield is worth per second at a given phase. */
+export function tariffPhaseWeight(phase: GamePhase): number {
+  return phase === 1 ? 0.3 : phase * 0.9;
+}
+
+/**
+ * Duty income per second for one nation at one rate — the number the Tariffs
+ * tab prints and the number `tickTariffRevenue` actually pays. One function, so
+ * the two cannot drift.
+ */
+export function nationDutyPerSecond(
+  baseExportYield: number | undefined,
+  rate: number,
+  phase: GamePhase
+): number {
+  return (baseExportYield || 10.0) * lafferRateMultiplier(rate) * tariffPhaseWeight(phase);
+}
+
+/**
  * Compute tariff revenue and retaliatory heat for one tick.
  *
  * INVARIANT: revenue is reported per-second so the caller can apply its own
@@ -55,25 +92,15 @@ export function tickTariffRevenue(
   let revenuePerSecond = 0;
   let retaliatoryHeat = 0;
 
-  // Phase 1 collects a token fraction so the customs desk reads as a stepping
-  // stone; later phases pay the full rate.
-  const phaseWeight = phase === 1 ? 0.3 : phase * 0.9;
-
   PARODY_NATIONS.forEach((nation) => {
-    const rate = tariffRates[nation.id] ?? nation.defaultTariffRate;
-    let rateMultiplier: number;
+    // INVARIANT: [No Free Lunch At Customs] — an absent key is 0, never
+    // `defaultTariffRate`. Matches `deskSlice`, `BilateralTariffsTab` and
+    // `marketEngine`; a divergence here would pay duty the UI says is zero.
+    const rate = tariffRates[nation.id] ?? 0;
 
-    if (rate <= TRADE_WAR_THRESHOLD) {
-      // Linear extractive revenue up to the trade-war threshold.
-      rateMultiplier = rate / 100;
-    } else {
-      // Diminishing returns and smuggling past the threshold.
-      rateMultiplier = Math.max(0.3, 2.5 - ((rate - TRADE_WAR_THRESHOLD) / 100) * 0.4);
-      retaliatoryHeat += RETALIATION_HEAT_PER_SECOND * deltaSeconds;
-    }
+    if (rate > TRADE_WAR_THRESHOLD) retaliatoryHeat += RETALIATION_HEAT_PER_SECOND * deltaSeconds;
 
-    const baseDuty = nation.baseExportYield || 10.0;
-    revenuePerSecond += baseDuty * rateMultiplier * phaseWeight;
+    revenuePerSecond += nationDutyPerSecond(nation.baseExportYield, rate, phase);
   });
 
   return { revenuePerSecond, retaliatoryHeat };

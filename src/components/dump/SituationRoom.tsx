@@ -24,9 +24,11 @@
 import React from 'react';
 import { Target, Check, FileBadge } from 'lucide-react';
 import { useGameStore } from '../../store/useGameStore';
-import { CAREER_OBJECTIVES, TUTORIAL_CHAIN } from '../../constants/onboarding';
+import { CAREER_OBJECTIVES } from '../../constants/onboarding';
 import { formatCurrency } from '../../engine/math/bigNumber';
-import { Card, CardHeader } from '../ui';
+import { Card, CardHeader } from '../ui/Card';
+import { hint } from '../ui/hint';
+import { objectiveHint } from './objectiveHint';
 import { TutorialDirective } from '../onboarding';
 import { CertificateExporter } from '../share/CertificateExporter';
 
@@ -36,50 +38,85 @@ export const SituationRoom: React.FC = () => {
   const totalFrenziesTriggered = useGameStore((s) => s.totalFrenziesTriggered);
   const totalCrisesAnswered = useGameStore((s) => s.totalCrisesAnswered);
   const activeUpgrades = useGameStore((s) => s.activeUpgrades);
-  const tutorialStepIndex = useGameStore((s) => s.tutorialStepIndex);
+  const agencies = useGameStore((s) => s.agencies);
+  const slopSuspicion = useGameStore((s) => s.slopSuspicion);
 
+  // The `Objective.read` signature is the contract. `slopSuspicion` was
+  // hardcoded to 0 here — a snapshot that lies to its own readers, waiting for
+  // the first objective that consults it.
   const snapshot = {
     treasuryCash,
     phase,
     totalFrenziesTriggered,
     totalCrisesAnswered,
     activeUpgrades,
-    slopSuspicion: 0,
+    agencies,
+    slopSuspicion,
   };
+
+  const rows = CAREER_OBJECTIVES.map((obj) => {
+    const current = obj.read(snapshot);
+    return { obj, current, isDone: current >= obj.target };
+  });
+  const done = rows.filter((r) => r.isDone);
 
   return (
     <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar flex flex-col gap-2">
       <TutorialDirective />
 
-      {/* Career objectives — always present so the deck is never empty */}
+      {/* Career objectives — always present so the deck is never empty.
+          INVARIANT: [The List Must Shrink As You Win]
+          These used to render forever, half struck through, so a player who had
+          completed three of four saw a wall of dead rows above the live one. The
+          next unfinished objective is promoted and the finished ones collapse
+          into a single struck-through summary line. */}
       <Card material="paper">
         <CardHeader
           title="Career Objectives"
           icon={<Target className="w-3.5 h-3.5 text-wax-500" />}
+          right={
+            <span className="t-caption font-mono font-black text-phosphor-600 shrink-0">
+              {done.length}/{rows.length} DONE
+            </span>
+          }
         />
         <div className="flex flex-col gap-1.5">
-          {CAREER_OBJECTIVES.map((obj) => {
-            const current = obj.read(snapshot);
-            const isDone = current >= obj.target;
+          {rows.map(({ obj, current, isDone }) => {
             const pct = isDone ? 100 : Math.min(100, (current / obj.target) * 100);
             // Large currency targets read better as money; counters read as x/N.
             const isMoney = obj.target >= 1_000_000;
             const currentLabel = isMoney ? formatCurrency(current) : `${Math.floor(current)}/${obj.target}`;
+            // The next unfinished objective is the one the player should read.
+            const isNext = !isDone && obj.id === rows.find((r) => !r.isDone)?.obj.id;
 
             return (
-              <div key={obj.id} className="rule-print pb-1.5 last:border-0 last:pb-0">
+              <div
+                key={obj.id}
+                // No `aria-label` here: this is a bare `<div>` with no role, and
+                // an `aria-label` on a generic element is ignored outright by
+                // assistive tech. The row's own text is its name; the
+                // `role="progressbar"` below carries the accessible description.
+                {...hint(objectiveHint(obj, current, isDone, isNext))}
+                className="rule-print pb-1.5 last:border-0 last:pb-0"
+              >
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-1 min-w-0">
                     {isDone ? (
-                      <Check className="w-3 h-3 text-phosphor-600 shrink-0" />
+                      <Check className="w-3 h-3 text-phosphor-600 shrink-0" aria-hidden />
                     ) : (
-                      <span className="w-3 h-3 rounded-full border-2 border-wax-500/50 shrink-0" />
+                      <span
+                        className={`w-3 h-3 rounded-full shrink-0 ${
+                          isNext ? 'border-2 border-wax-500 animate-calm-glow' : 'border-2 border-wax-500/50'
+                        }`}
+                        aria-hidden
+                      />
                     )}
                     <span
                       className={`t-caption font-black uppercase truncate ${
                         isDone ? 'text-phosphor-600 line-through' : 'text-newsprint-900'
                       }`}
                     >
+                      {isNext ? <span className="text-wax-500 mr-1">NEXT // </span> : null}
                       {obj.label}
                     </span>
                   </div>
@@ -90,7 +127,14 @@ export const SituationRoom: React.FC = () => {
 
                 {!isDone && (
                   <>
-                    <div className="mt-1 h-1 bg-newsprint-300/60 rounded-full overflow-hidden">
+                    <div
+                      className="mt-1 h-1 bg-newsprint-300/60 rounded-full overflow-hidden"
+                      role="progressbar"
+                      aria-label={obj.label}
+                      aria-valuemin={0}
+                      aria-valuemax={obj.target}
+                      aria-valuenow={Math.floor(current)}
+                    >
                       <div
                         className="h-full bg-wax-500 transition-all duration-500 rounded-full"
                         style={{ width: `${pct}%` }}
@@ -102,22 +146,29 @@ export const SituationRoom: React.FC = () => {
               </div>
             );
           })}
+
+          {done.length > 0 && (
+            <p className="t-caption font-mono text-phosphor-700 leading-snug">
+              Certified: {done.map((d) => d.obj.label).join(' · ')}
+            </p>
+          )}
         </div>
       </Card>
 
-      {/* The shareable artifact — the virality hook, available from Phase 1 */}
+      {/* The shareable artifact — the virality hook, available from Phase 1.
+          RENAMED [0.1]: it read `Issue A Certificate`, which described a
+          bureaucratic form rather than the thing the player actually wants,
+          which is to post the damage. It is now named for the action. */}
       <CertificateExporter>
         <Card material="paper" className="hover:border-gold-500/60 transition-colors cursor-pointer">
           <div className="flex items-center gap-2">
             <FileBadge className="w-5 h-5 text-gold-600 shrink-0" />
             <div className="min-w-0 flex-1">
               <div className="t-micro font-black tracking-widest text-newsprint-900 uppercase">
-                Issue A Certificate
+                [ Share The Damage ]
               </div>
               <div className="t-caption text-newsprint-800/80 leading-snug">
-                {tutorialStepIndex < TUTORIAL_CHAIN.length
-                  ? 'Stamp and export your latest decree as a shareable 9:16 decree card.'
-                  : 'Export your career as an official Certificate of Structural Damage.'}
+                Exports a 1080×1920 PNG of your latest decree.
               </div>
             </div>
           </div>

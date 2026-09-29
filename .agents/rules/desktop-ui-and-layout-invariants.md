@@ -107,10 +107,16 @@ Do not reintroduce filtering a channel out of the strip. That is what made the f
    - Tabs must be keyboard accessible and preserve active channel state in Zustand (`settingsSlice`).
    - The two wings share `PaneShell`/`TabStrip`/`StatusStrip` and differ only by an `accent` prop. Fork the markup and the two strips will drift.
    - Never `overflow-hidden` the hotkey list in `HotkeyFooterHUD` — it truncates silently. Scroll or reflow.
-2. **Oligarch Lobbying Upgrade Shop (`[U]` Tab):**
+2. **Hover Context — [No Element On Screen May Be Unhoverable]:**
+   - Every operable element (native control, or anything with an `onClick`) must spread `{...hint('...')}` from `components/ui/HintTooltip`. Enforced by `npm run hover:check` at budget 0, inside `npm run build`.
+   - A hint explains **mechanism and stakes**, never a restatement of the visible label. "Lock in the current result and close this position", not "Click SETTLE".
+   - Pass the second argument — the accessible name — only when the visible text is cryptic or absent (`100x`, `$1k`, `+25%`, an icon-only button). A `title` alone is not an accessible name and does not appear on touch, so it is never sufficient.
+   - Do **not** wrap controls in a tooltip element to get hover context. `HintLayer` is a single delegated listener on `[data-hint]`; a wrapper becomes the flex item instead of the button and will silently reflow the cockpit.
+   - Do **not** use the native `disabled` attribute on a control whose hover explains *why* it is unavailable. Chromium swallows pointer events on a disabled button, so the context would vanish exactly when it is needed. Use `aria-disabled` plus a handler guard.
+3. **Oligarch Lobbying Upgrade Shop (`[U]` Tab):**
    - Upgrades must provide clear mechanical multipliers (Click Yield, Autopen taps/sec, Tantrum build rate, 0DTE payout multipliers, Broad Daylight Money Printer).
    - Purchased upgrades must disable their buy button, indicate acquired status, and save permanently to local storage.
-3. **Progressive Disclosure:**
-   - Phase 1 (Gate 99B Customs): BagHolder Pro and the YAP unlock on the **first slam** (previously a $\$10{,}000$ cash threshold, removed — the core loop must be reachable in the first ten seconds). Individual channels inside each wing still gate on upgrades.
+4. **Progressive Disclosure:**
+   - Phase 1 (Gate 99B, The Deeply Terminal Annex): BagHolder Pro and the YAP unlock on the **first slam** (previously a $\$10{,}000$ cash threshold, removed — the core loop must be reachable in the first ten seconds). Individual channels inside each wing still gate on upgrades.
    - Phase 2 (Oval Syndicate): Left wing boots BagHolder Pro's full tab set.
    - Phase 3 (Fortress America): Right wing unlocks D.U.M.P. and the full Crony Tech Tree.

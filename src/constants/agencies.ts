@@ -116,7 +116,17 @@ export const INITIAL_AGENCIES: AgencyLiquidation[] = [
   {
     id: 'nuke',
     name: 'Department of Energetic Uranium & Atomic Splitting',
-    acronym: 'D.O.E.-N.U.K.E.',
+    // INVARIANT: [Never Use A Verbatim Agency Acronym]
+    // This read `D.O.E.-N.U.K.E.` — and `D.O.E.` is the real, exact, two-letter
+    // acronym of the US Department of Energy, with an expansion one word away from
+    // the real one ("Energetic" vs "Energy"). It was the only acronym in this
+    // roster that a viewer could read straight: the other nine are invented
+    // (`N.O.C.L.O.U.D.` is not NOAA, `F.A.T.` is not FDA, `C.O.U.G.H.` is not
+    // CDC), and several are ordinary English words.
+    //
+    // Renamed to `D.E.E.P.` — not a real department, and the gap from any real
+    // one is now unmistakable. The N.U.K.E. half of the pun, and the joke, stay.
+    acronym: 'D.E.E.P.-N.U.K.E.',
     satiricalMission: 'Safeguarding enriched radioactive isotopes and atomic reactors',
     liquidationCashYield: 2000000000,
     perkDescription: 'Oval Office crypto rig powered by raw fuel rods (+200% passive crypto yields)',

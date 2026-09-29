@@ -14,9 +14,10 @@
 
 import React, { useState, useCallback } from 'react';
 import { ScrollText } from 'lucide-react';
-import { Card, CardHeader } from '../ui';
+import { Card, CardHeader } from '../ui/Card';
 import { renderDecreeCard, downloadBlob } from './decreeCard';
 import { snapshotToCardData, type RunSnapshot } from './runSummary';
+import { hint } from '../ui/hint';
 
 export const RunSummaryCard: React.FC<{
   snapshot: RunSnapshot;
@@ -47,6 +48,9 @@ export const RunSummaryCard: React.FC<{
         right={
           <button
             onClick={onDismiss}
+            {...hint(
+              'File the paperwork. The run is already closed — the treasury is reseeded and the slips are banked whether you read this card or not. The numbers are gone for good; export first if you want the record.'
+            )}
             className="t-caption font-mono text-newsprint-800 hover:bg-newsprint-300/40 px-1 rounded"
           >
             Dismiss
@@ -77,6 +81,9 @@ export const RunSummaryCard: React.FC<{
       <button
         onClick={handleExport}
         disabled={busy}
+        {...hint(
+          'Stamps the Certificate of Structural Damage: the flight number, peak treasury, lifetime confiscations, options profit, slips awarded, total stamp slams, and every CAPS LOCK FRENZY. Downloads as a 1080x1920 PNG. It is a snapshot taken before the reset, so it is the only copy of this run that will ever exist.'
+        )}
         className="mt-2.5 w-full t-micro font-mono font-black uppercase tracking-widest py-1.5 rounded bg-newsprint-900 text-newsprint-50 hover:bg-wax-500 disabled:opacity-60 transition-colors"
       >
         {busy ? 'Stamping…' : 'Export Certificate (9:16 PNG)'}

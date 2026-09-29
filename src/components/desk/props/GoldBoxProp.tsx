@@ -1,39 +1,107 @@
 /**
  * Gold Classified Document Box Prop
- * Sits on the desk blotter; sells classified blueprints to offshore buyers.
- * Grants +$500 instant cash, but adds +8% S.L.O.P. regulatory heat.
+ * Sits on the desk blotter; sells classified bathroom blueprints to offshore
+ * buyers. Pays +$500 and adds +8% S.L.O.P. regulatory heat.
+ *
+ * DESIGN RATIONALE [The Early-Game Cash Bridge]:
+ * The audit called this prop "weak" — $500 on an 8s cooldown is trivial in the
+ * late game and noise in the early one, and its real cost (suspicion) surfaced
+ * nowhere. It is kept, and reframed, because it is the only early faucet that
+ * can actually bridge the tutorial: the player starts with $100 seed cash, and
+ * the default order slip wants $1,000 of collateral. A new player physically
+ * cannot place the paper PUT the tutorial is asking for until they either slam
+ * the stamp for a minute or sell one blueprint. That is the prop's job.
+ *
+ * INVARIANT: [The Prop Must Never Lie About Its Own Cooldown]
+ * This component used to discard the boolean from `sellClassifiedSecrets` and
+ * show "+$500 CASH" on every click, including the ones the 8s cooldown had
+ * rejected. The player was told they had been paid when they had not. The
+ * return value is now honoured, and the cooldown is shown, because a control
+ * that silently does nothing is indistinguishable from a bug.
+ *
+ * INVARIANT: [Disabled Controls Still Need To Explain Themselves]
+ * `aria-disabled` rather than `disabled`: a natively disabled button swallows
+ * pointer events in Chromium, so the hover context would vanish exactly when it
+ * is most needed — "restocking in 3s".
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Archive, Sparkles } from 'lucide-react';
 import { useGameStore } from '../../../store/useGameStore';
+import { formatCurrency } from '../../../engine/math/bigNumber';
+import { hint } from '../../ui/hint';
+
+const COOLDOWN_SECONDS = 8;
+const PAYOUT = 500;
+const HEAT = 8;
+/** Mirrors `SECRET_SALE_BROKE_THRESHOLD` in `deskPropsSlice` — the waiver. */
+const BROKE_THRESHOLD = 50;
 
 export const GoldBoxProp: React.FC = () => {
   const sellClassifiedSecrets = useGameStore((s) => s.sellClassifiedSecrets);
+  const lastSecretSaleTimestamp = useGameStore((s) => s.lastSecretSaleTimestamp);
+  const treasuryCash = useGameStore((s) => s.treasuryCash);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [remaining, setRemaining] = useState(0);
+
+  // Read the cooldown from the store's own timestamp rather than a local timer,
+  // so a reloaded tab cannot desync and re-grant a free sale.
+  useEffect(() => {
+    const tick = () => {
+      const elapsed = (Date.now() - (lastSecretSaleTimestamp || 0)) / 1000;
+      setRemaining(Math.max(0, Math.ceil(COOLDOWN_SECONDS - elapsed)));
+    };
+    tick();
+    const id = setInterval(tick, 250);
+    return () => clearInterval(id);
+  }, [lastSecretSaleTimestamp]);
+
+  // INVARIANT: [The Label Must Match The Rule That Actually Applies To YOU]
+  // `sellClassifiedSecrets` WAIVES the cooldown below $50 — an emergency sale,
+  // so a broke player can always act. Gating the display on the timestamp alone
+  // meant a broke player read "Restocking (5s)", was marked `aria-disabled`,
+  // was told by the tooltip they could not sell — and then was paid anyway.
+  // That is a smaller cousin of the bug this prop was rewritten to kill.
+  const isBroke = treasuryCash < BROKE_THRESHOLD;
+  const isRestocking = remaining > 0 && !isBroke;
 
   const handleClick = () => {
-    sellClassifiedSecrets();
-    setFeedback('+$500 CASH (+8% HEAT)');
+    if (!sellClassifiedSecrets()) {
+      setFeedback('BOX RESTOCKING');
+      setTimeout(() => setFeedback(null), 1200);
+      return;
+    }
+    setFeedback(`+${formatCurrency(PAYOUT)} CASH (+${HEAT}% HEAT)`);
     setTimeout(() => setFeedback(null), 1800);
   };
 
   return (
     <button
       onClick={handleClick}
-      title="Sell classified bathroom documents for +$500 (+8% Suspicion)"
+      aria-disabled={isRestocking}
+      {...hint(
+        isBroke
+          ? `Restocking for ${remaining}s — but not for you. Under ${formatCurrency(
+              BROKE_THRESHOLD
+            )} the desk sells on emergency terms and ignores the clock entirely. A broke player can always move a blueprint; everyone else waits.`
+          : isRestocking
+          ? `Restocking. ${remaining}s. The box cannot be sold twice inside ${COOLDOWN_SECONDS}s — a wealthy player who spams it would convert ${formatCurrency(
+              PAYOUT / COOLDOWN_SECONDS
+            )}/s of pure heat.`
+          : `Sell a classified bathroom blueprint offshore: +${formatCurrency(PAYOUT)} cash and +${HEAT}% S.L.O.P. suspicion, which is what invites the raids. ${COOLDOWN_SECONDS}s cooldown. You seed with $100 and the cheapest order the terminal takes locks $500, so one blueprint roughly doubles your buying power — a nudge, not a faucet.`
+      )}
       className="p-2 rounded-lg bg-newsprint-900 border border-newsprint-800 hover:border-gold-500/60 transition-all flex items-center gap-2 text-left cursor-pointer group relative overflow-hidden select-none active:scale-95"
     >
       <div className="p-1.5 rounded-md bg-amber-950/60 border border-amber-500/30 text-amber-400 group-hover:scale-110 transition-transform">
-        <Archive className="w-4 h-4" />
+        <Archive className="w-4 h-4" aria-hidden />
       </div>
       <div>
         <div className="flex items-center gap-1 font-mono font-bold t-micro text-amber-400 group-hover:text-amber-300">
           <span>GOLD BOX</span>
-          <Sparkles className="w-2.5 h-2.5 text-amber-300" />
+          <Sparkles className="w-2.5 h-2.5 text-amber-300" aria-hidden />
         </div>
         <span className="t-caption text-stone-500 font-mono block">
-          Sell Secrets (+$500)
+          {isRestocking ? `Restocking (${remaining}s)` : `Sell Secrets (+${formatCurrency(PAYOUT)})`}
         </span>
       </div>
 

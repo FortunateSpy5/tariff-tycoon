@@ -16,7 +16,8 @@ import React from 'react';
 import { GraduationCap, ChevronRight, X } from 'lucide-react';
 import { useGameStore } from '../../store/useGameStore';
 import { TUTORIAL_CHAIN } from '../../constants/onboarding';
-import { Card } from '../ui';
+import { Card } from '../ui/Card';
+import { hint } from '../ui/hint';
 
 export const TutorialDirective: React.FC = () => {
   const tutorialStepIndex = useGameStore((s) => s.tutorialStepIndex);
@@ -46,7 +47,7 @@ export const TutorialDirective: React.FC = () => {
             <span className="t-micro font-black tracking-widest text-wax-500 uppercase">
               Step {tutorialStepIndex + 1}/{TUTORIAL_CHAIN.length}
             </span>
-            <span className="text-newsprint-300 text-caption">//</span>
+            <span className="t-micro text-newsprint-300" aria-hidden>//</span>
             <span className="t-micro font-black tracking-widest text-newsprint-800 uppercase">
               {step.title}
             </span>
@@ -66,16 +67,33 @@ export const TutorialDirective: React.FC = () => {
             )}
 
             <div className="ml-auto flex items-center gap-1">
+              {/* ACCESSIBILITY FIX: this button is icon-only and its only text
+                  alternative was a `title`, which most screen readers never
+                  announce — it announced as an unlabelled "button". The hint
+                  supplies both `data-hint` and the missing accessible name. */}
               <button
                 onClick={skipTutorial}
+                {...hint(
+                  'Burn the rest of the directive. Sets the tutorial index to the end of the chain, so onboarding never replays — including after a Flight to the Caymans. You keep the market, the paper trades, and everything you have already earned. You lose only the coaching; the Career Objectives panel takes over.',
+                  'Skip onboarding'
+                )}
                 className="t-caption font-mono px-1.5 py-0.5 rounded text-newsprint-800 hover:bg-newsprint-300/40 transition-colors"
-                title="Skip onboarding"
               >
                 <X className="w-3 h-3 inline" />
               </button>
               {step.mode === 'manual' && (
+                /* Only the final step is manual, and it is the graduation step.
+                   Sealing writes `tutorialStepIndex = TUTORIAL_CHAIN.length`, the
+                   same terminal state as skipping — see `advanceTutorialIndex`,
+                   which clamps so it can never wrap back to 0. */
                 <button
                   onClick={advanceTutorial}
+                  {...hint(
+                    isFinal
+                      ? 'Sign the last page and close the file. Marks onboarding complete so the directive stops reappearing; the Career Objectives panel takes over. Nothing is spent, nothing is unlocked, and your treasury is untouched — you have already been paid for the loop.'
+                      : 'Mark this step done and move the directive to the next one. It costs nothing.',
+                    isFinal ? 'Seal onboarding and continue' : 'Advance to the next directive step'
+                  )}
                   className="t-caption font-mono font-black uppercase px-1.5 py-0.5 rounded bg-newsprint-900 text-newsprint-50 hover:bg-wax-500 flex items-center gap-0.5 transition-colors"
                 >
                   {isFinal ? 'Seal It' : 'Next'}

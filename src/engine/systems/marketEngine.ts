@@ -40,7 +40,14 @@ function tariffPressureFor(symbol: StockSymbol, tariffRates: Record<string, numb
   let pressure = 0;
   PARODY_NATIONS.forEach((nation) => {
     if (!nation.linkedStocks.includes(symbol)) return;
-    const rate = tariffRates[nation.id] ?? nation.defaultTariffRate;
+    // INVARIANT: [No Free Lunch At Customs] — an absent key reads as 0, NEVER as
+    // `nation.defaultTariffRate`. Both `deskSlice` and `BilateralTariffsTab`
+    // already treat a missing key as "not tariffed"; this was the last read
+    // still disagreeing, so a save migration or a newly-added nation without a
+    // desk default would have applied a silent 175% punitive drag while every
+    // UI surface displayed 0% and a relief rally. P0-2 ("all six dials start at
+    // ZERO") is only coherent if the simulation's read agrees with the display.
+    const rate = tariffRates[nation.id] ?? 0;
     if (rate > 100) {
       pressure -= ((rate - 100) / 100) * 0.0004;
     } else if (rate < 50) {
@@ -55,7 +62,8 @@ function painTariffPressure(tariffRates: Record<string, number>): number {
   let pressure = 0;
   PARODY_NATIONS.forEach((nation) => {
     if (!nation.linkedStocks.includes('PAIN')) return;
-    const rate = tariffRates[nation.id] ?? nation.defaultTariffRate;
+    // Same [No Free Lunch At Customs] fallback — see `tariffPressureFor`.
+    const rate = tariffRates[nation.id] ?? 0;
     if (rate > 100) {
       pressure -= ((rate - 100) / 100) * 0.0006;
     } else if (rate < 50) {

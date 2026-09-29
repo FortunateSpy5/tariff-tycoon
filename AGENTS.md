@@ -28,6 +28,7 @@ Welcome, AI Agent. This repository powers **EXECUTIVE DEGEN: SHORT THE WORLD** (
   - Headless mathematical logic must reside in `src/engine/` and include KaTeX formula citations matching `GAME_DESIGN_DOCUMENT.md`.
   - Invariant safety functions must include explicit docstrings.
   - **No `index.ts` barrels.** Import the concrete module. Barrels go silently stale.
+  - **Enforce that every control explains itself.** `npm run hover:check` runs inside `npm run build` with a budget of 0: no operable element without a `hint()` spread. **Hover copy must be TRUE** — a tooltip quoting a number the simulation does not use is a lie told at the exact moment the player risks money, so compute it from `src/constants/` and `src/engine/` rather than typing it. A *visible label* that lies is worse than a tooltip that does. Gated controls use `aria-disabled` plus a handler guard, never `disabled`, so the explanation stays reachable.
   - **Enforce the theme, don't just intend it.** `npm run theme:check` runs inside `npm run build` with a budget of 0: no player-facing `bg-stone-*` surface without a themed material or an inline `theme-allow` marker. The region→material table is in `.agents/workflows/UI_REDESIGN_PLAN.md`.
 - **Keep Documentation Honest:**
   - A stale doc is a defect. If you change or delete behaviour, grep the `*.md` tree for the old claim and fix every hit — GDD, README, knowledge base, audit report, and rules files all drift independently.

@@ -14,19 +14,19 @@ You play as **"The Dealmaker-in-Chief"**—a silhouette with a glowing aerodynam
 
 ## 🕹️ Core Gameplay Loops
 1. **Two-Phase Tactile Clicker Progression**:
-   * **Phase 1: Gate 99B Liberty International**: Slam a heavy blue rubber stamp **[CONFISCATED - BY ORDER OF AGENT 412]** onto tourist declarations and foreign brie, flipping contraband on **GriftBay Underground** for seed cash.
+   * **Phase 1: Gate 99B, The Deeply Terminal Annex**: Slam a heavy blue rubber stamp **[CONFISCATED - BY ORDER OF AGENT 412]** onto tourist declarations and foreign brie, flipping contraband on **GriftBay Underground** for seed cash.
    * **Your first slam unlocks BagHolder Pro and the YAP** — market access is an *event*, not a cash threshold, so the core loop is playable in the first ten seconds. At **$1,000,000**, the Oval Office opens and the Golden Sharpie replaces the customs stamp.
    * A **5-step classified-directive tutorial** (slam → open a paper PUT → fire a YAP → settle) teaches that loop. Your first **3 contracts are paper trades**: losses refund, wins pay for real. Risk-free by design, because the premise must survive a first bad guess.
-   * When ink runs out, the **"Desperation Dry Nib"** scratch adds 3.0% Tantrum per click and pays 90% yield, building toward **CAPS LOCK FRENZY** (15 seconds, 10x click multiplier, ink restored on activation). Above 85% Tantrum the stamp switches to a damped slam so fast clicking degrades to a throb rather than a judder.
+   * When ink runs out, the **"Desperation Dry Nib"** scratch pays **10% yield and builds no tantrum** — after 30 consecutive dry clicks the nib jams and yield collapses to 2%. The only route to **CAPS LOCK FRENZY** (20 seconds, 10x click multiplier, ink *frozen* for the duration and **not** restored) is to keep the tank inked. Above 85% Tantrum the stamp switches to a damped slam so fast clicking degrades to a throb rather than a judder.
 2. **The 3:00 AM Lethal YAP & Causal Insider Shorting**:
    * Use **BagHolder Pro** (the phosphor CRT terminal in the left wing). Your first YAP opens S.L.O.P. Radar; settling a PUT opened before that YAP brings in PolyGrift and its pundit bets.
    * Buy 1,000x leveraged Put options on a target sector.
    * Slam **[LAUNCH LETHAL YAP]** on **`YAP`** with procedurally generated 3:00 AM rants (*"FRUIT ECOSYSTEM INC. IS COOLING CHIPS WITH COMMIE TAP WATER! 400% PATRIOT TAX AT SUNRISE! SAD!"*).
    * Settle the PUT to bank its result. For the optional **Straddle Squeeze**, arm a CALL on the crashed ticker and hit **[WALK-BACK CLARIFICATION]** within 8 seconds. The CALL settles with the rally; if time runs out, its combo collateral is returned and settled PUT proceeds stay safe.
 3. **The D.U.M.P. Liquidation Tree (Disaster Capitalism)**:
-   * Liquidate 10 federal agencies (N.O.C.L.O.U.D., F.A.T., A.I.R., S.M.O.G., S.N.A.I.L., S.L.O.P., S.H.A.K.E., THE BRRR VAULT, D.O.E.-N.U.K.E., C.O.U.G.H.) for massive cash while monetizing the resulting catastrophes (e.g. emergency umbrella tariffs during unannounced hurricanes, selling toxic sludge as "Patriot Protein Paste").
+   * Liquidate 10 federal agencies (N.O.C.L.O.U.D., F.A.T., A.I.R., S.M.O.G., S.N.A.I.L., S.L.O.P., S.H.A.K.E., THE BRRR VAULT, D.E.E.P.-N.U.K.E., C.O.U.G.H.) for massive cash while monetizing the resulting catastrophes (e.g. emergency umbrella tariffs during unannounced hurricanes, selling toxic sludge as "Patriot Protein Paste").
 4. **The 4-Phase Escalation (Universal Paperclips Scale)**:
-   * **Phase 1: The Customs Desk** ($0 to $1M) — Shaking down tourists at Gate 99B Liberty International for unpasteurized Strike Republic brie. Market access opens on your **first slam**.
+   * **Phase 1: The Customs Desk** ($0 to $1M) — Shaking down tourists at Gate 99B, The Deeply Terminal Annex (Liberty International Airport) for unpasteurized Strike Republic brie. Market access opens on your **first slam**.
    * **Phase 2: The Oval Syndicate** ($1M to $100B) — D.U.M.P. opens first; liquidations reveal upgrades, upgrades reveal tariff controls, and changing a tariff reveals Caymans prestige.
    * **Phase 3: Fortress America** ($100B to $10^18) — Freezing maritime trade; naval container auctions; F.A.T. reclassifying drywall as "High-Calcium Freedom Flour."
    * **Phase 4: Ontological Tariffs** ($10^{18} to $10^{42}$) — Expanding the Commerce Clause into cosmic physics: 45% tariff on the Sun's photons, 900% tariff on the Future, declaring the 2nd Law of Thermodynamics unconstitutional, until the universe files for Chapter 7 bankruptcy.

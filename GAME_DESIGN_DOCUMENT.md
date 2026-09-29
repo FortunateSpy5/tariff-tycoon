@@ -53,7 +53,7 @@
 ### 3.1 The Primary Clicker: Two-Phase Kinesthetic Progression
 
 #### Phase 1 Clicker: The Blue Rubber Stamp ($0 to $1M)
-* **Setting:** Gate 99B, Liberty International Airport (Terminal Under Continuous Asbestos Abatement Since 1974).
+* **Setting:** Gate 99B, The Deeply Terminal Annex — Liberty International Airport (Terminal Under Continuous Asbestos Abatement Since 1974).
 * **The Interaction:** A heavy, ink-stained blue rubber stamp: **[CONFISCATED - BY ORDER OF AGENT 412]** slamming down onto tourist baggage declarations and wheels of foreign brie on a scuffed laminate TSA counter.
 * **The Side-Hustle:** Confiscated goods are tossed into the desk mini-fridge and flipped on **GriftBay Underground** for seed capital.
 * **The Milestone ($1M):** Sirens wail, screen fades to black, and an armored motorcade whisks the player directly to the Oval Office!
@@ -148,7 +148,7 @@ $$\text{YAP} = [\text{TIME\_PREFIX}] + [\text{TARGET\_ENTITY}] + [\text{BIZARRE\
 | **5** | **S.N.A.I.L. (Postal Service)** | **+$50,000,000** | 100% margin on foreign trade parcel duties | **14% Lost Parcel Paradox**: Orders lost in mail. | Unlock **"Unclaimed Cargo Mystery Box Auctions"** under BagHolder Pro! |
 | **6** | **S.L.O.P. (Securities Comm)** | **+$180,000,000** | Suspicion accumulation -75%; 5,000x leverage | **Ponzi Cascade**: Stock rug-pulls to $0.00 every 3m. | Front-run the rug-pull with automated short puts! |
 | **7** | **S.H.A.K.E. (Tax Service)** | **+$650,000,000** | +50% Retained corporate profit growth | **Honesty Box Deficit**: Debt compounds +10%. | Blame the deficit on trading partners to justify 1,000% retaliatory tariffs! |
-| **8** | **D.O.E.-N.U.K.E. (Atomic)** | **+$2,500,000,000** | +200% Executive Mansion crypto rig yield | **Geiger Counter Clicker**: 2.5% click chance to trigger mutant auto-tariffs. | Free radioactive glow doubles night-shift intern typing speed! |
+| **8** | **D.E.E.P.-N.U.K.E. (Atomic)** | **+$2,500,000,000** | +200% Executive Mansion crypto rig yield | **Geiger Counter Clicker**: 2.5% click chance to trigger mutant auto-tariffs. | Free radioactive glow doubles night-shift intern typing speed! |
 | **9** | **C.O.U.G.H. (Contagion)** | **+$8,000,000,000** | Manual "Health Scare" button (-60% market) | **Cabinet Super-Gout**: Intern passive click rates drop 40% on Mondays. | Sell holistic "Freedom Tonics" directly from the Oval Office! |
 | **10**| **THE BRRR VAULT ($BRRR)** | **+$100,000 per print** | **"PRINT $BRRR"** physical desk button; 60-second cooldown | **S.L.O.P. Heat Surge**: Suspicion rises +15 per print. | Deliberate liquidity injection with a visible raid risk. |
 
@@ -198,7 +198,7 @@ $$\text{YAP} = [\text{TIME\_PREFIX}] + [\text{TARGET\_ENTITY}] + [\text{BIZARRE\
 
 BagHolder Pro and YAP unlock on the **first slam** as a Phase 1 milestone; this does not advance the formal phase.
 
-1. **Phase 1: The Customs Desk ("Confiscation Arbitrage")**: Shaking down tourists at Gate 99B Liberty International for unpasteurized French brie, fine cigars, and luxury cosmetics. Stashing contraband in the desk mini-fridge and flipping it on GriftBay Underground.
+1. **Phase 1: The Customs Desk ("Confiscation Arbitrage")**: Shaking down tourists at Gate 99B, The Deeply Terminal Annex for unpasteurized French brie, fine cigars, and luxury cosmetics. Stashing contraband in the desk mini-fridge and flipping it on GriftBay Underground.
 2. **Phase 2: The Oval Syndicate ("The BagHolder Pro Era")**: Controlling global trade policy from the Resolute Desk. Front-running the S&Pain 500 with unhinged 3:00 AM YAPs, buying 1,000x leveraged options, and cashing in billions.
 3. **Phase 3: Fortress America ("The D.U.M.P. Protocol")**: 2,500% tariffs freeze world trade. 3,000 container ships anchored off Long Beach form the floating rogue nation of "New Shenzhen." Navy seals board cargo ships to auction off mystery containers. Domestic substitution: FDA reclassifies powdered drywall as "High-Calcium Freedom Flour."
 4. **Phase 4: Ontological Protectionism ("Taxing the Singularity")**: Every terrestrial nation is bankrupt. The Commerce Clause expands beyond spacetime into scientific notation ($10^{18} \to 10^{42}$):

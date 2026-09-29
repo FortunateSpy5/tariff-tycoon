@@ -54,7 +54,7 @@ CAPS LOCK Frenzy      S.L.O.P. Suspicion      Inflation Heat          Ontologica
 * **INVARIANT: [Only A Real Slam Advances The Chain].** Onboarding advances on a manual slam and nothing else; passive ticks and offline credit may terminate it at Phase 2 but never advance it. Sharing one resolver between the click path and the tick path consumed the first-slam token on the first idle frame and soft-locked the causal loop shut for every new player.
 * **INVARIANT: [No Free Lunch At Customs].** Bilateral tariff dials start at 0%, not at the nations' default rates, so revenue begins only once the player has been granted the dials and turned them. Pre-set dials paid ~$40/s from turn one — 8x a $5.00 slam. The Laffer curve is unchanged; this is a gate, not a rebalance.
 * Phase 2 at $1,000,000 reveals D.U.M.P.; liquidation reveals Crony upgrades; the first upgrade reveals tariff controls; changing a tariff reveals Caymans prestige.
-1. **Phase 1: The Customs Desk ($0 to $1M):** Airport confiscation arbitrage at Gate 99B Liberty International.
+1. **Phase 1: The Customs Desk ($0 to $1M):** Airport confiscation arbitrage at Gate 99B, The Deeply Terminal Annex.
 2. **Phase 2: The Oval Syndicate ($1M to $100B):** Front-running markets with 3:00 AM YAPs on BagHolder Pro.
 3. **Phase 3: Fortress America ($100B to $10^18):** Naval container auctions & domestic drywall substitution.
 4. **Phase 4: Ontological Protectionism ($10^{18} \to 10^{42}$):** 45% solar photon duty on the Sun, taxing future knowledge, nullifying the 2nd Law of Thermodynamics.

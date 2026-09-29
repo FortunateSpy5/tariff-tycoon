@@ -13,6 +13,7 @@ import {
   PRESTIGE_OPTIONS_WEIGHT,
   INK_REFILL_COST_CAP,
   INK_REFILL_COST_GROWTH,
+  INK_REFILL_TREASURY_RATIO,
   DRY_CLICK_JAM_YIELD_MULTIPLIER,
   DRY_CLICK_YIELD_MULTIPLIER,
   FRENZY_CLICK_MULTIPLIER,
@@ -71,14 +72,47 @@ export function calculateClickValue(
 
 /**
  * Computes the cost to refill Golden Sharpie ink.
- * GDD Formula: C(n) = C_0 \times 1.15^n
- * KaTeX: C(n) = \min(25 \times 1.15^n, 25000)
- * 
+ * KaTeX: C(n) = \min(25 \times 1.35^n, 25000)
+ *
+ * INVARIANT: the exponent is 1.35, NOT the GDD's original 1.15. `balance.ts`
+ * steepened it deliberately ("GDD Formula: 1.15^n -> steeper") and the constant
+ * is the definition — but the KaTeX citation here kept saying 1.15, and the
+ * figure then leaked into player-facing hover copy that quoted the stale
+ * formula. A balance constant is not where a designer looks for a formula, so
+ * the citation is the thing that has to be kept true.
+ *
  * Capped to avoid negative-ROI traps where refills exceed a full ink tank's output.
  */
 export function calculateInkRefillCost(refillCount: number, baseCost: number = 25): number {
   const exponentialCost = Math.floor(baseCost * Math.pow(INK_REFILL_COST_GROWTH, refillCount));
   return Math.min(exponentialCost, INK_REFILL_COST_CAP);
+}
+
+/** The 4× ceiling on a refill, as a multiple of the base curve. */
+export const INK_REFILL_HARD_CAP_MULTIPLE = 4;
+
+/**
+ * The price the player ACTUALLY pays to refill: the base curve PLUS a
+ * percentage tax on the treasury, hard-capped at 4× the base.
+ * KaTeX: C_{total}(n) = \min\left(B(n) + 0.02 \cdot \text{treasury},\ 4 \cdot B(n)\right)
+ *
+ * INVARIANT: [The Quoted Price Must Be The Charged Price]
+ * `refillInk` inlined this expression while the UI showed
+ * `calculateInkRefillCost` — the base term ONLY. So a player holding $10M was
+ * quoted "$25.00" and charged $100, and the hint's "adds 2% of your treasury on
+ * top" described a term the cap deletes outright whenever 2%·treasury exceeds
+ * 3× the base. That is a `SIGN TARIFF`-class lie, told at the moment of payment.
+ *
+ * The cap is exactly why this needed saying out loud: the 2% is not always
+ * "on top", and copy implying it always is, is wrong.
+ */
+export function calculateInkRefillTotal(
+  refillCount: number,
+  treasuryCash: number,
+  baseCost: number = 25
+): number {
+  const base = calculateInkRefillCost(refillCount, baseCost);
+  return Math.min(base + treasuryCash * INK_REFILL_TREASURY_RATIO, base * INK_REFILL_HARD_CAP_MULTIPLE);
 }
 
 /**

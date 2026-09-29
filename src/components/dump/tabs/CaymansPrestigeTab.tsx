@@ -1,6 +1,13 @@
 /**
  * Caymans Prestige Tab
  * Tier 1 Prestige: Flight to the Caymans & Sovereign Immunity Slips (SIS).
+ *
+ * INVARIANT: [The Gate Counts Collateral You Never Withdrew]
+ * `executeFlightToCaymans` credits `lifetimeCashEarned + Σ lockedCollateral`
+ * against `PRESTIGE_CASH_DIVISOR`, so margin still sitting in open 0DTE
+ * positions counts toward the threshold. The button label used to advertise a
+ * flat "Lifetime" requirement and quietly omitted that, which made the gate
+ * read as stricter than it is. The label now names the collateral.
  */
 
 import React, { useState } from 'react';
@@ -11,7 +18,8 @@ import { formatCurrency } from '../../../engine/math/bigNumber';
 import { PRESTIGE_CASH_DIVISOR } from '../../../constants/balance';
 import { RunSummaryCard } from '../../share/RunSummaryCard';
 import { captureRunSnapshot, type RunSnapshot } from '../../share/runSummary';
-import { Card } from '../../ui';
+import { Card } from '../../ui/Card';
+import { hint } from '../../ui/hint';
 import { DossierHeader } from '../DossierHeader';
 
 export const CaymansPrestigeTab: React.FC = () => {
@@ -29,7 +37,7 @@ export const CaymansPrestigeTab: React.FC = () => {
   const lockedCollateral = (activeTrades || []).reduce((sum, t) => sum + (t.collateralLocked || 0), 0);
   const effectiveLifetimeCash = (lifetimeCashEarned || 0) + lockedCollateral;
 
-  // Minimum $10^10 lifetime treasury cash to prestige (GDD §5)
+  // Minimum $10^10 of lifetime cash, collateral included (GDD §5)
   const canPrestige = effectiveLifetimeCash >= PRESTIGE_CASH_DIVISOR;
   const potentialSIS = calculatePrestigeSIS(effectiveLifetimeCash, lifetimeOptionsProfit || 0);
 
@@ -52,6 +60,24 @@ export const CaymansPrestigeTab: React.FC = () => {
     setFeedback(`PRESTIGE COMPLETE! Earned +${earned} Sovereign Immunity Slips!`);
     setTimeout(() => setFeedback(null), 3000);
   };
+
+  // INVARIANT: [Lead With The Number, Then The Consequence]
+  // The gated branch used to open by telling the player the "cheapest route to
+  // qualifying is to size up and hold a position" — a balance designer
+  // confessing an exploit, in the imperative, in the imperative voice of a
+  // manual. The shortfall is the only number they came for, and it was
+  // sentence four. Same facts, player-first.
+  const prestigeHint = canPrestige
+    ? `+${potentialSIS} Sovereign Immunity Slips, each a permanent +10% click yield. The gate is ` +
+      `${formatCurrency(PRESTIGE_CASH_DIVISOR)} of lifetime earnings PLUS every dollar still locked in open ` +
+      `0DTE positions. Wiped: treasury, every liquidation, every tariff dial, every upgrade, all heat, and ` +
+      `every open position — closed out, not settled. Kept: your Slips, your decrees, the tutorial. You come ` +
+      `back with $1M per Slip, raised to 1.2, so a fat filing compounds immediately.`
+    : `${formatCurrency(Math.max(0, PRESTIGE_CASH_DIVISOR - effectiveLifetimeCash))} short. The gate is ` +
+      `${formatCurrency(PRESTIGE_CASH_DIVISOR)} of lifetime earnings PLUS every dollar of collateral locked in ` +
+      `open 0DTE positions — you have ${formatCurrency(effectiveLifetimeCash)} counted, and a fat position ` +
+      `counts toward it. Filing wipes the treasury, every liquidation, every tariff dial, every upgrade, all heat, ` +
+      `and every open position. You keep your Slips and their +10% click yield each.`;
 
   return (
     <div className="h-full min-h-0 flex flex-col gap-2.5 select-none">
@@ -87,8 +113,10 @@ export const CaymansPrestigeTab: React.FC = () => {
             File Chapter 11 Nation Reorganization
           </span>
           <p className="t-micro text-newsprint-800 leading-relaxed font-sans">
-            Reset current Treasury cash and liquidations to incorporate an offshore Delaware C-Corp. 
-            Retain permanent Sovereign Immunity Slips to amplify future click and tariff payouts.
+            Dissolve the Republic into an offshore shell and start again. Treasury cash, every agency liquidation,
+            every tariff dial, every crony upgrade and all S.L.O.P. heat return to zero, and any open 0DTE
+            position is closed out rather than settled. You keep your Sovereign Immunity Slips: each is a permanent
+            +10% on manual click yield and a $1,000-per-slip floor on every click, so a run can never begin soft-locked.
           </p>
 
           <div className="p-2 rounded bg-newsprint-200/70 border border-newsprint-300 font-mono text-xs flex justify-between items-center">
@@ -96,9 +124,18 @@ export const CaymansPrestigeTab: React.FC = () => {
             <span className="text-emerald-700 font-bold">+{potentialSIS} SIS</span>
           </div>
 
+          <div className="p-2 rounded bg-newsprint-200/70 border border-newsprint-300 font-mono t-caption flex justify-between items-center text-newsprint-800">
+            <span>Counted: {formatCurrency(lifetimeCashEarned || 0)} earned</span>
+            <span>+ {formatCurrency(lockedCollateral)} locked</span>
+          </div>
+
           <button
             onClick={handlePrestige}
-            disabled={!canPrestige}
+            // INVARIANT: [Gated Controls Use aria-Disabled, Not disabled]
+            // A native `disabled` swallows pointer events and would remove the
+            // hover text that explains the shortfall. `handlePrestige` guards.
+            aria-disabled={!canPrestige}
+            {...hint(prestigeHint, 'File Chapter 11 and flee to the Caymans')}
             className={`w-full py-2 rounded-lg font-mono t-micro font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all ${
               canPrestige
                 ? 'bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 text-newsprint-950 shadow cursor-pointer active:scale-95 font-black'
@@ -106,7 +143,11 @@ export const CaymansPrestigeTab: React.FC = () => {
             }`}
           >
             <RefreshCw className="w-3.5 h-3.5" />
-            <span>Flee to the Caymans (Need {formatCurrency(PRESTIGE_CASH_DIVISOR)} Lifetime)</span>
+            <span>
+              {canPrestige
+                ? 'Flee to the Caymans'
+                : `Flee to the Caymans (Need ${formatCurrency(PRESTIGE_CASH_DIVISOR)} Lifetime + Collateral)`}
+            </span>
           </button>
         </div>
       </div>

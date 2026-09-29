@@ -18,12 +18,14 @@ import {
 import { useGameStore } from '../../store/useGameStore';
 import { formatCurrency } from '../../engine/math/bigNumber';
 import { ResetGameModal } from '../dialogs/ResetGameModal';
+import { hint } from '../ui/hint';
+import { CUSTOMS_LOCATION_SHORT, CUSTOMS_STAMP_NAME } from '../../constants/setting';
 import type { StockSymbol } from '../../types/market';
 
 const HEADLINES = [
   'WALL STREET RALLIES ON 3:00 AM TARIFF POST // ANALYSTS SHOCKED',
   'FRUIT ECOSYSTEM INTRODUCES $3,500 REPLACEMENT POWER CORD',
-  'CUSTOMS CONFISCATES 400 WHEELS OF GREAT NORTHERN MAPLE BRIE AT GATE 99B',
+  `CUSTOMS CONFISCATES 400 WHEELS OF GREAT NORTHERN MAPLE BRIE AT ${CUSTOMS_STAMP_NAME}`,
   'D.U.M.P. HATCHET MEN SPOTTED OUTSIDE WEATHER BUREAU WITH CHAINSAWS',
   'GIGAFLEX WEDGETRUCK RUST DEFENSE DECLARED UNCONSTITUTIONAL',
   'THE S&PAIN 500 INCHES TOWARD RECORD DISASTER // BUY PUTS',
@@ -69,7 +71,7 @@ export const BreakingNewsBar: React.FC = () => {
               : 'bg-newsprint-900 text-newsprint-100 border-newsprint-900'
           }`}
         >
-          {isCapsFrenzy ? 'FRENZY' : phase === 1 ? 'GATE 99B' : 'OVAL // 3 AM'}
+          {isCapsFrenzy ? 'FRENZY' : phase === 1 ? CUSTOMS_LOCATION_SHORT : 'OVAL // 3 AM'}
         </span>
       </div>
 
@@ -131,9 +133,15 @@ export const BreakingNewsBar: React.FC = () => {
 
         {/* Crony Favor — B4: Handshake icon replaces the 🤝 emoji. */}
         <div className="text-right hidden sm:block">
+          {/* Non-button, so the gate does not require it — but a bare number on a
+              rail is unreadable without its mechanism. INVARIANT: the two
+              resource readouts must always say what they buy. */}
           <span
             className="text-xs font-bold text-wax-500 flex items-center gap-1"
-            title="Crony Favor"
+            {...hint(
+              'Political capital, not cash. YAPs pay 2 each and the desk leaks 0.05 a second, capped at 9,999. Spends on the subpoena shredder, the S.L.O.P. bribe, and D.U.M.P. liquidations — which kick a quarter of the price straight back. A normal run starts you at 30.',
+              'Crony Favor'
+            )}
           >
             <Handshake className="w-3.5 h-3.5" aria-hidden />
             {Math.floor(cronyFavor)}
@@ -145,7 +153,14 @@ export const BreakingNewsBar: React.FC = () => {
           <div className="text-right hidden md:block">
             <span
               className="text-xs font-bold text-newsprint-800 flex items-center gap-1"
-              title="Sovereign Immunity Slips"
+              {...hint(
+                // roadmap: there is no perk vault yet — `unlockPerk` exists in
+                // `prestigeSlice` but is called from no component. Promising a
+                // shop that does not exist is the doc-lie AGENTS.md calls out by
+                // name, so the slips are described as what they actually do.
+                'The only currency that survives a Flight to the Caymans. Each slip is a flat +10% on every stamp for the rest of the run, and it also props up the bankruptcy floor at $1,000 a slip. Earned by prestiging at $10^10 lifetime cash. Nothing spends them yet — they sit in the drawer until the vault ships. A wipe of this save destroys them; a Flight to the Caymans does not.',
+                'Sovereign Immunity Slips'
+              )}
             >
               <ScrollText className="w-3.5 h-3.5" aria-hidden />
               {sovereignImmunitySlips}
@@ -157,8 +172,12 @@ export const BreakingNewsBar: React.FC = () => {
         <div className="flex items-center gap-0.5 border-l border-newsprint-300 pl-2">
           <button
             onClick={toggleMute}
-            title={isMuted ? 'Unmute Audio [M]' : 'Mute Audio [M]'}
-            aria-label={isMuted ? 'Unmute audio' : 'Mute audio'}
+            {...hint(
+              isMuted
+                ? 'Restore the squeaks, the thuds, and the cha-ching on a settled contract. [M]'
+                : 'Kill the audio. The treasury does not care, and neither does your sleep schedule. [M]',
+              isMuted ? 'Unmute audio' : 'Mute audio'
+            )}
             className="p-1 rounded text-newsprint-800 hover:bg-newsprint-300/50 transition-colors cursor-pointer"
           >
             {isMuted ? (
@@ -169,8 +188,12 @@ export const BreakingNewsBar: React.FC = () => {
           </button>
           <button
             onClick={toggleScreenShake}
-            title={screenShakeEnabled ? 'Disable Screen Shake [Z]' : 'Enable Screen Shake [Z]'}
-            aria-label="Toggle screen shake"
+            {...hint(
+              screenShakeEnabled
+                ? 'Recoil is on. The whole rail kicks when the ink hits the blotter and when a leveraged contract settles. [Z]'
+                : 'Recoil is off. Every stamp and every settlement lands without moving the screen. Cosmetic only. [Z]',
+              'Toggle screen shake'
+            )}
             className="p-1 rounded text-newsprint-800 hover:bg-newsprint-300/50 transition-colors cursor-pointer"
           >
             {screenShakeEnabled ? (
@@ -181,8 +204,10 @@ export const BreakingNewsBar: React.FC = () => {
           </button>
           <button
             onClick={() => setIsResetOpen(true)}
-            title="Reset Game / Wipe Local Save"
-            aria-label="Reset game"
+            {...hint(
+              `Chapter 7. Opens a confirmation that DELETES the executive_degen_save_v1 key from this browser and reloads the page. Unlike a Flight to the Caymans, nothing is grandfathered: your treasury, lifetime cash, options profit, every open contract, all unlocked channels, every D.U.M.P. liquidation, the active tariffs, the crony favor, the unlocked perks, the flight count, and every Sovereign Immunity Slip are erased. You come back to ${CUSTOMS_STAMP_NAME} with $100, the tutorial, and all channels re-sealed.`,
+              'Reset game'
+            )}
             className="p-1 rounded text-newsprint-800 hover:bg-wax-500 hover:text-newsprint-50 transition-colors cursor-pointer ml-0.5"
           >
             <RotateCcw className="w-3.5 h-3.5" />

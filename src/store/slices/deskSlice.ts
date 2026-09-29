@@ -8,7 +8,7 @@ import type { DeskSliceContract } from '../../types/store';
 import type { GameStore } from '../useGameStore';
 import {
   calculateClickValue,
-  calculateInkRefillCost,
+  calculateInkRefillTotal,
   calculateOfflineEarnings,
 } from '../../engine/math/formulas';
 import { INITIAL_CRONY_UPGRADES } from '../../constants/unlocks';
@@ -39,7 +39,6 @@ import {
   FRENZY_COOLDOWN_BY_PHASE,
   FRENZY_COOLDOWN_TANTRUM_DECAY_PER_SECOND,
   DRY_CLICK_JAM_THRESHOLD,
-  INK_REFILL_TREASURY_RATIO,
   CRONY_FAVOR_PASSIVE_PER_SECOND,
   TANTRUM_VENT_CONSUME_RATIO,
   TANTRUM_VENT_VEX_RELIEF,
@@ -261,13 +260,13 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
 
   refillInk: () => {
     const state = get();
-    const baseCost = calculateInkRefillCost(state.inkRefillCount);
-
-    // INVARIANT: [Ink Is A Cost Center]
-    // Refills cost a flat escalating term PLUS a percentage of treasury, so ink
-    // is a real ongoing tax on earnings at every stage rather than a rounding error.
-    const treasuryTax = state.treasuryCash * INK_REFILL_TREASURY_RATIO;
-    const cost = Math.min(baseCost + treasuryTax, baseCost * 4);
+    // INVARIANT: [The Quoted Price Must Be The Charged Price]
+    // The cost comes from the shared `calculateInkRefillTotal`, which the ink
+    // gauge ALSO renders. It used to be inlined here while the UI showed the
+    // base curve only — so a rich player was quoted $25 and charged $100, and
+    // the hint's "2% of your treasury on top" described a term the 4× cap
+    // deletes outright. One function, one number, one place to be wrong.
+    const cost = calculateInkRefillTotal(state.inkRefillCount, state.treasuryCash);
 
     if (state.treasuryCash < cost) {
       return false;

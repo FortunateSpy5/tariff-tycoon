@@ -28,8 +28,15 @@ export const SLOP_DECAY_PER_SECOND = 0.2;
 /** Minimum gap between raids, so one bad trade cannot chain-seize repeatedly. */
 const RAID_COOLDOWN_MS = 15000;
 
-/** Crony Favor needed to bribe the raid away. */
-const RAID_BRIBE_COST = 50;
+/**
+ * Crony Favor needed to bribe the raid away.
+ *
+ * Exported because the cost is load-bearing player-facing information: the desk
+ * shredder and the S.L.O.P. bribe are both priced against it, and both surfaces
+ * now quote it so the player can weigh "five shreds or one bribe?" without
+ * guessing. Keep it the single definition.
+ */
+export const RAID_BRIBE_COST = 50;
 
 /** Heat restored after a successful bribe — a plea bargain, not a pardon. */
 const BRIBE_HEAT_RESET = 25;

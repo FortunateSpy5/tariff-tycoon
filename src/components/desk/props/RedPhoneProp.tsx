@@ -19,6 +19,10 @@ import React from 'react';
 import { Phone, PhoneCall, PhoneOff } from 'lucide-react';
 import { useGameStore } from '../../../store/useGameStore';
 import { formatCurrency } from '../../../engine/math/bigNumber';
+import { RAID_BRIBE_COST } from '../../../engine/systems/slopEngine';
+import { FRENZY_CLICK_MULTIPLIER } from '../../../constants/balance';
+import { CRISIS_HEAT_PER_TIER } from '../../../constants/crisis';
+import { hint } from '../../ui/hint';
 import {
   CRISIS_BOOK,
   CRISIS_TIER_MULTIPLIERS,
@@ -116,7 +120,11 @@ export const RedPhoneProp: React.FC = () => {
     return isBroke ? (
       <button
         onClick={triggerRedPhoneBailout}
-        title="EMERGENCY BAILOUT: bill Sovereign Detail for golf cart rentals"
+        {...hint(
+          `EMERGENCY BAILOUT: bill the Sovereign Detail for golf cart rentals. Unlocked only below $10 — you hold ${formatCurrency(
+            treasuryCash
+          )}. This is the bankruptcy floor, not a faucet, and it pays nothing in S.L.O.P. heat.`
+        )}
         className={`${shell} cursor-pointer group hover:border-red-400`}
       >
         {body}
@@ -191,14 +199,26 @@ export const RedPhoneProp: React.FC = () => {
         </span>
         <button
           onClick={swearInCrisis}
-          title={`Answer now for ${formatCurrency(nowPayout)} and low heat. Waiting raises the multiplier but adds S.L.O.P. heat.`}
+          {...hint(
+            // INVARIANT: [Heat Is Charged At Resolution, Not By Waiting] — an
+            // earlier draft said "every second you wait ... adds retaliatory
+            // S.L.O.P. heat". It does not: `swearInCrisis` applies
+            // `CRISIS_HEAT_PER_TIER * (tier+1)` once, at the tier you answer
+            // at, and `suppressCrisis` charges nothing. As written, the tooltip
+            // implied that idling on a ringing phone was itself dangerous.
+            `Answer now for ${formatCurrency(nowPayout)} at ${tierDef?.severity} severity, with low heat. The ladder above climbs to ${formatCurrency(
+              maxPayout
+            )} — but each tier you let it climb costs another ${CRISIS_HEAT_PER_TIER} heat if you answer, and the tantrum is forfeited outright if you let it ring out. Ignore it instead and it costs you nothing but the meter.`,
+          )}
           className="px-1.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-stone-950 font-mono font-black t-micro cursor-pointer active:scale-95 transition-all shrink-0"
         >
           SWEAR IN {formatCurrency(nowPayout)}
         </button>
         <button
           onClick={suppressCrisis}
-          title="Issue a statement and move on. No payout, no heat, no tantrum."
+          {...hint(
+            `Issue a statement and move on. No payout, no heat — and no tantrum, which is the real cost: the meter you were saving toward a ${FRENZY_CLICK_MULTIPLIER}x FRENZY does not move at all. Doing nothing resolves it the same way.`
+          )}
           className="px-1.5 py-1 rounded bg-newsprint-800 hover:bg-newsprint-700 border border-newsprint-700 text-newsprint-200 font-mono font-bold t-micro cursor-pointer active:scale-95 transition-all shrink-0 flex items-center gap-0.5"
         >
           <PhoneOff className="w-2.5 h-2.5" />
@@ -208,6 +228,7 @@ export const RedPhoneProp: React.FC = () => {
 
       <span className="t-caption font-mono text-newsprint-300 leading-none">
         Peak pays {formatCurrency(maxPayout)} · max heat
+        {` · a raid auto-bribe costs ${RAID_BRIBE_COST} Favor`}
       </span>
     </div>
   );

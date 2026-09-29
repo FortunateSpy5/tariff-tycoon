@@ -20,12 +20,14 @@ import { useGameStore } from '../../store/useGameStore';
 import type { RightChannelTab } from '../../types/unlocks';
 import { isRightTabUnlocked, type UnlockState } from '../../engine/systems/unlockEngine';
 import { RIGHT_TAB_DEMANDS } from '../../constants/tabDemands';
-import { PaneShell, TabStrip, StatusStrip, SealedDossier } from '../ui';
+import { PaneShell, TabStrip, StatusStrip } from '../ui/PaneShell';
+import { SealedDossier } from '../ui/SealedDossier';
 import { DumpAgenciesTab } from './tabs/DumpAgenciesTab';
 import { CronyUnlocksTab } from './tabs/CronyUnlocksTab';
 import { BilateralTariffsTab } from './tabs/BilateralTariffsTab';
 import { CaymansPrestigeTab } from './tabs/CaymansPrestigeTab';
 import { SituationRoom } from './SituationRoom';
+import { readPhaseProgress } from './readPhaseProgress';
 
 const TABS: { id: RightChannelTab; label: string; shortcut: string }[] = [
   { id: 'brief', label: 'BRIEF', shortcut: 'B' },
@@ -38,6 +40,7 @@ const TABS: { id: RightChannelTab; label: string; shortcut: string }[] = [
 export const ExecutiveExpansionPane: React.FC = () => {
   const phase = useGameStore((s) => s.phase);
   const hasMarketAccess = useGameStore((s) => s.hasMarketAccess);
+  const treasuryCash = useGameStore((s) => s.treasuryCash);
   const activeRightTab = useGameStore((s) => s.activeRightTab);
   const setActiveRightTab = useGameStore((s) => s.setActiveRightTab);
 
@@ -77,15 +80,18 @@ export const ExecutiveExpansionPane: React.FC = () => {
         />
       }
       footer={
+        /* REPLACED [0.1]: this read `CABINET GOVERNANCE` / `READY`. `READY` was
+           the only variable and it never changed — the strip told the player
+           nothing, in the one place that is permanently on screen. It is now the
+           one number that is never visible anywhere else and always matters:
+           how far the treasury is from the next rung. See `readPhaseProgress`. */
         <StatusStrip
-          icon={<Briefcase className="w-3 h-3 text-gold-400" />}
-          label="CABINET GOVERNANCE"
+          icon={<Briefcase className="w-3 h-3 text-gold-400" aria-hidden />}
+          label="CABINET"
           right={
             <>
-              <Zap className="w-3 h-3 text-phosphor-400" />
-              <span className="text-gold-400 font-bold">
-                {isSealed ? 'SEALED' : 'READY'}
-              </span>
+              <Zap className="w-3 h-3 text-phosphor-400" aria-hidden />
+              <span className="text-gold-400 font-bold">{readPhaseProgress(phase, treasuryCash)}</span>
             </>
           }
         />
