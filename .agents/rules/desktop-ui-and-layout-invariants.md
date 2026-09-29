@@ -78,11 +78,19 @@ To eliminate RSI index finger fatigue from spam clicking, the game must be fully
 | Key Binding | Primary Action | Target Panel |
 | :--- | :--- | :--- |
 | **`[SPACEBAR]`** or **`[ENTER]`** | Slam Stamp / Sign Directive | Center Desk |
-| **`[1]`, `[2]`, `[3]`** | Switch Left Telemetry Channels (Stocks, PolyGrift, S.L.O.P.) | Left Wing |
+| **`[1]`, `[2]`, `[3]`** | Switch Left Telemetry Channels (Stocks, S.L.O.P., PolyGrift) | Left Wing |
+| **`[B]`** | Switch Right Expansion Channel to the **Brief** (Situation Room; never sealed) | Right Wing |
 | **`[D]`** | Switch Right Expansion Channel to **D.U.M.P.** | Right Wing |
 | **`[U]`** | Switch Right Expansion Channel to **Crony Unlocks** (Upgrade Tree) | Right Wing |
 | **`[T]`** | Switch Right Expansion Channel to **Bilateral Tariffs** | Right Wing |
 | **`[C]`** | Switch Right Expansion Channel to **Caymans Prestige** | Right Wing |
+
+**INVARIANT: [The Seal Is a Promise, Not a Wall]**
+Every channel key above fires **regardless of unlock state**, and every channel is always present in its tab strip. A channel that is not yet open renders a **sealed dossier** — `SealedDossier` — naming the single event that opens it (`constants/tabDemands.ts`) plus a teaser of what is behind the door, with a progress bar only where the gate is a number the player can watch.
+
+Selection is free; **action is not**. A sealed channel must never mount its real body, so the hotkey reaches a demand card and never a purchase, liquidation, tariff move, or prestige reset. The gate lives in the pane render branch, NOT in `setActiveLeftTab`/`setActiveRightTab`.
+
+Do not reintroduce filtering a channel out of the strip. That is what made the four systems the game is named for invisible and unnameable — they appeared only as lines in a Career Objectives list, with no affordance of any kind. Sealed keys stay listed in the footer dock, dimmed: a key that is not listed is a key that does not exist.
 | **`[Y]`** | Launch 3:00 AM Lethal YAP | Center Desk |
 | **`[W]`** | Walk-Back Clarification (+35% recovery pump) | Center Desk |
 | **`[S]`** | Subpoena Paper Shredder (Heat purge QTE) | Center Desk |

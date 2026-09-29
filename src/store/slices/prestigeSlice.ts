@@ -64,7 +64,10 @@ export const createPrestigeSlice: StateCreator<GameStore, [], [], PrestigeSlice>
       hasTariffAccess: false,
       hasPrestigeAccess: false,
       activeLeftTab: 'stocks',
-      activeRightTab: 'dump',
+      // Every channel is reset to sealed, so return to the one channel that is
+      // never sealed — the Situation Room. Landing on D.U.M.P. here would show
+      // a demand card for a run the player has not started yet.
+      activeRightTab: 'brief',
       inkLevel: 100,
       inkRefillCount: 0,
       tantrumMeter: 0,

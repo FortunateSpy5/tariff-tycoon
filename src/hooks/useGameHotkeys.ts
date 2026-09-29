@@ -46,20 +46,28 @@ export function useGameHotkeys() {
         if (target.closest('button, a, [role="button"]')) return;
         e.preventDefault();
         store.clickDesk();
-      } else if (e.key === '1') {
-        if (store.hasMarketAccess) store.setActiveLeftTab('stocks');
+      } /* CHANNEL HOTKEYS — always fire, even for a sealed channel.
+         Selecting a locked channel is navigation, not unlock: the pane renders a
+         SealedDossier instead of the body, so nothing becomes actionable. The
+         guards that used to sit here silently swallowed the key, which is why a
+         new player pressing T saw nothing happen and concluded the tab was
+         missing. See [The Seal Is a Promise, Not a Wall]. */
+      else if (e.key === '1') {
+        store.setActiveLeftTab('stocks');
       } else if (e.key === '2') {
-        if (store.hasRadarAccess) store.setActiveLeftTab('radar');
+        store.setActiveLeftTab('radar');
       } else if (e.key === '3') {
-        if (store.hasPolyGriftAccess) store.setActiveLeftTab('polygrift');
+        store.setActiveLeftTab('polygrift');
       } else if (e.key === 'd' || e.key === 'D') {
-        if (store.phase >= 2) store.setActiveRightTab('dump');
+        store.setActiveRightTab('dump');
       } else if (e.key === 'u' || e.key === 'U') {
-        if (store.hasCronyUnlocksAccess) store.setActiveRightTab('unlocks');
+        store.setActiveRightTab('unlocks');
       } else if (e.key === 't' || e.key === 'T') {
-        if (store.hasTariffAccess) store.setActiveRightTab('tariffs');
+        store.setActiveRightTab('tariffs');
       } else if (e.key === 'c' || e.key === 'C') {
-        if (store.hasPrestigeAccess) store.setActiveRightTab('caymans');
+        store.setActiveRightTab('caymans');
+      } else if (e.key === 'b' || e.key === 'B') {
+        store.setActiveRightTab('brief');
       } else if (e.key === 'y' || e.key === 'Y') {
         if (store.hasMarketAccess) {
           e.preventDefault();

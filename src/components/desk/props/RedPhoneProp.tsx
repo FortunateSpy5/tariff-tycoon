@@ -47,36 +47,89 @@ export const RedPhoneProp: React.FC = () => {
   const isBroke = treasuryCash < 10;
 
   // --- Standby: the phone is quiet ---
+  //
+  // REDESIGN [The Dead Air Next To The Phone]:
+  // The prop tray is a 2-column grid and this row spans both columns, but the
+  // standby face was a shrink-to-fit button — 169px of content in a 562px row,
+  // leaving ~400px of dead panel to the right of it. The row was reserved for a
+  // card that expands dramatically while ringing, so the gap read as a layout
+  // bug rather than as breathing room.
+  //
+  // The standby face now FILLS the row and uses it: it previews the wager
+  // (the escalation ladder, unlit) alongside what the call is worth, so the
+  // player can read the stakes before the phone ever rings. The space is now
+  // doing the mechanic's teaching work instead of sitting empty.
+  //
+  // A11y note: this is a `<div>`, not a `<button>`, unless the player is
+  // actually broke. The old version was a button that did nothing 99% of the
+  // time — a dead click target that advertised an affordance it did not have.
   if (!activeCrisis) {
     const nextIn = Math.max(0, Math.ceil(crisisCooldownSeconds));
-    return (
-      <button
-        onClick={() => {
-          if (isBroke) triggerRedPhoneBailout();
-        }}
-        title={
-          isBroke
-            ? 'EMERGENCY BAILOUT: bill Sovereign Detail for golf cart rentals'
-            : `Standby. Next 3:00 AM call in ${nextIn}s.`
-        }
-        className={`p-2 rounded-lg border transition-all flex items-center gap-2 text-left cursor-pointer group relative overflow-hidden select-none ${
-          isBroke
-            ? 'bg-red-950/80 border-red-600 text-red-200 animate-ring shadow-lg shadow-red-950/50'
-            : 'bg-newsprint-900 border-newsprint-800 text-newsprint-300 hover:border-wax-500/60'
-        }`}
-      >
-        <div className={`p-1.5 rounded-md shrink-0 ${isBroke ? 'bg-wax-500 text-newsprint-50' : 'bg-newsprint-800 text-wax-400'}`}>
-          {isBroke ? <PhoneCall className="w-4 h-4 animate-bounce" /> : <Phone className="w-4 h-4" />}
+    const base = crisisBasePayoutForPhase(phase);
+    const peak = Math.round(base * CRISIS_TIER_MULTIPLIERS[CRISIS_TIER_MULTIPLIERS.length - 1]);
+
+    const body = (
+      <>
+        <div
+          className={`p-1.5 rounded-md shrink-0 ${
+            isBroke ? 'bg-wax-500 text-newsprint-50' : 'bg-newsprint-800 text-wax-400'
+          }`}
+        >
+          {/* The handset rattles, not the row — see `crisis-ring` in index.css. */}
+          {isBroke ? (
+            <PhoneCall className="w-4 h-4 animate-crisis-ring" />
+          ) : (
+            <Phone className="w-4 h-4" />
+          )}
         </div>
-        <div className="min-w-0">
-          <span className="font-mono font-bold t-micro block text-red-400 group-hover:text-red-300">
-            CRISIS CALL
-          </span>
+
+        <div className="min-w-0 flex-1">
+          <span className="font-mono font-bold t-micro block text-red-400">CRISIS CALL</span>
           <span className="t-micro text-stone-500 font-mono block truncate">
             {isBroke ? 'BAILOUT AVAILABLE' : `Standby · next in ${nextIn}s`}
           </span>
         </div>
+
+        {/* The wager, previewed. Only on the calm path — a broken player needs
+            one loud instruction, not a payout table they cannot act on. */}
+        {!isBroke && (
+          <div className="flex items-center gap-2 shrink-0">
+            <div className="flex gap-0.5 w-16" aria-hidden="true">
+              {CRISIS_TIER_MULTIPLIERS.map((m) => (
+                <div key={m} className="h-1 flex-1 rounded-full bg-newsprint-800" />
+              ))}
+            </div>
+            <span className="t-micro font-mono text-newsprint-500 whitespace-nowrap">
+              Peak {formatCurrency(peak)}
+            </span>
+          </div>
+        )}
+      </>
+    );
+
+    const shell = `w-full p-2 rounded-lg border text-left select-none flex items-center gap-2 transition-colors ${
+      isBroke
+        ? 'bg-red-950/80 border-red-600 text-red-200 animate-crisis-alarm'
+        : 'bg-newsprint-900 border-newsprint-800 text-newsprint-300'
+    }`;
+
+    return isBroke ? (
+      <button
+        onClick={triggerRedPhoneBailout}
+        title="EMERGENCY BAILOUT: bill Sovereign Detail for golf cart rentals"
+        className={`${shell} cursor-pointer group hover:border-red-400`}
+      >
+        {body}
       </button>
+    ) : (
+      /* No ARIA live region here. The countdown text changes every second, and
+         `role="status"` implies `aria-live="polite"` — which would announce a
+         new number to a screen reader once a second for the entire session.
+         The face is static prose plus a timer, so it is marked up as plain
+         content and left out of the accessibility tree's announcement queue. */
+      <div className={shell}>
+        {body}
+      </div>
     );
   }
 
@@ -91,14 +144,21 @@ export const RedPhoneProp: React.FC = () => {
   const isMaxTier = tier >= CRISIS_TIER_MULTIPLIERS.length - 1;
 
   return (
+    /* INVARIANT: this card carries no shake of its own. It holds the two buttons
+       the whole mechanic exists to offer, so it must never move under the
+       cursor. Urgency lives on the handset icon (a ~16px rattle) and, at max
+       tier, in a halo. The previous `animate-ring` rotated this entire panel
+       +/-10deg at 0.4s, which displaced SWEAR IN and IGNORE continuously. */
     <div
       className={`p-2 rounded-lg border-2 bg-red-950/70 flex flex-col gap-1.5 relative overflow-hidden select-none shadow-lg shadow-red-950/50 ${
-        isMaxTier ? 'border-red-300 animate-ring' : 'border-red-600'
+        isMaxTier ? 'border-red-300 animate-crisis-alarm' : 'border-red-600'
       }`}
     >
       <div className="flex items-start gap-2">
         <div className="p-1.5 rounded-md bg-red-600 text-stone-950 shrink-0">
-          <PhoneCall className="w-4 h-4 animate-bounce" />
+          {/* Was `animate-bounce`, which compounded with the card's own ring into
+              a judder. The rattle is the whole signal; bounce was redundant. */}
+          <PhoneCall className="w-4 h-4 animate-crisis-ring" />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">

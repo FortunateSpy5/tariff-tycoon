@@ -34,7 +34,10 @@ You play as **"The Dealmaker-in-Chief"**—a silhouette with a glowing aerodynam
    * Every YAP can be issued as a **1080×1920 PNG** — a certified nonsense document with a wax seal, classification banner, redaction bar, and your portfolio-at-risk in 9:16 vertical. Available from Phase 1, with a caption copied to the clipboard alongside it.
    * The same renderer draws the **prestige run summary**, captured *before* the reset wipes the run, so prestige shows a record instead of a zero.
 6. **Career Objectives & Newswire**:
-   * The right wing is a live **Situation Room**: tutorial directives, tracked career objectives, and a scrolling newswire of procedural market incident reports. No dead cabinet.
+   * The right wing is a live **Situation Room** (`[B] BRIEF`): tutorial directives, tracked career objectives, and a scrolling newswire of procedural market incident reports. No dead cabinet.
+7. **Sealed Channels (nothing is hidden)**:
+   * Every cockpit channel is **always present in the tab strip** and always selectable — `[1] STOCKS`, `[2] S.L.O.P.`, `[3] POLY-GRIFT` on the left; `[B] BRIEF`, `[D] D.U.M.P.`, `[U] UNLOCKS`, `[T] TARIFFS`, `[C] CAYMANS` on the right. A channel you have not opened yet renders a **sealed dossier** naming the single event that opens it plus a teaser of what is behind the door. Locked keys stay in the footer dock, dimmed, because a key that is not listed is a key that does not exist.
+   * A sealed channel never mounts its real body, so nothing is buyable, liquidatable, movable, or resettable while sealed. **Progression is still earned, never idled** — the seal is a promise, not a wall.
 
 > **Not yet built** (tracked in [.agents/workflows/FEATURE_ROADMAP.md](.agents/workflows/FEATURE_ROADMAP.md)): the C-SNOOZE Senate-hearing **MP4** clip generator (the `viral-clip-director` skill documents the pipeline; only the PNG certificate ships today) and **Streamer Mode** chat integration. Neither exists in the build — treat them as roadmap, not as features.
 

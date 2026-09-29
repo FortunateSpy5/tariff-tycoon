@@ -27,8 +27,6 @@ import {
 import {
   canBuyUpgrades,
   canSetTariff,
-  isLeftTabUnlocked,
-  isRightTabUnlocked,
 } from '../../engine/systems/unlockEngine';
 import {
   INK_PER_CLICK,
@@ -80,15 +78,8 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
   lastTickTimestamp: Date.now(),
   lifetimeCashEarned: 100.0,
 
-  activeLeftTab: 'stocks',
-  activeRightTab: 'dump',
-  setActiveLeftTab: (tab) => {
-    // INVARIANT: [Progression Must Be Earned, Not Idle] — see `unlockEngine`.
-    if (isLeftTabUnlocked(tab, get())) set({ activeLeftTab: tab });
-  },
-  setActiveRightTab: (tab) => {
-    if (isRightTabUnlocked(tab, get())) set({ activeRightTab: tab });
-  },
+  // Cockpit channel selection lives in `channelSlice` — see [The Seal Is a
+  // Promise, Not a Wall] there for why selection is not gated on unlock.
 
   activeUpgrades: [],
   tariffRates: {

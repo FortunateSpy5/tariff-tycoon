@@ -27,9 +27,22 @@ import { useGameStore } from '../../store/useGameStore';
 interface KeyHint {
   key: string;
   label: string;
+  /**
+   * The key is visible and functional but its channel is still sealed. A sealed
+   * key is dimmed rather than hidden — [The Clipping Footer]'s invariant applies
+   * with more force here, since a key that is not listed is a key that does not
+   * exist as far as the player is concerned.
+   */
+  sealed?: boolean;
 }
 
-/** Builds the visible key list from live unlock state. */
+/**
+ * Builds the visible key list from live unlock state.
+ *
+ * Channel keys are ALWAYS listed. They used to be appended only once their
+ * channel was unlocked, which meant a new player's dock taught five keys and
+ * hid the seven that describe the rest of the game.
+ */
 function useKeyHints(): KeyHint[] {
   const hasMarketAccess = useGameStore((s) => s.hasMarketAccess);
   const hasRadarAccess = useGameStore((s) => s.hasRadarAccess);
@@ -51,15 +64,26 @@ function useKeyHints(): KeyHint[] {
     { key: 'F', label: 'Full' },
   ];
 
-  if (hasMarketAccess) {
-    hints.push({ key: '1', label: 'Stocks' }, { key: 'Y', label: 'YAP' });
-  }
-  if (hasRadarAccess) hints.push({ key: '2', label: 'Radar' });
-  if (hasPolyGriftAccess) hints.push({ key: '3', label: 'PolyGrift' });
-  if (phase >= 2) hints.push({ key: 'D', label: 'D.U.M.P.' });
-  if (hasCronyUnlocksAccess) hints.push({ key: 'U', label: 'Upgrades' });
-  if (hasTariffAccess) hints.push({ key: 'T', label: 'Tariffs' });
-  if (hasPrestigeAccess) hints.push({ key: 'C', label: 'Caymans' });
+  const channel = (key: string, label: string, unlocked: boolean): KeyHint => ({
+    key,
+    label,
+    sealed: !unlocked,
+  });
+
+  hints.push(channel('1', 'Stocks', hasMarketAccess));
+  // [Y] fires a real YAP, which is a genuine gated ACTION — unlike channel
+  // selection, peeking at the market must not be possible from the keyboard.
+  if (hasMarketAccess) hints.push({ key: 'Y', label: 'YAP' });
+
+  hints.push(channel('2', 'Radar', hasRadarAccess));
+  hints.push(channel('3', 'PolyGrift', hasPolyGriftAccess));
+  // [B] is the always-open Situation Room, so it is never sealed.
+  hints.push({ key: 'B', label: 'Brief' });
+  hints.push(channel('D', 'D.U.M.P.', phase >= 2));
+  hints.push(channel('U', 'Upgrades', hasCronyUnlocksAccess));
+  hints.push(channel('T', 'Tariffs', hasTariffAccess));
+  hints.push(channel('C', 'Caymans', hasPrestigeAccess));
+
   if (canVent) hints.push({ key: 'V', label: 'Vent' });
   if (isWalkBackWindowActive) hints.push({ key: 'W', label: 'Walk-Back' });
 
@@ -90,8 +114,12 @@ export const HotkeyFooterHUD: React.FC = () => {
         aria-label="Keyboard shortcuts"
         className="flex items-center gap-2.5 overflow-x-auto custom-scrollbar min-w-0 flex-1"
       >
-        {hints.map(({ key, label }) => (
-          <span key={key} className="flex items-center gap-1 shrink-0">
+        {hints.map(({ key, label, sealed }) => (
+          <span
+            key={key}
+            className={`flex items-center gap-1 shrink-0 ${sealed ? 'opacity-45' : ''}`}
+            title={sealed ? `${label} — sealed. Press to see what opens it.` : undefined}
+          >
             <kbd className="px-1 py-px rounded bg-redaction-500 border border-redaction-500 text-newsprint-200 font-bold">
               {key}
             </kbd>

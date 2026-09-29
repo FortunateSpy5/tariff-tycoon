@@ -13,8 +13,12 @@
  *   - Early game: live career objectives with real progress bars.
  *   - Mid/late game: the Certificate button (see CertificateExporter).
  *
- * It is a fallback surface. Once D.U.M.P./Tariffs/Prestige unlock, the real tabs
- * mount instead and this is not rendered.
+ * REDESIGN [The Phantom Wings]:
+ * This was a FALLBACK surface — it stood in for the whole right wing whenever
+ * no real channel was unlocked, which meant the tab strip vanished and the four
+ * systems the game is named for were mentioned only here. It is now the body of
+ * the always-open `[B] BRIEF` channel, so the tab strip is permanently present
+ * and this sits beside the sealed dossiers rather than replacing them.
  */
 
 import React from 'react';

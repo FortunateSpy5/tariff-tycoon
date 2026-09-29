@@ -16,6 +16,7 @@
  */
 
 import React from 'react';
+import { Lock } from 'lucide-react';
 
 export interface PaneShellProps {
   /** Tab strip rendered in the header. Omit for a pane with no tabs. */
@@ -55,7 +56,7 @@ export const PaneShell: React.FC<PaneShellProps> = ({
  * this markup, which is how the two strips drifted apart in the first place.
  */
 export const TabStrip: React.FC<{
-  tabs: ReadonlyArray<{ id: string; label: string; shortcut: string }>;
+  tabs: ReadonlyArray<{ id: string; label: string; shortcut: string; locked?: boolean }>;
   activeId: string;
   onSelect: (id: string) => void;
   /** Accent for the active tab. Terminal = phosphor, right deck = gold. */
@@ -73,14 +74,23 @@ export const TabStrip: React.FC<{
         <button
           key={tab.id}
           onClick={() => onSelect(tab.id)}
+          /* Locked tabs are STILL SELECTABLE — the body renders a SealedDossier.
+             See [The Seal Is a Promise, Not a Wall]. The `locked` flag is presentational
+             only; it must never be wired to `disabled`. */
+          aria-pressed={isActive}
+          title={tab.locked ? `${tab.label} — sealed. Select to see what opens it.` : tab.label}
           className={`flex min-w-0 flex-1 items-center justify-center gap-1 rounded px-1 py-1 text-center font-mono t-micro font-bold transition-colors ${
             isActive
               ? `${active} font-black shadow-md`
-              : 'text-newsprint-300 hover:bg-redaction-500 hover:text-newsprint-100'
+              : tab.locked
+                /* Unselected + locked: visibly sealed, but still a live target. */
+                ? 'text-newsprint-500 hover:bg-redaction-500 hover:text-newsprint-200'
+                : 'text-newsprint-300 hover:bg-redaction-500 hover:text-newsprint-100'
           }`}
         >
           <span className="shrink-0">[{tab.shortcut}]</span>
           <span className="truncate">{tab.label}</span>
+          {tab.locked && <Lock className="h-2.5 w-2.5 shrink-0" aria-hidden="true" />}
         </button>
       );
     })}

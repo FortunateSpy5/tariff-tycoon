@@ -9,6 +9,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { createDeskSlice, type DeskSlice } from './slices/deskSlice';
+import { createChannelSlice, type ChannelSlice } from './slices/channelSlice';
 import { createDeskPropsSlice, type DeskPropsSlice } from './slices/deskPropsSlice';
 import { createCrisisSlice, type CrisisSlice } from './slices/crisisSlice';
 import { createTradingSlice, type TradingSlice } from './slices/tradingSlice';
@@ -18,8 +19,10 @@ import { createDumpSlice, type DumpSlice } from './slices/dumpSlice';
 import { createPrestigeSlice, type PrestigeSlice } from './slices/prestigeSlice';
 import { createSettingsSlice, type SettingsSlice } from './slices/settingsSlice';
 import { calculateOfflineEarnings } from '../engine/math/formulas';
+import type { LeftChannelTab, RightChannelTab } from '../types/unlocks';
 
 export type GameStore = DeskSlice &
+  ChannelSlice &
   DeskPropsSlice &
   CrisisSlice &
   TradingSlice &
@@ -33,6 +36,7 @@ export const useGameStore = create<GameStore>()(
   persist(
     (...a) => ({
       ...createDeskSlice(...a),
+      ...createChannelSlice(...a),
       ...createDeskPropsSlice(...a),
       ...createCrisisSlice(...a),
       ...createTradingSlice(...a),
@@ -145,14 +149,18 @@ export const useGameStore = create<GameStore>()(
       onRehydrateStorage: () => (state) => {
         if (!state) return;
         state.hasMarketAccess = Boolean(state.hasMarketAccess || state.phase >= 2 || state.totalClicks > 0);
-        if (!state.hasMarketAccess) state.activeLeftTab = 'stocks';
-        if (state.activeLeftTab === 'radar' && !state.hasRadarAccess) state.activeLeftTab = 'stocks';
-        if (state.activeLeftTab === 'polygrift' && !state.hasPolyGriftAccess) state.activeLeftTab = 'stocks';
-        if (state.phase < 2 || (state.activeRightTab === 'unlocks' && !state.hasCronyUnlocksAccess)) {
-          state.activeRightTab = 'dump';
-        }
-        if (state.activeRightTab === 'tariffs' && !state.hasTariffAccess) state.activeRightTab = 'dump';
-        if (state.activeRightTab === 'caymans' && !state.hasPrestigeAccess) state.activeRightTab = 'dump';
+        /* CHANNEL SELECTION IS NOT GATED ON REHYDRATION.
+           These resets used to force a locked channel back to its default, on the
+           theory that a tab you cannot use should not be selectable. Under [The
+           Seal Is a Promise, Not a Wall] a sealed channel is a legitimate, safe
+           place to land: it renders a SealedDossier and exposes no actions. The
+           only thing still corrected here is a tab id outside its union (a
+           corrupted or older save), which must not leave the pane rendering
+           nothing. */
+        const LEFT_TABS: LeftChannelTab[] = ['stocks', 'radar', 'polygrift'];
+        const RIGHT_TABS: RightChannelTab[] = ['brief', 'dump', 'unlocks', 'tariffs', 'caymans'];
+        if (!LEFT_TABS.includes(state.activeLeftTab)) state.activeLeftTab = 'stocks';
+        if (!RIGHT_TABS.includes(state.activeRightTab)) state.activeRightTab = 'brief';
         const now = Date.now();
         const offlineSeconds = Math.max(0, (now - state.lastSavedTimestamp) / 1000);
 

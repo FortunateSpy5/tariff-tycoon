@@ -48,18 +48,27 @@ export interface DeskPropsSliceContract {
   printEmergencyCash: () => boolean;
 }
 
-/** The clicker economy, ink stamina, tantrum and the desk tabs. */
+/**
+ * Cockpit channel selection — which tab each wing is showing, and the
+ * [The Seal Is a Promise, Not a Wall] invariant that governs it.
+ * Implemented in `slices/channelSlice`.
+ */
+export interface ChannelSliceContract {
+  activeLeftTab: LeftChannelTab;
+  activeRightTab: RightChannelTab;
+  /** Selects a channel. Permitted even when sealed — see the invariant. */
+  setActiveLeftTab: (tab: LeftChannelTab) => void;
+  /** Selects a channel. Permitted even when sealed — see the invariant. */
+  setActiveRightTab: (tab: RightChannelTab) => void;
+}
+
+/** The clicker economy, ink stamina and tantrum. */
 export interface DeskSliceContract extends DeskState {
   treasuryCash: number;
   passiveCashPerSecond: number;
   lastTickTimestamp: number;
   /** Lifetime treasury cash this run. Drives the Tier 1 prestige SIS formula. */
   lifetimeCashEarned: number;
-
-  activeLeftTab: LeftChannelTab;
-  activeRightTab: RightChannelTab;
-  setActiveLeftTab: (tab: LeftChannelTab) => void;
-  setActiveRightTab: (tab: RightChannelTab) => void;
 
   activeUpgrades: string[];
   buyUpgrade: (upgradeId: string) => boolean;

@@ -325,10 +325,27 @@
   animation: calm-glow 3.4s ease-in-out infinite;
 }
 
-@keyframes ring-shake {
-  0%, 100% { transform: rotate(0deg); }
-  20%, 60% { transform: rotate(-10deg); }
-  40%, 80% { transform: rotate(10deg); }
+/* INVARIANT: the crisis ring rattles the HANDSET, never the card.
+   `ring-shake` rotated the whole panel +/-10deg at 0.4s. Applied to the ~560px
+   Crisis Call card that was several pixels of travel on every edge, and — worse —
+   it moved the SWEAR IN / IGNORE buttons underneath the cursor, so the two
+   decisions the whole mechanic exists to offer were being shaken out from under
+   a player trying to click them. A ringing phone rattles the receiver in its
+   cradle; the desk it sits on does not move. Amplitude is now sized for a 16px
+   icon, and the card's urgency is carried by a non-motion channel (border +
+   pulse) so nothing that must be clicked ever moves. */
+@keyframes crisis-ring {
+  0%, 100% { transform: rotate(0deg) translateY(0); }
+  25% { transform: rotate(-4deg) translateY(-1px); }
+  50% { transform: rotate(0deg) translateY(0); }
+  75% { transform: rotate(4deg) translateY(-1px); }
+}
+
+/* The max-tier signal, expressed as a halo rather than a shake. Reaches the
+   player without displacing anything clickable. */
+@keyframes crisis-alarm {
+  0%, 100% { box-shadow: 0 0 0 0 rgb(252 165 165 / 0.30); }
+  50% { box-shadow: 0 0 0 3px rgb(252 165 165 / 0.10); }
 }
 
 @keyframes float-fade {
@@ -402,8 +419,12 @@
   animation: ink-bloom 0.5s ease-out forwards;
 }
 
-.animate-ring {
-  animation: ring-shake 0.4s infinite ease-in-out;
+.animate-crisis-ring {
+  animation: crisis-ring 0.32s infinite ease-in-out;
+}
+
+.animate-crisis-alarm {
+  animation: crisis-alarm 1.5s ease-in-out infinite;
 }
 
 .animate-float-fade {
