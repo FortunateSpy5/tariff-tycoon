@@ -180,6 +180,13 @@ $$\text{YAP} = [\text{TIME\_PREFIX}] + [\text{TARGET\_ENTITY}] + [\text{BIZARRE\
 * Phase transitions are Phase 1 at $0-$1M, Phase 2 at $1M-$100B, Phase 3 at $100B-$10^{18}$, and Phase 4 at $10^{18}$ and beyond.
 * The first market tutorial teaches: select a ticker, open a PUT, target it with YAP, settle the PUT to protect its payout, then optionally arm a matching CALL and hit WALK-BACK before the 8-second window closes.
 
+#### The First Hour Must Not Pay You To Leave (2026-09-29 audit)
+* **INVARIANT: [Only A Real Slam Advances The Chain].** Onboarding advances on a **manual slam** and on nothing else. Passive ticks and offline credit may **terminate** onboarding at Phase 2 but may never **advance** it.
+  * *Why it matters:* sharing one rule resolver between the click path and the tick path consumed the first-slam token on the first idle frame after page load. `hasMarketAccess` then stayed `false` for the rest of the session, so a brand-new player was told "OPEN A PAPER PUT" by the directive card while the very channel it pointed at still read "SLAM THE STAMP ONCE TO UNSEAL BAGHOLDER PRO" — and clicking could never satisfy it. The causal loop, the game's entire premise, was unreachable until a page reload.
+* **INVARIANT: [No Free Lunch At Customs].** Every bilateral tariff dial starts at **0%**, not at the nation's default rate. Tariff revenue therefore begins only after the player has been granted the dials (Phase 2 + `hasTariffAccess`) and turned them.
+  * *Why it matters:* pre-set dials paid ~$40/s from the first frame of a new run — **8x** the value of a $5.00 slam — before the player had unlocked the channel, moved a dial, or seen a number. The primary clicker was strictly dominated by doing nothing, which is exactly the "Ten-Minute Wall" failure mode the first-slam redesign existed to kill.
+  * The Laffer curve and every exponent in `tariffEngine` are unchanged. This is a **gate**, not a rebalance.
+
 ---
 
 ## 4. The 4-Phase Evolutionary Arc (Universal Paperclips Phase Shift)

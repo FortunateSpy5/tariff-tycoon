@@ -79,13 +79,17 @@ export const createPrestigeSlice: StateCreator<GameStore, [], [], PrestigeSlice>
       cronyFavor: 30,
       cronyFavorRemainder: 0,
       vexVolatility: 15.0,
+      // INVARIANT: [No Free Lunch At Customs] — dials reset to zero, not to the
+      // nations' default rates. See `deskSlice` for why. Prestige resets every
+      // other faucet to zero too; this one used to smuggle ~$40/s straight back
+      // in on the frame the player returned to a run.
       tariffRates: {
-        north_annex: 125,
-        nearshore_fed: 150,
-        strike_republic: 200,
-        overthinker_union: 100,
-        red_factory: 175,
-        silicon_archipelago: 75,
+        north_annex: 0,
+        nearshore_fed: 0,
+        strike_republic: 0,
+        overthinker_union: 0,
+        red_factory: 0,
+        silicon_archipelago: 0,
       },
       stocks: { ...INITIAL_STOCKS },
       activeTrades: [],

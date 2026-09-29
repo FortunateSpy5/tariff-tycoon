@@ -24,6 +24,8 @@ To achieve this:
 
 * **Primary Target Resolution:** 1920 × 1080 (16:9 Standard Desktop).
 * **High-DPI / Ultrawide Support:** 2560 × 1440 (1440p), 3840 × 2160 (4K), and 21:9 Ultrawide displays center the cockpit (`max-w-[1720px] aspect-[16/9] mx-auto`) framed by warm amber desk ambient glow.
+  * ⚠️ **NOT YET IMPLEMENTED (2026-09-29 audit).** `App.tsx` has no max-width — the grid stretches edge to edge, so at 2560px the centre desk becomes ~840px of empty parchment. Tracked as Phase 2.6 in `.agents/workflows/UX_EVALUATION_AND_REDESIGN_PLAN.md`. Treat this line as intent until the width clamp lands.
+  * ⚠️ **NOT YET IMPLEMENTED (2026-09-29 audit).** `App.tsx` has no max-width — the grid stretches edge to edge, so at 2560px the centre desk becomes ~840px of empty parchment. Tracked as Phase 2.6 in `.agents/workflows/UX_EVALUATION_AND_REDESIGN_PLAN.md`. Treat this line as intent until the width clamp lands.
 * **Sub-1080p Safety Clamp (`useDesktopViewport`):** On budget laptops (1366 × 768, 1600 × 900) or displays with vertical height $<840\text{px}$, the UI applies a dynamic CSS scale clamp (`transform: scale(min(1, h / 860))`) with `transformOrigin: 'top center'`. All three wings, buttons, and meters remain 100% visible on screen without clipping.
 
 ---
@@ -108,18 +110,23 @@ by an `accent` prop (`phosphor` vs `gold`). Fork that markup and the two drift.
 ### 4.2 Left Wing: The Oval Telemetry Console (26% Width)
 * **Tab `[1] STOCKS & 0DTE OPTIONS`**:
   - Live S&Pain 500 mini candlestick/sparkline chart for targeted tickers (`$PAIN`, `$DOOR`, `$FRUT`, `$GIGA`).
+    - ⚠️ **DOES NOT EXIST (2026-09-29 audit).** `StocksOptionsTab.tsx` renders no chart at all — only a ticker, a price and a delta under a heading that reads "Candlestick Telemetry." `priceHistory` is written by `resolveYapShock` and read by no component. This is the single highest-impact gap in the game: the causal payoff (*watch the sector you just nuked go red*) is invisible. Tracked as Phase 1.1 in `.agents/workflows/UX_EVALUATION_AND_REDESIGN_PLAN.md`.
+    - ⚠️ **DOES NOT EXIST (2026-09-29 audit).** `StocksOptionsTab.tsx` renders no chart at all — only a ticker, a price and a delta under a heading that reads "Candlestick Telemetry." `priceHistory` is written by `resolveYapShock` and read by no component. This is the single highest-impact gap in the game: the causal payoff (*watch the sector you just nuked go red*) is invisible. Tracked as Phase 1.1 in `.agents/workflows/UX_EVALUATION_AND_REDESIGN_PLAN.md`.
   - 0DTE options ladder ($10\times$ to $1,000\times$ leverage slider).
   - Quick-short strike buttons with live P&L return indicator.
-* **Tab `[2] S.L.O.P. REGULATORY RADAR`** (revealed after the first YAP):
+* **Sealed left channels:** every tab is always present in the strip and always selectable. A channel you have not opened yet renders `SealedDossier` — **To Open** (the single event that opens it) plus **Inside** (the teaser). The former full-pane "RESTRICTED SECURITY ZONE" shutter was removed: it covered the entire terminal *including the tab strip*, so a new player could not read which channels existed, and the strip silently reordered itself as channels unlocked.
+* **Tab `[2] S.L.O.P. REGULATORY RADAR`** (sealed until the first YAP):
   - Tracks Grand Jury investigation heat ($0\text{--}100\%$).
   - Displays raid countdowns and legal defense bribe funds.
-* **Tab `[3] POLY-GRIFT (Prediction Markets)`** (revealed after settling a YAP-targeted PUT):
+* **Tab `[3] POLY-GRIFT (Prediction Markets)`** (sealed until a YAP-targeted PUT settles):
   - Parody prediction betting terminal.
   - Wager cash on unhinged political prop bets (e.g. *"Will Canadian maple syrup be taxed by sunrise? YES: 92% ($1.08) | NO: 8% ($12.50)"*).
 * **First trade cue:** The stocks panel guides the player through selecting a ticker, opening a PUT, targeting it with YAP, and settling or attempting the timed CALL/walk-back.
 
 ### 4.3 Right Wing: The Executive Expansion Deck (32% Width)
 * BagHolder Pro opens on the **first slam** during Phase 1. At Phase 2 ($1\text{M}$), D.U.M.P. opens. The first liquidation reveals upgrades; the first upgrade reveals tariffs; the first tariff change reveals Caymans prestige.
+* **Tab `[B] BRIEF (Situation Room)`** — never sealed. Carries the tutorial directive, the Career Objectives list, and the certificate exporter. This is the channel you stand in while the others are still locked.
+* **Sealed channels [The Seal Is a Promise, Not a Wall]:** every tab is always present in the strip and always selectable, whether or not its channel is open. A sealed channel renders `SealedDossier` — a redacted header, **To Open** (the single event that unlocks it, with a progress bar only for numeric gates), and **Inside** (the teaser). It never mounts the real body, so no purchase, liquidation, tariff move, or prestige reset is reachable while sealed. Copy lives in `src/constants/tabDemands.ts`; the gate is the render branch in `ExecutiveExpansionPane` / `TelemetryConsolePane`, **not** the store's tab setters.
 * **Tab `[D] D.U.M.P. (Chainsaw Liquidations)`**:
   - 10 federal agencies (Weather Bureau, Food & Toxins, Aviation Safety, Postal Service, etc.) to scrap for instant cash payouts and permanent disaster perks.
 * **Tab `[U] CRONY UNLOCKS (Oligarch Tech Tree)`**:
@@ -142,11 +149,12 @@ by an `accent` prop (`phosphor` vs `gold`). Fork that markup and the two drift.
 | :--- | :--- | :--- |
 | **`[SPACEBAR]`** or **`[ENTER]`** | Slam Stamp / Sign Directive | Center Desk |
 | **`[R]`** | Refill Ink | Center Desk |
-| **`[1]`, `[2]`, `[3]`** | Switch Stocks, S.L.O.P. (after first YAP), and PolyGrift (after YAP PUT settlement) | Left Wing |
-| **`[D]`** | Switch to **D.U.M.P.** at Phase 2 | Right Wing |
-| **`[U]`** | Switch to **Crony Unlocks** after first liquidation | Right Wing |
-| **`[T]`** | Switch to **Bilateral Tariffs** after first upgrade | Right Wing |
-| **`[C]`** | Switch to **Caymans Prestige** after first tariff change | Right Wing |
+| **`[1]`, `[2]`, `[3]`** | Switch Stocks, S.L.O.P., and PolyGrift. **Always fire** — a sealed channel shows a demand card | Left Wing |
+| **`[B]`** | Switch to the **Brief** (Situation Room; never sealed) | Right Wing |
+| **`[D]`** | Switch to **D.U.M.P.**. Always fires; sealed shows a demand card | Right Wing |
+| **`[U]`** | Switch to **Crony Unlocks**. Always fires; sealed shows a demand card | Right Wing |
+| **`[T]`** | Switch to **Bilateral Tariffs**. Always fires; sealed shows a demand card | Right Wing |
+| **`[C]`** | Switch to **Caymans Prestige**. Always fires; sealed shows a demand card | Right Wing |
 | **`[Y]`** | Launch 3:00 AM Lethal YAP | Center Desk |
 | **`[W]`** | Walk-Back Clarification (+35% recovery pump) | Center Desk |
 | **`[V]`** | Vent Tantrum (burns the meter for VEX relief) | Center Desk |

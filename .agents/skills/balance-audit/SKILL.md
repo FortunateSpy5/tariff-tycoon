@@ -34,7 +34,7 @@ Then read, in this order:
 - `GAME_DESIGN_DOCUMENT.md` — intended values and phase arc
 - `AGENTS.md` — the exponents that require **ASK FIRST** before changing
 - `.agents/skills/options-trading-math/SKILL.md` — the arcade options model
-- `.agents/AUDIT_REPORT.md` §2–§3 — prior findings, many since fixed
+- `.agents/workflows/UX_EVALUATION_AND_REDESIGN_PLAN.md` — the 2026-09-29 audit, including two fixed P0s (the first-slam soft-lock and the pre-set tariff faucet)
 
 ---
 

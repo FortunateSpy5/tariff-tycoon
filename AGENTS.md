@@ -69,7 +69,7 @@ For specialized guidelines and detailed mechanics, consult:
 - **Agentic Code Architecture:** [.agents/rules/agentic-code-architecture.md](.agents/rules/agentic-code-architecture.md)
 - **Satirical Voice & Tone:** [.agents/rules/satirical-voice-and-tone.md](.agents/rules/satirical-voice-and-tone.md)
 - **Feature Roadmap & SOP:** [.agents/workflows/FEATURE_ROADMAP.md](.agents/workflows/FEATURE_ROADMAP.md)
-- **Codebase Audit Report:** [.agents/AUDIT_REPORT.md](.agents/AUDIT_REPORT.md)
+- **UX Evaluation & Redesign Plan:** [.agents/workflows/UX_EVALUATION_AND_REDESIGN_PLAN.md](.agents/workflows/UX_EVALUATION_AND_REDESIGN_PLAN.md)
 
 ---
 

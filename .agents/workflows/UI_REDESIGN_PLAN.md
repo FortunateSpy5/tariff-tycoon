@@ -290,4 +290,5 @@ comes last.
 
 **Not in scope (deliberately):** leaderboard (needs a backend; project has none) ·
 the `viral-clip-director` MP4 skill remains unused · `yapEngine` reply-swarm and
-fat-finger event are still unimplemented per `.agents/AUDIT_REPORT.md`.
+fat-finger event are still unimplemented; see `UX_EVALUATION_AND_REDESIGN_PLAN.md`
+Phase 3, which schedules the fat-finger autocorrect beat.

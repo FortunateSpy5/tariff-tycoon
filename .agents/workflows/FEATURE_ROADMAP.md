@@ -2,7 +2,19 @@
 
 This document outlines the development phases for **EXECUTIVE DEGEN: SHORT THE WORLD**.
 
-> ⚠️ **Status note:** Phase 1 & 2 are marked complete below, but a full code audit (see [`.agents/AUDIT_REPORT.md`](../AUDIT_REPORT.md)) found doc↔code drift, an economy dead-end (Crony Favor has no faucet), and several cosmetic-only systems. Treat the checkmarks as "shipped in some form," not "matches spec."
+> ⚠️ **Status note:** Phase 1 & 2 are marked complete below, but two later audits found
+> doc↔code drift and several cosmetic-only systems. Treat the checkmarks as "shipped in
+> some form," not "matches spec." The most recent audit is
+> [`.agents/workflows/UX_EVALUATION_AND_REDESIGN_PLAN.md`](UX_EVALUATION_AND_REDESIGN_PLAN.md).
+>
+> **Sprint 2.6 — UX Evaluation & 3:00 AM Terminal Panic (2026-09-29, P0s shipped).**
+> A follow-up audit found and fixed **two P0s**: the idle game loop consumed the
+> first-slam token, soft-locking the causal loop shut for every new player; and the
+> default tariff dials paid ~$40/s from turn one (8× a click) before the player
+> had them. Full findings, measurements and the Phase 0–4 redesign plan:
+> [`.agents/workflows/UX_EVALUATION_AND_REDESIGN_PLAN.md`](UX_EVALUATION_AND_REDESIGN_PLAN.md).
+> Headline remaining gaps: the promised price chart **does not exist**, ~40 % of the
+> centre stage is empty, and 18 interactive elements have no hover context.
 >
 > **Sprint 2.5 — UI Redesign (2026-09-29, shipped).** Onboarding was rebuilt around the
 > game's actual subject: the $10,000 cash gate is gone (market + YAP unlock on the first
@@ -33,10 +45,10 @@ This document outlines the development phases for **EXECUTIVE DEGEN: SHORT THE W
 ---
 
 ## Phase 3: The D.U.M.P. Liquidation Tree & Macro Chaos (Sprint 3)
-- [ ] **D.U.M.P. Chainsaw Engine:** 10 federal agencies to scrap with instant cash payouts and active comedic hazards.
-- [ ] **Oligarch Lobbying Tech Tree:** Permanent unlockable perks (Tungsten Nib, AI Autopen, Diet Soda Drip, Dark Pool Fiber).
-- [ ] **Inflation Heat & Civil Unrest Loop:** Active friction balancing with stimulus checks and military flyover distractions.
-- [ ] **The Palm-a-Grifto Golf Protocol:** Offline state persistence and freeze invariants.
+- [x] **D.U.M.P. Chainsaw Engine:** 10 federal agencies to scrap with instant cash payouts and active comedic hazards. *(Verified implemented and playable 2026-09-29 — this checkmark was stale.)*
+- [x] **Oligarch Lobbying Tech Tree:** Permanent unlockable perks (Tungsten Nib, AI Autopen, Diet Soda Drip, Dark Pool Fiber). *(Verified implemented 2026-09-29 — this checkmark was stale. Note the Tier-1 SIS perk tree from GDD §5 is still absent; see the redesign plan Phase 1.2.)*
+- [ ] **Inflation Heat & Civil Unrest Loop:** Active friction balancing with stimulus checks and military flyover distractions. *(Never implemented. GDD §3.5 labels this design-only — do not document it as shipped.)*
+- [x] **The Palm-a-Grifto Golf Protocol:** Offline state persistence and freeze invariants.
 
 ---
 

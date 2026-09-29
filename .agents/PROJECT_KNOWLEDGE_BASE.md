@@ -48,7 +48,11 @@ CAPS LOCK Frenzy      S.L.O.P. Suspicion      Inflation Heat          Ontologica
 ---
 
 ## The 4 Evolutionary Phases
-* BagHolder Pro stocks/options and YAP unlock on the **first slam** during Phase 1 (previously a $10K cash threshold — see `.agents/workflows/UI_REDESIGN_PLAN.md`). First YAP reveals S.L.O.P.; settling a YAP-targeted PUT reveals PolyGrift.
+* BagHolder Pro stocks/options and YAP unlock on the **first slam** during Phase 1 (previously a $10K cash threshold - see `.agents/workflows/UI_REDESIGN_PLAN.md`). First YAP reveals S.L.O.P.; settling a YAP-targeted PUT reveals PolyGrift.
+* **INVARIANT: [Only A Real Slam Advances The Chain].** Onboarding advances on a manual slam and nothing else; passive ticks and offline credit may terminate it at Phase 2 but never advance it. Sharing one resolver between the click path and the tick path consumed the first-slam token on the first idle frame and soft-locked the causal loop shut for every new player.
+* **INVARIANT: [No Free Lunch At Customs].** Bilateral tariff dials start at 0%, not at the nations' default rates, so revenue begins only once the player has been granted the dials and turned them. Pre-set dials paid ~$40/s from turn one — 8x a $5.00 slam. The Laffer curve is unchanged; this is a gate, not a rebalance.
+* **INVARIANT: [Only A Real Slam Advances The Chain].** Onboarding advances on a manual slam and nothing else; passive ticks and offline credit may terminate it at Phase 2 but never advance it. Sharing one resolver between the click path and the tick path consumed the first-slam token on the first idle frame and soft-locked the causal loop shut for every new player.
+* **INVARIANT: [No Free Lunch At Customs].** Bilateral tariff dials start at 0%, not at the nations' default rates, so revenue begins only once the player has been granted the dials and turned them. Pre-set dials paid ~$40/s from turn one — 8x a $5.00 slam. The Laffer curve is unchanged; this is a gate, not a rebalance.
 * Phase 2 at $1,000,000 reveals D.U.M.P.; liquidation reveals Crony upgrades; the first upgrade reveals tariff controls; changing a tariff reveals Caymans prestige.
 1. **Phase 1: The Customs Desk ($0 to $1M):** Airport confiscation arbitrage at Gate 99B Liberty International.
 2. **Phase 2: The Oval Syndicate ($1M to $100B):** Front-running markets with 3:00 AM YAPs on BagHolder Pro.
@@ -76,6 +80,9 @@ src/
 │   ├── balance.ts      # The tuning surface. ASK FIRST before changing exponents.
 │   ├── crisis.ts       # Red-Phone crisis book, tiers, cooldowns
 │   └── onboarding.ts   # Tutorial directive chain + career objectives
+│   ├── tabDemands.ts   # Per-channel demand copy for sealed channels (open-this +
+│   │                   # teaser). The copy behind [The Seal Is a Promise, Not a Wall]
+│   └── unlocks.ts      # Permanent crony upgrade definitions
 ├── engine/             # Headless mathematical & causal engines (100% testable without DOM)
 │   ├── math/           # Pure formulas with KaTeX annotations (break_infinity, leverage, SIS)
 │   └── systems/        # One concern per file, each pure + independently testable:
@@ -83,8 +90,8 @@ src/
 │                       #   crisisEngine, inkFrenzyEngine, passiveEngine, phaseEngine,
 │                       #   tariffEngine, unlockEngine, onboardingEngine
 ├── store/              # Zustand state divided into slice architecture
-│   ├── slices/         # 9 slices: desk, trading, settlement, prediction, crisis,
-│   │                   #   deskProps, dump, prestige, settings
+│   ├── slices/         # 10 slices: desk, channel, trading, settlement, prediction,
+│   │                   #   crisis, deskProps, dump, prestige, settings
 │   └── useGameStore.ts # Root unified store with persistent localStorage
 ├── audio/              # Procedural Web Audio API sound synthesis (zero audio asset bloat)
 │   ├── soundEngine.ts  # Master AudioContext & gain buses

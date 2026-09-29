@@ -8,7 +8,7 @@ These rules govern the mathematical balance, progression architecture, and playe
 * **The Rule:** An incremental game must **never punish absence**. Returning to the game after 8 hours must always feel rewarding, never punishing.
 * **Implementation:**
   - When the browser tab closes or unmounts:
-    1. S.L.O.P. Suspicion and VEX volatility are **frozen**. *(Inflation Heat and Civil Unrest are named here historically — neither has ever been implemented; see `AUDIT_REPORT.md` §4. Do not document them as if they exist.)*
+    1. S.L.O.P. Suspicion and VEX volatility are **frozen**. *(Inflation Heat and Civil Unrest are named here historically — neither has ever been implemented. Do not document them as if they exist.)*
     2. Zero margin calls or Special Counsel raids can execute while offline. Open 0DTE contracts have their expiry **pushed forward** by the offline duration (`extendTradesForOffline`) — a 0DTE position silently expiring in the player's absence is the one genuinely hostile offline behaviour in the game.
     3. Passive Treasury Cash and Crony Favor accrue cleanly at 100% efficiency (up to a 48-hour cap, `MAX_OFFLINE_SECONDS`).
     4. Offline earnings can cross a **phase threshold while the tab is shut**, so every cash-gain path — not just clicks — must be able to complete onboarding and promote the phase (`onboardingEngine.resolveMarketAccess`).

@@ -14,11 +14,18 @@ export const BilateralTariffsTab: React.FC = () => {
   const hasPrestigeAccess = useGameStore((s) => s.hasPrestigeAccess);
 
   const handleAdjustTariff = (nationId: string, delta: number) => {
-    const current = tariffRates[nationId] ?? 100;
+    // INVARIANT: [No Free Lunch At Customs] — an absent key reads as 0, never as
+    // `nation.defaultTariffRate`. Falling back to the default here would silently
+    // re-open the free faucet the desk slice now gates behind the unlock, and the
+    // dial would read one number while the engine paid out on another.
+    const current = tariffRates[nationId] ?? 0;
     setTariffRate(nationId, Math.max(0, Math.min(500, current + delta)));
   };
 
   const getBeggingCable = (nation: typeof PARODY_NATIONS[number], rate: number) => {
+    // A nation nobody has tariffed has nothing to beg about — it has not been
+    // harmed yet. The mildest cable is reserved for an actual imposition.
+    if (rate < 25) return 'No diplomatic correspondence on file. This nation has not yet been harmed.';
     if (rate < 100) return nation.beggingTiers.mild;
     if (rate < 300) return nation.beggingTiers.desperate;
     return nation.beggingTiers.surrender;
@@ -43,7 +50,7 @@ export const BilateralTariffsTab: React.FC = () => {
       {/* Nations List — flexes to fill remaining vertical space */}
       <div className="flex-1 min-h-0 space-y-2 overflow-y-auto custom-scrollbar pr-0.5">
         {PARODY_NATIONS.map((nation) => {
-            const currentRate = tariffRates[nation.id] ?? nation.defaultTariffRate;
+            const currentRate = tariffRates[nation.id] ?? 0;
             const cableText = getBeggingCable(nation, currentRate);
 
             // Compute local tariff revenue for display

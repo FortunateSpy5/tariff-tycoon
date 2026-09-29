@@ -23,6 +23,7 @@ import {
   completedTutorialIndex,
   resolveMarketAccess,
   resolveTutorialIndex,
+  resolvePassiveTutorialIndex,
 } from '../../engine/systems/onboardingEngine';
 import {
   canBuyUpgrades,
@@ -82,13 +83,18 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
   // Promise, Not a Wall] there for why selection is not gated on unlock.
 
   activeUpgrades: [],
+  // INVARIANT: [No Free Lunch At Customs] — every dial starts at ZERO, not at
+  // `defaultTariffRate`. Pre-set dials paid ~$40/s from the first frame of a new
+  // run (8x a $5.00 slam) before the player had the dials, so the clicker was
+  // dominated by idling. `canSetTariff` gates the dial behind Phase 2 + access,
+  // so revenue can only start once the player turns them. See `deskSlice` history.
   tariffRates: {
-    north_annex: 125,
-    nearshore_fed: 150,
-    strike_republic: 200,
-    overthinker_union: 100,
-    red_factory: 175,
-    silicon_archipelago: 75,
+    north_annex: 0,
+    nearshore_fed: 0,
+    strike_republic: 0,
+    overthinker_union: 0,
+    red_factory: 0,
+    silicon_archipelago: 0,
   },
   setTariffRate: (nationId, rate) =>
     set((state) => {
@@ -337,10 +343,11 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
     const nextPhase = nextPhaseFor(state.phase, nextCash);
     if (isPhasePromotion(state.phase, nextPhase)) sound.playChaChing();
 
-    // INVARIANT: onboarding ends for good at Phase 2 (same as `clickDesk`), so
-    // a returning player who idled overnight is not re-nagged by a tutorial
-    // they already finished. See `onboardingEngine`.
-    const tutorialStepIndex = resolveTutorialIndex(nextPhase, state.tutorialStepIndex);
+    // INVARIANT: [Only A Real Slam Advances The Chain] — this is the PASSIVE
+    // path, so it uses `resolvePassiveTutorialIndex`, which cannot advance the
+    // chain. `resolveTutorialIndex` here consumed the first-slam token on the
+    // first idle frame after page load and soft-locked the market terminal shut.
+    const tutorialStepIndex = resolvePassiveTutorialIndex(nextPhase, state.tutorialStepIndex);
 
     set({
       treasuryCash: nextCash,
@@ -376,9 +383,10 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
     set({
       treasuryCash: state.treasuryCash + cashEarned,
       lifetimeCashEarned: state.lifetimeCashEarned + cashEarned,
-      // Offline earnings can cross the Phase 2 threshold while the tab is shut,
-      // so onboarding must terminate on this path too — see `onboardingEngine`.
-      tutorialStepIndex: resolveTutorialIndex(state.phase, state.tutorialStepIndex),
+      // INVARIANT: [Only A Real Slam Advances The Chain] — PASSIVE path. Offline
+      // earnings can cross the Phase 2 threshold while the tab is shut, so
+      // onboarding must still TERMINATE here; it just may not ADVANCE.
+      tutorialStepIndex: resolvePassiveTutorialIndex(state.phase, state.tutorialStepIndex),
     });
     return cashEarned;
   },

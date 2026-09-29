@@ -21,6 +21,22 @@
  * permanently stuck on step 1 with no way forward. Keying off the index makes
  * every advance idempotent and self-healing.
  *
+ * INVARIANT: [Only A Real Slam Advances The Chain]
+ * `resolveTutorialIndex` applies the first-slam rule, so it may ONLY be called
+ * from `clickDesk`. The passive paths — `tickDesk` (every 100 ms) and
+ * `creditOfflineEarnings` — must use `resolvePassiveTutorialIndex`, which can
+ * only terminate onboarding at Phase 2.
+ *
+ * This was a HARD SOFT-LOCK, not a cosmetic bug. `tickDesk` shares one rule
+ * resolver with `clickDesk`, so the first passive frame after page load consumed
+ * the first-slam token. `resolveMarketAccess` then saw a non-first-slam index on
+ * every subsequent click and left `hasMarketAccess` false forever. A new player
+ * was told "STEP 2/5 // OPEN A PAPER PUT" by the directive card while the very
+ * channel it points at rendered "SLAM THE STAMP ONCE TO UNSEAL BAGHOLDER PRO" —
+ * and clicking could never satisfy it. The causal shorting loop, the game's
+ * entire premise, was unreachable until the player reloaded the page (the
+ * `onRehydrateStorage` totalClicks > 0 repair masked it on the second load).
+ *
  * INVARIANT: [Onboarding Must Always Terminate]
  * The final tutorial step is manual ("Seal It"). If a player ignores it, the
  * directive card would sit above the objectives forever. Reaching the Oval
@@ -50,7 +66,21 @@ export function completedTutorialIndex(): number {
 }
 
 /**
- * Resolve the tutorial index after a cash-gain event.
+ * Resolve the tutorial index on a PASSIVE cash-gain path (idle tick, offline
+ * credit). Passive income may only TERMINATE onboarding at Phase 2 — it can
+ * never advance it past a step the player has not performed.
+ *
+ * See [Only A Real Slam Advances The Chain].
+ */
+export function resolvePassiveTutorialIndex(nextPhase: GamePhase, currentIndex: number): number {
+  if (nextPhase >= 2 && currentIndex < TUTORIAL_CHAIN.length) {
+    return TUTORIAL_CHAIN.length;
+  }
+  return currentIndex;
+}
+
+/**
+ * Resolve the tutorial index after a MANUAL slam.
  *
  * @param nextPhase The phase the player is in AFTER the gain.
  * @param currentIndex The tutorial index BEFORE the gain.
