@@ -1065,3 +1065,107 @@ because a finding that was checked and dismissed is still information.
   safely from a pre-field save, and `axisPriceLabel` is over budget 0 times across
   520 swept values (max 8 characters, verified against the real function rather
   than a reimplementation of it).
+
+---
+
+# PART 4 - The Chekhov audit: nothing on screen is a throwaway
+
+**Status: NOT STARTED. This is a phase, not a fix. It is scoped here so the audit
+has a definition of done rather than a vibe.**
+
+## The complaint, stated precisely
+
+Satire is allowed to be loud. It is not allowed to be *decorative*. The
+distinction that matters:
+
+- **Atmosphere** is text that could be deleted with no mechanical consequence and
+  no lost meaning. "THE DEEPLY TERMINAL ANNEX" in the top bar is a setting, a
+  joke, and a bit of lettering. It is not a Chekhov's gun.
+- **Chekhov's gun** is text that either *is* a mechanic, or *promises* a
+  mechanic, or *is* load-bearing worldbuilding that recurs. Every string on
+  screen must be in one of those three classes. A fourth class exists today -
+  **filler** - and it is invisible in code review because each individual string
+  reads as harmless.
+
+The failure mode this phase exists to stop: a player who has played two hours
+cannot answer "what was that for?" about a third of what they have read. Every
+unanswered string is a small tax on the feeling that the world is real, and the
+whole premise of the game is a world that is real except that it is funny.
+
+## What the audit is NOT
+
+It is **not** "delete all flavour". Volume 4 of this document argued the
+opposite: the game has a tone problem, not a surplus-text problem. It is also
+**not** "make every number matter" in the sense of wiring all of them into the
+economy. Some things should stay pure atmosphere, and the point of putting them
+in writing is so the decision is deliberate instead of accidental.
+
+## The rule to test each string against
+
+> If a player deleted this string, would they lose **a mechanic, a promise, or
+> the world's coherence**? If not, it is either *cut* or *made load-bearing*.
+> There is no third option of leaving it as filler.
+
+## Seed findings, from the examples raised
+
+These are the confirmed instances. They are seeds, not the list — the audit has
+not been run.
+
+| # | string | class today | what it should be |
+|---|---|---|---|
+| 1 | `THE DEEPLY TERMINAL ANNEX` (top bar, `setting.ts:20`) | **filler.** A location name used in a header, and nowhere else in the fiction | Either a real place with rooms the player visits, or cut. It currently reads as a setting because it is set in a typeface, which is the weakest possible form of "setting" |
+| 2 | `viralQuotesCount` (`yapEngine.ts:162`) | **the worst instance.** `Math.floor(Math.random() * 45000 + 5000)`, printed as "N viral quotes" on the DirectiveSheet, read by **nothing** | Delete, or make it mean something. It is a number with a unit and no referent, printed to two significant figures of precision |
+| 3 | `impactMultiplier` (`yapEngine.ts:164`) | **filler with a real number.** `1.0 + tariffRate / 100` — so a 500% tariff prints "Impact ×6.00", a figure large enough to read as a damage multiplier | Either it multiplies something, or it stops being formatted to two decimals. `DirectiveSheet.tsx:45` already admits it "is never fed back into the crash" |
+| 4 | `Tariff N%` (DirectiveSheet footer) | **ambiguous by collision.** A tariff *rate* (an input, in dials) and a tariff *percentage* (an output, a consequence) are the same string | This is a Chekhov violation of the subtlest kind: both referents are real, so nothing looks wrong, and the player has to guess which one they are reading |
+| 5 | `timestamp: "...s ago"` (`yapEngine.ts:151`) | **filler.** A random 2–46s, and the post is a permanent record | Either it is the real age of the post or it is cut |
+| 6 | `BIZARRE_GRIEVANCES` / `PUNITIVE_DECREES` / `UNHINGED_OUTROS` / `DEVICE_OUTROS` / typo injection / bot archetypes (`yapEngine.ts:133-146`) | **mixed, and unexamined.** These are five independent random draws composing one sentence, so **any four of them can be combined into a sentence that was never authored** | Each fragment must make sense *in combination with any other*, or the pools must be combinatorially constrained. This is the highest-volume Chekhov surface in the game and the one most likely to produce accidental nonsense |
+| 7 | `preferredStock \|\| stockSymbols[random]` (`yapEngine.ts:126`) | **mechanic, but silently random** | A YAP that nukes a random sector is a mechanic; a YAP that nukes a sector for no reason is a shrug. This one is a *design* question, not a copy question |
+
+Item 6 deserves emphasis because it is a class of bug no amount of reading the
+UI will catch. The sentence is assembled from independent uniform draws, so the
+combinatorial space is the product of all pool sizes, and it is enormous. A
+reader sees one sentence at a time and cannot audit a space of that size by
+sampling. The audit needs either a generator constraint or an exhaustive
+combination check, and I have not established which is feasible.
+
+## Method
+
+1. **Enumerate the population, mechanically.** Grep every string literal that
+   reaches a rendered surface, plus every `Math.random()` in the game loop
+   (there are 20 call sites; `predictionSlice.ts:80` documents itself as the only
+   *remaining* one that resolves game state, which is a useful prior).
+2. **Classify each** into mechanic / promise / worldbuilding / filler.
+3. **For every filler, choose** cut, or make load-bearing, or keep-and-document
+   as atmosphere. Record the choice. A deliberate atmosphere string is fine; an
+   accidental one is the defect.
+4. **For item 6 specifically**, decide between a constrained generator and an
+   exhaustive check, then implement whichever is cheaper.
+5. **Gate it.** The existing gates cover hover coverage, theme, and file size —
+   none of which can see a throwaway string. A new gate is the only way this does
+   not regress: something that flags a numeric literal rendered with a unit and
+   no consumer.
+
+## Definition of done
+
+- [ ] Every player-facing string is classified, and the classification is in this
+      file rather than in a reviewer's head
+- [ ] `viralQuotesCount` and `impactMultiplier` either drive something or are cut
+- [ ] The YAP sentence pools are either combinatorially constrained or exhaustively
+      checked
+- [ ] `THE DEEPLY TERMINAL ANNEX` is a place, or it is not there
+- [ ] A build gate fails on a unit-bearing number with no consumer
+- [ ] Two hours of play, six strings sampled at random, all answerable to
+      "what was that for?"
+
+## Open question for the player
+
+Items 1 and 7 are design decisions, not defects, and I would rather not guess:
+
+- **The customs desk as a place.** Phase 1.2 has the right wing largely empty
+  (~40% of centre stage and ~55% of the right wing were measured as dead space in
+  Part 2). Making `THE DEEPLY TERMINAL ANNEX` a real location with rooms to visit
+  would give the string a referent *and* fill dead space with the same work. It
+  is also the largest single content build in the remaining plan.
+- **Random YAP targets.** A YAP that hits a random sector is a mechanic with a
+  shrug attached. It could instead prefer a sector the player has a position in,
+  which makes the same randomness feel causal — but that changes the loop.
