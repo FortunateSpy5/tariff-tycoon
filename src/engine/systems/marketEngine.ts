@@ -95,19 +95,34 @@ const FAIR_VALUE_ABSORB = 0.02;
  *
  * INVARIANT: [THIS MUST NOT BE ORDINARILY SMALLER THAN ABSORB]
  * This is the only unbounded-growth guarantee in the price model, and it is a
- * GUARANTEE only if it can win. At equilibrium the two terms balance —
- * `(P - F) * ABSORB = (base - F) * RELAX` — so `F = (AB·P − RL·base)/(AB − RL)`.
- * With `ABSORB = 0.02` and `RELAX = 0.0005` that is a 40:1 ratio and fair value
- * settles at **103% of the price**: relaxation is a rounding error beside
- * absorption, and the anchor is pinned to the tape it is supposed to stabilise.
- * Caught in the live game, where a `$PAIN` that had inherited a legacy $17,148
- * level sat at 3.3x base and rose, because "return to base" was not a property
- * of the model at all.
+ * GUARANTEE only if it can win. Holding the price at `P` and letting fair value
+ * settle, the update `F' = F + (P − F)·AB + (base − F)·RL` is at a fixed point
+ * when the two terms balance:
  *
- * The two rates are therefore EQUAL, which puts the equilibrium at `F = P` when
- * `P = base` and pulls hard toward base from anywhere else. Equal is not
- * arbitrary — it is the smallest relaxation that actually dominates, so the
- * guarantee is met with no margin to tune away.
+ *     (P − F)·AB + (base − F)·RL = 0
+ *     F = (AB·P + RL·base) / (AB + RL)
+ *
+ * NOTE THE SIGNS AND THE DENOMINATOR. Both terms are `+`, so both go in the
+ * numerator and the rates ADD. An earlier version of this comment wrote
+ * `(AB·P − RL·base)/(AB − RL)`, which is the algebra of a SIGNED restoring term
+ * and is wrong on all three counts — the sign on `base`, the operator between the
+ * rates, and it evaluates to its own `0/0` at the equal rates that ship. Follow
+ * it and you conclude the equilibrium diverges when it is in fact a convex
+ * combination, so fair value is trapped in the hull of `{price, base}` and can
+ * never leave it. The correct formula makes that trapping visible, which is the
+ * point: it is why `FAIR_VALUE_ABSORB`'s own note about the hull is true.
+ *
+ * Read through the CORRECT formula, relaxation loses when it is small. With
+ * `ABSORB = 0.02` and `RELAX = 0.0005` — a 40:1 ratio — the equilibrium is
+ * 98.4% of the price plus 1.6% of base, so a ticker trading at half its issue
+ * price anchors at 0.492x base: relaxation is a rounding error beside absorption,
+ * and the anchor is pinned to the tape it is supposed to stabilise. Caught in the
+ * live game, where a `$PAIN` that had inherited a legacy $17,148 level sat at
+ * 3.3x base and rose, because "return to base" was not a property of the model.
+ *
+ * The two rates are therefore EQUAL, which makes the anchor a pure midpoint of
+ * price and base. That is a COUPLED guarantee rather than a local one — see
+ * `FAIR_VALUE_ABSORB` above for why the coupled system still lands on base.
  */
 const FAIR_VALUE_RELAX = 0.02;
 
@@ -185,9 +200,10 @@ function meanReversion(currentPrice: number, reference: number, ageTicks: number
   // not work. With it, the crash is intact when the 0DTE settles and still
   // decays over minutes, so the market forgets it eventually — as a market does.
   //
-  // A YAP is a discrete print, so `ageTicks` is 1 on the tick it lands and grows
-  // from there. It is derived from the newest candle's `t`, which is already the
-  // bucket's open stamp, so no new state is required.
+  // A YAP is a discrete print, so `ageTicks` is 0 on the tick it lands and grows
+  // from there. It is read from `lastPlayerMoveAt` in engine state, NOT from the
+  // candle array — see `ticksSinceLastPlayerMove` for why deriving it from the
+  // chart silently capped the window at 40 seconds.
   const shockFade = Math.min(1, ageTicks / SHOCK_GRADING_TICKS);
   const dev = (currentPrice - reference) / reference;
   // INVARIANT: [The Restore Force Is CLAMPED, Because It Is A MULTIPLICATIVE RATE]
@@ -195,7 +211,9 @@ function meanReversion(currentPrice: number, reference: number, ageTicks: number
   // price: `p * (1 + rev)` goes negative and the `MIN_PRICE` floor then slams the
   // ticker to $0.50. The cubic term is not a soft spring — it is a cliff. Solving
   // `LIN*dev*(1 + CUBIC*dev^2) = 1` puts the edge at dev = 3.68, so a price just
-  // under 4.7x its reference snaps violently and one just over is destroyed.
+  // under 4.7x its reference snaps violently and one just over would, unclamped,
+  // be destroyed. The clamp on the last line is what makes that case merely
+  // violent.
   //
   // Measured reachability: 100 two-hour runs across all nine tickers peak at
   // |dev| = 0.50, and a punitive 500% duty peaks at 0.42 — an order of magnitude
@@ -286,7 +304,7 @@ export function tickMarketPrices(
     // graded in; a level the market walked to is not. See
     // `ticksSinceLastPlayerMove` for why the candle bucket's own stamp cannot
     // answer this.
-    const ageTicks = ticksSinceLastPlayerMove(s.candles, now, SHOCK_GRADING_TICKS);
+    const ageTicks = ticksSinceLastPlayerMove(s.lastPlayerMoveAt, now);
     const reversion = meanReversion(s.currentPrice, fair, ageTicks);
     const noise = (rand() - 0.5) * 0.01 * s.volatilityMultiplier + pressure;
     const nextPrice = Math.max(MIN_PRICE, +(s.currentPrice * (1 + noise + reversion)).toFixed(2));
@@ -333,7 +351,7 @@ export function tickMarketPrices(
     const painPressure = painTariffPressure(tariffRates);
     const painFair = painStock.fairValue ?? painStock.basePrice;
     // Same rule as the constituents — see `ticksSinceLastPlayerMove`.
-    const painAgeTicks = ticksSinceLastPlayerMove(painStock.candles, now, SHOCK_GRADING_TICKS);
+    const painAgeTicks = ticksSinceLastPlayerMove(painStock.lastPlayerMoveAt, now);
     // INVARIANT: [$PAIN's Constituent Link Is A RATIO, NOT A DOLLAR AMOUNT]
     // The beta term was `(averageConstituent - 100) * 0.04` — an ADDITIVE term.
     // With constituents around $150 that is +$2.00 into the index EVERY TICK,

@@ -182,6 +182,10 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
           currentPrice: newPrice,
           priceHistory: shock.priceHistory,
           candles: crashedCandles,
+          // INVARIANT: the SAME `now` that stamped the candle. Two clock reads
+          // could disagree by a tick and the grading ramp would start from a
+          // timestamp its own scar contradicts.
+          lastPlayerMoveAt: now,
         },
       },
       inkLevel: Math.max(0, state.inkLevel - INK_COST_PER_YAP),
@@ -260,6 +264,8 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
           currentPrice: squeeze.pumpPrice,
           priceHistory: squeeze.priceHistory,
           candles: rallyCandles,
+          // Same `now` as the stamp — see the YAP path.
+          lastPlayerMoveAt: now,
         },
       },
       treasuryCash: state.treasuryCash + squeeze.comboPayout,

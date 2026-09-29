@@ -43,6 +43,7 @@
 
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, extname, relative } from 'node:path';
+import { parseOpeningTag } from './lib/jsx-attrs.mjs';
 
 const ROOT = 'src/components';
 /** Exemptions are relative paths, never basenames — a basename exemption would
@@ -115,7 +116,11 @@ function walk(dir, out = []) {
   for (const entry of readdirSync(dir)) {
     const full = join(dir, entry);
     if (statSync(full).isDirectory()) walk(full, out);
-    else if (extname(full) === '.tsx') out.push(full);
+    // INVARIANT: [`.jsx` Is Scanned Too]
+    // `.tsx` alone meant a component authored in `.jsx` was invisible to the gate
+    // entirely — a real hole the moment anyone adds one. The repo is 100% `.tsx`
+    // today, so this costs nothing and removes a whole class of future surprise.
+    else if (extname(full) === '.tsx' || extname(full) === '.jsx') out.push(full);
   }
   return out;
 }
@@ -177,77 +182,6 @@ function blankLineCommentsOutsideStrings(line) {
 }
 
 /**
- * Read a JSX opening tag from `<`, returning the full tag, the tag's OWN
- * attributes with every `{...}` expression value blanked out, and the tag's line
- * range.
- *
- * Braces, brackets and quotes are tracked because an arrow function inside an
- * attribute (`onClick={() => f()}`) contains a `>` that does not end the tag.
- * That is the whole reason a regex cannot do this job.
- */
-function readOpeningTag(src, start) {
-  let i = start;
-  let depth = 0;
-  let quote = null;
-  while (i < src.length) {
-    const c = src[i];
-    if (quote) {
-      if (c === '\\') i += 1;
-      else if (c === quote) quote = null;
-    } else if (c === '"' || c === "'" || c === '`') {
-      quote = c;
-    } else if (c === '{' || c === '(' || c === '[') {
-      depth += 1;
-    } else if (c === '}' || c === ')' || c === ']') {
-      depth -= 1;
-    } else if (c === '>' && depth === 0) {
-      return { tag: src.slice(start, i + 1), own: blankExpressions(src.slice(start, i)) };
-    }
-    i += 1;
-  }
-  return null;
-}
-
-/**
- * Replace every balanced `{...}` group with spaces, keeping offsets stable, and
- * note which line each offset falls on. `own` is what the operability test reads
- * — a handler or a role belonging to a NESTED element must not make a parent
- * look operable.
- */
-function blankExpressions(s) {
-  let out = '';
-  let depth = 0;
-  let quote = null;
-  for (let i = 0; i < s.length; i += 1) {
-    const c = s[i];
-    if (quote) {
-      if (c === '\\') i += 1;
-      else if (c === quote) quote = null;
-    } else if (c === '"' || c === "'" || c === '`') {
-      quote = c;
-    } else if (c === '{') {
-      depth += 1;
-    } else if (c === '}') {
-      depth -= 1;
-    }
-    out += depth > 0 && c !== '{' ? ' ' : c;
-  }
-  return out;
-}
-
-/**
- * Attribute NAMES in a blanked tag, so `data-x="onClick=1"` cannot match.
- *
- * Bare (valueless) attributes count too: JSX allows `<div contentEditable />`
- * and React reads it as `true`, so matching only `name =` would miss it.
- */
-function attributeNames(own) {
-  const named = [...own.matchAll(/([A-Za-z_][\w:.-]*)\s*=/g)].map((m) => m[1]);
-  const bare = [...own.matchAll(/(?:^|\s)([A-Za-z_][\w:.-]*)(?=[\s/>])/g)].map((m) => m[1]);
-  return [...new Set([...named, ...bare])];
-}
-
-/**
  * Blank out the CONTENTS of string literals, leaving the quotes.
  *
  * Used on the raw source span before the `hint-allow` test. A marker inside a
@@ -279,7 +213,10 @@ function blankStrings(s) {
   return out;
 }
 
-const TAG_START = /<([A-Za-z][A-Za-z0-9.]*)\b/g;
+// INVARIANT: [HYPHENS ARE PART OF A TAG NAME]
+// `<my-widget onClick={f}>` is a custom element and is clickable. The class
+// excluded `-`, so a hyphenated element was skipped entirely.
+const TAG_START = /<([A-Za-z][A-Za-z0-9.-]*)\b/g;
 
 /**
  * Does this tag carry a real hint?
@@ -290,7 +227,25 @@ const TAG_START = /<([A-Za-z][A-Za-z0-9.]*)\b/g;
  * proven non-empty at build time. To pass, write `{...hint('...')}`.
  */
 const HINT_SPREAD = /\{\s*\.\.\.hint\((?!\s*['"`]\s*['"`])/;
-const LITERAL_DATA_HINT = /data-hint\s*=\s*['"`][^'"`]+['"`]/;
+
+/**
+ * A `data-hint` ATTRIBUTE whose value is a non-empty string literal.
+ *
+ * INVARIANT: [Proven By Attribute Name, Never By The Characters Appearing]
+ * The original pattern was a bare substring match, so
+ * `className="chip data-hint='b'"` and `aria-label="read data-hint='b' now"` both
+ * satisfied it — the gate passed on an element carrying no `data-hint` at all.
+ * The header claimed that defence was in place; it was not.
+ *
+ * Two attempts to close it by blanking both failed, in opposite directions:
+ * blanking every `{...}` erases a legitimate `{...hint('text')}` spread (44 false
+ * positives); blanking every string erases the hint's own text argument, which is
+ * the evidence (12 false positives). The evidence and the smuggled marker are
+ * both strings, so no blanking rule separates them. `parseOpeningTag` does, by
+ * reporting which value belongs to which attribute — so this test reads
+ * `attr.name`, not the tag text. See `./lib/jsx-attrs.mjs`.
+ */
+const LITERAL_DATA_HINT = /^['"`][^'"`]+['"`]$/;
 
 /**
  * `hint-allow` counts only inside a real comment.
@@ -303,8 +258,17 @@ const LITERAL_DATA_HINT = /data-hint\s*=\s*['"`][^'"`]+['"`]/;
  * `className`. Strings inside the tag's span are blanked before this test runs;
  * a real `//` or `/* *\/` comment survives `blankComments`, because the
  * `ALLOW_IN_COMMENT` test reads the RAW line range, not the blanked source.
+ *
+ * INVARIANT: [A JSDoc Block Is Not An Exemption Channel]
+ * `(?!\*)` after the opening `/*` rejects a doc comment. A doc comment reads as
+ * prose about the element below it, so `hint-allow` inside one looks like
+ * documentation that happens to mention the gate rather than a deliberate marker
+ * a reviewer can spot as such — and a reviewer skimming for the JSX block-comment
+ * form would not see it. Every real exemption in the tree is a JSX block comment
+ * or a `//` line, so forbidding the doc-comment form costs nothing and removes a
+ * channel whose whole purpose is to be missed.
  */
-const ALLOW_IN_COMMENT = /\/\*(?:(?!\*\/)[^*]|\*(?!\/))*hint-allow|\/\/[^\n]*hint-allow/s;
+const ALLOW_IN_COMMENT = /\/\*(?!\*)(?:(?!\*\/)[^*]|\*(?!\/))*hint-allow|\/\/[^\n]*hint-allow/s;
 
 const violations = [];
 let total = 0;
@@ -326,10 +290,10 @@ for (const file of walk(ROOT)) {
     const afterName = src[match.index + match[0].length];
     if (afterName && !/[\s/>]/.test(afterName)) continue;
 
-    const opened = readOpeningTag(src, match.index);
+    const opened = parseOpeningTag(src, match.index);
     if (!opened) continue;
 
-    const names = attributeNames(opened.own);
+    const names = opened.attrs.map((a) => a.name);
     // INVARIANT: [A Capitalised Tag With An `on*` Prop Is Judged] — a component
     // tag is normally invisible to this gate, because the checker cannot see the
     // markup it renders. But that exemption had a hole: `Card` spreads `...rest`
@@ -345,15 +309,31 @@ for (const file of walk(ROOT)) {
       isDomTag || passesHandlerDown
         ? names.some((n) => /^on[A-Z]/.test(n) && !NON_USER_HANDLERS.has(n))
         : false;
-    const roleMatch = isDomTag ? opened.own.match(/role\s*=\s*['"`]([a-z]+)['"`]/) : null;
+    const roleAttr = isDomTag
+      ? opened.attrs.find((a) => a.name === 'role' && a.value)
+      : undefined;
+    const roleValue = roleAttr ? /^\s*['"`]([a-z]+)['"`]\s*$/.exec(roleAttr.value) : null;
+    const roleName = roleValue ? roleValue[1] : null;
     const isOperable =
       NATIVE_CONTROLS.has(tagName) ||
       hasReactHandler ||
       (isDomTag && names.some((n) => OPERABLE_PROPS.includes(n))) ||
-      (roleMatch ? INTERACTIVE_ROLES.has(roleMatch[1]) : false);
+      (roleName ? INTERACTIVE_ROLES.has(roleName) : false);
     if (!isOperable) continue;
 
-    if (HINT_SPREAD.test(opened.tag) || LITERAL_DATA_HINT.test(opened.tag)) continue;
+    // INVARIANT: [The Hint Must Be AN ATTRIBUTE OF THIS TAG, AND ONLY AN ATTRIBUTE]
+    // Both tests read a single parsed attribute, so a `{...hint(...)}` NESTED in a
+    // handler body - `onClick={() => f({ ...hint('x') })}` - cannot satisfy the
+    // element, and neither can the characters `data-hint=` inside a className or
+    // an aria-label. A spread attribute is reported with its own source as its
+    // name, so `HINT_SPREAD` on `attr.name` is an exact test for "this element
+    // spreads a hint" with no string inspection at all.
+    const hasHint = opened.attrs.some(
+      (a) =>
+        (a.spread && HINT_SPREAD.test(a.name)) ||
+        (a.name === 'data-hint' && a.value !== null && LITERAL_DATA_HINT.test(a.value.trim()))
+    );
+    if (hasHint) continue;
 
     const startLine = src.slice(0, match.index).split('\n').length;
     // The marker may sit anywhere in the tag's line range — developers put it

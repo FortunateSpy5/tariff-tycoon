@@ -69,6 +69,16 @@ export function seedCandle(price: number, now: number): PriceCandle {
  * that opened it. A window equal to the trade length would put reversion at FULL
  * strength exactly when the option settles, which is precisely backwards.
  *
+ * INVARIANT: [THIS MUST EXCEED THE CHART BUFFER, OR IT IS NOT A PROPERTY]
+ * `CANDLE_HISTORY_LENGTH` x `CANDLE_INTERVAL_MS` is 40 seconds — shorter than
+ * this window, and shorter than the 60-second option. When the age was read by
+ * scanning the candle array for a scar, the scar was evicted at t+40s and the
+ * grade took a 15x step to full strength, so the realised window was 40 seconds
+ * and its LENGTH was set by a constant whose stated job is how much chart to
+ * keep. Reading `lastPlayerMoveAt` instead decouples them, but the relationship
+ * is worth stating: if `CANDLE_HISTORY_LENGTH` or `CANDLE_INTERVAL_MS` is retuned
+ * past this window, the two stop being independent and that coupling is silent.
+ *
  * These are not independent constants. A grid search over both found only a narrow
  * band where the game works at all — the crash still pays at 60s, AND the 1-hour
  * price band stays inside 0.2x..3x, AND a 10-hour soak does not run away:
@@ -86,30 +96,43 @@ export const SHOCK_GRADING_TICKS = 6000;
 /**
  * Ticks since a ticker's newest PLAYER-CAUSED move, for grading mean reversion.
  *
- * INVARIANT: [The Age Is Of The Scar, NOT Of The Candle It Lands In]
- * The obvious cheap signal is the newest candle's `t`, and it is WRONG: that is
- * the OPEN stamp of a 2-second bucket, so it advances every 2 seconds forever.
- * The age could therefore never exceed 20, the shock grade never rose above 0.3%,
- * and reversion ran at a three-hundredth of its intended strength — effectively
- * switched off. Caught in the live game, where `$PAIN` sat at $14,500 against a
- * $5,200 base and refused to come back.
+ * INVARIANT: [The Age Comes From ENGINE STATE, Never From The Chart]
+ * This originally scanned the candle array for a `playerMove` scar. That is wrong
+ * twice over, and the second failure is the one that matters:
+ *
+ * 1. Scanning is O(n) per symbol per tick, and the array is a *chart* buffer.
+ * 2. WORSE: `CANDLE_HISTORY_LENGTH` caps that buffer at 20 two-second buckets, so
+ *    a scar survives at most 40 SECONDS. The 6000-tick grading window could then
+ *    never be reached — `shockFade` ramped to 0.067 and then took a 15x STEP to
+ *    1.0 the moment the scar was evicted, forty seconds into a sixty-second
+ *    option. The documented "ten-minute force on a one-minute instrument" was
+ *    really a 40-second force, and worse, its length was set by a constant whose
+ *    stated job is "how many buckets the chart keeps": retuning the chart to 40
+ *    buckets would have silently doubled the restore force on the game's core
+ *    mechanic, and nothing in the chart code says so.
+ *
+ * So the age is read from `lastPlayerMoveAt` on the StockDefinition — engine state,
+ * stamped by `stampPlayerMove`, persisted, and completely independent of anything
+ * the renderer wants to draw. `gradeTicks` is then a real property of the price
+ * model again.
  *
  * A level the market reached by walking there is an equilibrium and snaps back
  * immediately. A level a YAP printed is a shock, and is graded in over
- * `gradeTicks`. With no scar in the window there is nothing to be shocked about,
- * so the age is reported as fully graded.
+ * `gradeTicks`. With no recorded move the ticker has never been shocked, so the age
+ * is reported as fully graded.
  *
+ * @param lastPlayerMoveAt `Date.now()` of the newest player-caused print, or 0.
  * @param gradeTicks The grading window. Defaults to `SHOCK_GRADING_TICKS`; the
  *                   parameter exists so the window can be varied in a test without
  *                   re-tuning the engine.
  */
 export function ticksSinceLastPlayerMove(
-  candles: PriceCandle[] | undefined,
+  lastPlayerMoveAt: number | undefined,
   now: number,
   gradeTicks: number = SHOCK_GRADING_TICKS
 ): number {
-  const scar = [...(candles ?? [])].reverse().find((c) => c.playerMove === true);
-  return scar ? (now - scar.t) / TICK_MS : gradeTicks;
+  if (!lastPlayerMoveAt) return gradeTicks;
+  return (now - lastPlayerMoveAt) / TICK_MS;
 }
 
 /**

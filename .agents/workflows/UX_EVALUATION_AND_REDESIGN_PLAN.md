@@ -688,7 +688,20 @@ resting estimate actually does:
 - **absorbs** a print (so a crash is immediately the new price), and
 - **relaxes** toward the issue price (so nothing compounds, ever).
 
-`fairValue: fair + (price - fair) * 0.02 + (base - fair) * 0.0005`
+`fairValue: fair + (price - fair) * 0.02 + (base - fair) * 0.02`
+
+Note the two rates are now **equal**. The `0.0005` above was the *bug* this
+paragraph is describing — a 40:1 absorb-to-relax ratio, documented two lines
+earlier in this same file as the failure. Quoting it here as the shipped code
+was the same class of error the repo treats as a defect: a knowledge base
+repeating a number the simulation does not use.
+
+The correct equilibrium for that update is `F = (AB·P + RL·base) / (AB + RL)` —
+both terms positive, rates **added**. An earlier draft of the code comment wrote
+`(AB·P − RL·base) / (AB − RL)`, which has the wrong sign, the wrong operator, and
+evaluates to its own `0/0` at the equal rates that ship. Correct, it shows fair
+value is a convex combination of price and base, hence trapped in their hull and
+incapable of running away — which is the actual reason the model is bounded.
 
 Reversion is additionally **graded by how long the current price has held**
 (`SHOCK_GRADING_TICKS = 6000`, ten times the 60s option window): a level the
@@ -697,6 +710,35 @@ reached one tick ago is a shock and is left alone. The two constants are not
 independent — a grid search over both found only a narrow band where the game
 works, and the window must be far longer than `TRADE_DURATION_MS` or reversion
 reaches full strength exactly when the option settles.
+
+**This window was documented but not implemented, and the gap was load-bearing.**
+The age was read by scanning the candle array for a `playerMove` scar, and
+`CANDLE_HISTORY_LENGTH` caps that buffer at 20 × 2s = **40 seconds** — shorter
+than both the grading window and the 60-second option. So the ramp topped out at
+0.067 and then took a **15x step** to full strength the instant the scar was
+evicted, forty seconds into a sixty-second option, and the realised window was
+0.67x the option rather than the documented 10x. Worse, its *length* was set by a
+constant whose stated job is "how many buckets the chart keeps": retuning the
+chart to 40 buckets would have silently doubled the restore force on the game's
+core mechanic, and nothing in the chart code said so.
+
+The fix is `StockDefinition.lastPlayerMoveAt` — engine state, stamped by
+`stampPlayerMove` from the same `now` that wrote the candle, persisted, and
+entirely independent of anything the renderer wants to draw. The relationship is
+now stated rather than assumed: if `CANDLE_HISTORY_LENGTH` or
+`CANDLE_INTERVAL_MS` is ever retuned past 6000 ticks, the two stop being
+independent and that coupling is silent.
+
+Measured after the fix, and it is not a wash — the real window pays *better*,
+because reversion is now genuinely weak during the whole settlement:
+
+| grading window | 50% YAP returns at t+60s |
+|---|---|
+| 400 ticks (the broken 40s) | −35.3% |
+| 6000 ticks (the real 600s) | **−48.4%** |
+
+with the 1h band 0.58x..1.58x, a 10h soak peaking at 1.37x, a legacy $17,148
+`$PAIN` back to 1.06x in 30 minutes, and no non-finite price in 2,700 runs.
 
 ### Verified
 
@@ -977,3 +1019,49 @@ The four `hint(text, name)` families — `ClickerButton`, `WatchlistLadder`,
 `ResetGameModal` and the dock's icon buttons — keep their names. With the bubble
 off, those names are all a screen-reader user has, and a gated control with no
 name explains nothing at all.
+
+---
+
+## Adversarial review round (follow-up to the chart/price-model commit)
+
+An independent review agent was pointed at commit `552514a` with instructions to
+find defects and prove them, and to report nothing rather than invent. It ran 30
+fixtures against a patched copy of the gate and derived the fair-value fixed
+point independently. Findings are recorded here whether or not they were fixed,
+because a finding that was checked and dismissed is still information.
+
+### Fixed
+
+| # | finding | severity | resolution |
+|---|---|---|---|
+| 1 | `SHOCK_GRADING_TICKS` was not the grading window. The scar was read from the candle array, capped at 40s, so the ramp topped out at 0.067 and took a 15x step at t+40s of a 60s option. | MAJOR | `lastPlayerMoveAt` engine state. Documented above. |
+| 2 | The fair-value equilibrium was written `(AB·P − RL·base)/(AB − RL)` — wrong sign, wrong operator, and `0/0` at the rates that ship. | MAJOR | Corrected to `(AB·P + RL·base)/(AB + RL)`, with the failed form recorded so nobody re-derives it. |
+| 3 | The hint layer's re-render trigger was `setPlaced(p => p ? {...p} : p)`, a no-op when `placed` is null — which is the *only* state it is ever in with bubbles off, freezing the one description a screen-reader user still has. | MAJOR | Replaced with an unconditional `setTextTick(n => n+1)` counter, and verified in-browser that the suppressed node's text still tracks the attribute. |
+| 4 | `hover:check` passable four ways: a `hint()` nested in a handler body, `data-hint=` smuggled inside a `className` or `aria-label`, a `.jsx` file unscanned, and a hyphenated custom element skipped. Plus a trailing bare attribute (`contentEditable` with nothing after it) read as inert. | MAJOR | Rewrote the tag reader as a real attribute parser (`scripts/lib/jsx-attrs.mjs`) and matched on attribute NAME rather than on characters. 29 probes, 0 failures. |
+| 5 | `axisPriceLabel` had a second decimal loop byte-identical to a strict subset of the first — it fired **0 times in 13,396 labels** — and its comment described a "bigger unit" escalation the code did not perform. | MINOR | Deleted. The sci-notation escape it guarded is genuinely live (`-$1.0E5`). |
+| 6 | `describeChart` — the `<svg>`'s `aria-label`, the one string a screen reader hears — spelled "two-second buckets" in words, desynchronising silently if `CANDLE_INTERVAL_MS` were retuned, and emitting "1 two-second buckets". | MINOR | Interpolates `BUCKET_SECONDS` like every other duration. |
+| 7 | `types/market.ts` cited `FAIR_VALUE_PULL`, a symbol that exists nowhere (renamed to `FAIR_VALUE_ABSORB`/`FAIR_VALUE_RELAX`), sending a reader to a symbol that isn't there. | MINOR | Cites both real constants. |
+| 8 | `UI_DESIGN_SPECIFICATION.md` carried the "DOES NOT EXIST" audit paragraph **twice, character for character**, on a chart that now ships. | MINOR | Replaced once with the shipped description. |
+| 9 | This file quoted `* 0.0005` as the shipped relax rate, in the same paragraph that explains `0.0005` was the bug. | MINOR | Corrected to `0.02` with the distinction stated. |
+| 10–12 | Prose describing the *unclamped* world immediately above the clamp; a stale `1e-9` span floor that is now relative; `TICK_MS = 100` duplicated as a literal in `useGameLoop`. | MINOR | 10 and 11 fixed. 12 left: the duplicate is honestly documented as a manual coupling, and a shared constant would trade a comment for an import without removing the coupling. |
+| 13 | A JSDoc `/** hint-allow */` exempted an element. | MINOR | Rejected by a `(?!\*)` guard. Every real marker in the tree is a JSX block or `//` comment, so this cost nothing. |
+
+### Checked, and left alone
+
+- **`BASE_SPAN_BUDGET` fires at 5%, not just at absurd levels.** A base 5% off a
+  calm tape loses the dashed rule and its gold BASE label while the header still
+  prints the drift in dollars. This is *disclosed*, not hidden: the hover copy says
+  "off-window, so no rule is drawn", and the constant's own docstring states the
+  rule it implements. The constant exists to stop a 100,000x base from flattening
+  the candles. Loosening it is a design call, not a bug fix, so it is recorded
+  here rather than made silently.
+- **Fair value settles at the MIDPOINT `(price + base)/2`, not at base.** The
+  review flagged the code comment as claiming otherwise. Re-derived in both
+  directions: holding price pinned leaves the anchor stranded at 2.15x base, but
+  the live coupled system converges to 0.95x base within 30 minutes, because mean
+  reversion drags the *price* down and absorption drags fair value after it. The
+  guarantee is real and **coupled, not local**; the comment now says exactly that.
+- **No BLOCKER.** The 0DTE pays, the gates pass, `fairValue` persists and degrades
+  safely from a pre-field save, and `axisPriceLabel` is over budget 0 times across
+  520 swept values (max 8 characters, verified against the real function rather
+  than a reimplementation of it).

@@ -97,12 +97,13 @@ export interface StockDefinition {
    * causal loop the game is built on, quietly did not work — with nothing on
    * screen to say why.
    *
-   * So the anchor follows the price, but slowly (`FAIR_VALUE_PULL`), which is
-   * what a market actually does: a crash is immediately the new price, and the
-   * expectation of where the price sits drifts back over minutes. The separation
-   * that matters is not shock-vs-no-shock but fast-vs-slow — the 60s option
-   * window is far shorter than the anchor's relaxation, so a position opened on a
-   * YAP settles on that YAP.
+   * So the anchor follows the price, but slowly — it both ABSORBS a print
+   * (`FAIR_VALUE_ABSORB`) and RELAXES toward the issue price
+   * (`FAIR_VALUE_RELAX`), which is what a market actually does: a crash is
+   * immediately the new price, and the expectation of where the price sits drifts
+   * back over minutes. The separation that matters is not shock-vs-no-shock but
+   * fast-vs-slow — the 60s option window is far shorter than the anchor's
+   * relaxation, so a position opened on a YAP settles on that YAP.
    *
    * `undefined` on a save written before this field existed; the tick seeds it
    * from the issue price on the first print.
@@ -110,6 +111,23 @@ export interface StockDefinition {
   fairValue?: number;
   priceHistory: number[];
   volatilityMultiplier: number;
+  /**
+   * `Date.now()` of the most recent PLAYER-CAUSED print on this ticker, or 0.
+   *
+   * INVARIANT: [This Is Engine State, And It Is NOT Derived From The Chart]
+   * Mean reversion is graded by how long the current price level has held, so the
+   * engine needs the age of the last shock. Deriving it from the candle array was
+   * tried and is wrong: `CANDLE_HISTORY_LENGTH` caps that buffer at 40 seconds of
+   * tape, so a scar is evicted long before a meaningful grading window elapses —
+   * which made the chart's bucket count silently govern the restore force on the
+   * game's central mechanic. Retuning the chart must never be able to change how
+   * hard a price snaps back.
+   *
+   * Set by `stampPlayerMove`, so the field cannot disagree with which candles
+   * carry a mark. `undefined`/0 on a pre-field save, which reads as "never
+   * shocked" and therefore fully graded — the correct answer for a fresh ticker.
+   */
+  lastPlayerMoveAt?: number;
   /** Time-bucketed OHLC series for the desk chart. See [A Candle Is Recorded]. */
   candles?: PriceCandle[];
 }

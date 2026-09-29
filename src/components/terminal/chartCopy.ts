@@ -13,7 +13,12 @@
  * themselves at call time. Nothing here holds a literal percentage or a literal
  * duration: the bucket width comes from `CANDLE_INTERVAL_MS` and the window
  * length from the series the engine actually printed, so retuning either retunes
- * the sentence with it.
+ * the sentence with it. This is a claim about EVERY sentence here, so it was
+ * checked rather than trusted: `describeChart` — the `aria-label` of the `<svg>`,
+ * and therefore the one string a screen-reader user hears — used to spell out
+ * "two-second buckets" in words, which desynchronised silently the moment
+ * `CANDLE_INTERVAL_MS` was retuned, and read "1 two-second buckets" on a single
+ * candle. It now interpolates `BUCKET_SECONDS` like every other duration.
  *
  * INVARIANT: [A Move Is Named For What It Did]
  * Two player actions mark a candle and they move the price in OPPOSITE
@@ -42,9 +47,12 @@ export interface AxisLabel {
 /**
  * Max, base and min, nudged apart.
  *
- * The nudge is not cosmetic: `scaleSeries` floors the span at 1e-9, so on a flat
- * tape the base and min labels land a couple of units apart and overprint each
- * other into a smudge — exactly when the player most needs to read the base rule.
+ * The nudge is not cosmetic: `scaleSeries` floors the span at a RELATIVE
+ * `max(|max|, 1) * 1e-4`, so on a flat tape the base and min labels land a couple
+ * of units apart and overprint each other into a smudge — exactly when the player
+ * most needs to read the base rule. (The floor used to be the absolute `1e-9`,
+ * which at a $5200 base was a millionth of a percent and did nothing at all. It
+ * is relative now, which is the version described above.)
  */
 export function axisLabels(scale: PlotScale, basePrice: number): AxisLabel[] {
   const base = finite(basePrice, 0);
@@ -191,23 +199,25 @@ export function axisPriceLabel(price: number): string {
     const candidate = `${sign}$${(abs / row.divisor).toFixed(decimals)}${row.suffix}`;
     if (candidate.length <= AXIS_MAX_CHARS) return candidate;
   }
-  // INVARIANT: [A Price Too Wide For Its Unit Gets A BIGGER Unit, Not A Cut]
+  // INVARIANT: [The Escape Is Scientific Notation, Because A Price Always Renders]
   // The game reaches $10^42 of total wealth, so a ticker can legitimately exceed
-  // what `T` can express: at zero decimals a $1e30 price is eleven characters. The
-  // suffixes above therefore climb to `Sp` at $1e36, and this loop picks the
-  // largest one that keeps the label inside the budget. The first draft of this
-  // branch divided by 1e15 and then labelled the result `M` or `Qi` while printing
-  // the UNSCALED magnitude — 26 characters of `-$199999999999999967232.0Qi`. A
-  // number too wide to render must still render as a number, never clipped with
-  // an ellipsis that would read like a real price.
-  for (let decimals = 2; decimals >= 0; decimals -= 1) {
-    const candidate = `${sign}$${(abs / row.divisor).toFixed(decimals)}${row.suffix}`;
-    if (candidate.length <= AXIS_MAX_CHARS) return candidate;
-  }
-  // Only reachable when the sign itself is the overflow: a `-` costs the one
-  // character the mantissa needed, so `-$100000E5` cannot be shortened by dropping
-  // decimals. Re-scale into scientific notation with a single leading digit, which
-  // is the only form guaranteed to fit at any magnitude.
+  // what any suffix can express: `$100000T` is already eight characters, and a
+  // negative sign spends the ninth. `AXIS_SUFFIXES` climbs to `Oc` at $1e39, and
+  // beyond that no suffix keeps the label short.
+  //
+  // A second loop once sat here, re-trying the SAME candidates as the loop above
+  // at a fixed two decimals. It was byte-identical to a strict subset of them, so
+  // it could never return: swept across 13,396 labels it fired zero times. Its
+  // comment claimed a "bigger unit" escalation the code did not perform, which is
+  // the worse half of that — a reader tuning the suffix ladder would have been
+  // reading a mechanism that did not exist. The first draft of that branch was
+  // worse still: it divided by 1e15 then labelled the result `Qi` while printing
+  // the UNSCALED magnitude, 26 characters of `-$199999999999999967232.0Qi`.
+  //
+  // A number too wide to render must still render as a number, never clipped with
+  // an ellipsis that would read like a real price. Re-scaling into scientific
+  // notation with a single leading digit is the only form guaranteed to fit at
+  // any magnitude, and it is reachable: `axisPriceLabel(-1e17) === "-$1.0E5"`.
   const mantissa = abs / row.divisor;
   const exponent = Math.floor(Math.log10(Math.max(mantissa, 1)));
   return `${sign}$${(mantissa / 10 ** exponent).toFixed(1)}E${exponent}`;
@@ -300,7 +310,7 @@ export function describeChart(
   const last = newestImpact(marks);
   const parts = [
     `$${symbol} candlestick chart`,
-    `${candles.length} two-second buckets, a ${timeAxis(candles).windowSeconds} second window`,
+    `${candles.length} x ${BUCKET_SECONDS}s buckets, a ${timeAxis(candles).windowSeconds} second window`,
     `live mark $${(base + amount).toFixed(2)}, ${directionWord(amount)} ${Math.abs(amount).toFixed(2)} from the $${base.toFixed(2)} base`,
   ];
   if (candles.length) {
