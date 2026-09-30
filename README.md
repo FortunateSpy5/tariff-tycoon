@@ -1,7 +1,7 @@
 # 🦅 EXECUTIVE DEGEN: SHORT THE WORLD
 *(The Art of the 3:00 AM Tariff)*
 
-> *"The S&Pain 500 opens in 4 minutes. Sign an 800% tariff on Great Northern maple slurry with your squeaking Golden Sharpie, short European automakers on BagHolder Pro under the Resolute Desk, and deploy D.U.M.P. auditors to balance the vibes."*
+> *"The S&Pain 500 opens in 4 minutes. Sign an 800% tariff on Great Northern maple slurry with your squeaking Golden Sherpie, short European automakers on BagHolder Pro under the Resolute Desk, and deploy D.U.M.P. auditors to balance the vibes."*
 
 ---
 
@@ -15,7 +15,7 @@ You play as **"The Dealmaker-in-Chief"**—a silhouette with a glowing aerodynam
 ## 🕹️ Core Gameplay Loops
 1. **Two-Phase Tactile Clicker Progression**:
    * **Phase 1: Gate 99B, The Deeply Terminal Annex**: Slam a heavy blue rubber stamp **[CONFISCATED - BY ORDER OF AGENT 412]** onto tourist declarations and foreign brie, flipping contraband on **GriftBay Underground** for seed cash.
-   * **Your first slam unlocks BagHolder Pro and the YAP** — market access is an *event*, not a cash threshold, so the core loop is playable in the first ten seconds. At **$1,000,000**, the Oval Office opens and the Golden Sharpie replaces the customs stamp.
+   * **Your first slam unlocks BagHolder Pro and the YAP** — market access is an *event*, not a cash threshold, so the core loop is playable in the first ten seconds. At **$1,000,000**, the Oval Office opens and the Golden Sherpie replaces the customs stamp.
    * A **5-step classified-directive tutorial** (slam → open a paper PUT → fire a YAP → settle) teaches that loop. Your first **3 contracts are paper trades**: losses refund, wins pay for real. Risk-free by design, because the premise must survive a first bad guess.
    * When ink runs out, the **"Desperation Dry Nib"** scratch pays **10% yield and builds no tantrum** — after 30 consecutive dry clicks the nib jams and yield collapses to 2%. The only route to **CAPS LOCK FRENZY** (20 seconds, 10x click multiplier, ink *frozen* for the duration and **not** restored) is to keep the tank inked. Above 85% Tantrum the stamp switches to a damped slam so fast clicking degrades to a throb rather than a judder.
 2. **The 3:00 AM Lethal YAP & Causal Insider Shorting**:

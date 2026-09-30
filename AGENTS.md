@@ -16,7 +16,7 @@ Welcome, AI Agent. This repository powers **EXECUTIVE DEGEN: SHORT THE WORLD** (
   - **Zero Soft-Locks:** The manual click ("Executive Action / Tweet") always has a guaranteed cash floor ($ \ge \$1.00 $ or $ \text{SIS} \times \$1,000 $). If a player loses 100% of their net worth on a bad option trade, the "Too Big to Fail" bailout safety net triggers automatically.
   - **Causal Market Volatility:** Stock crashes must be causally triggered by player YAPs and tariffs, never purely passive background RNG.
 - **Maintain Tactile & Visceral Juice:**
-  - All clicker interactions must feature kinesthetic weight: screen recoil, procedural Sharpie ink squeaks, paper blotter physics, ink splatters, and dynamic UI state changes (e.g. CAPS LOCK FRENZY red borders).
+  - All clicker interactions must feature kinesthetic weight: screen recoil, procedural Sherpie ink squeaks, paper blotter physics, ink splatters, and dynamic UI state changes (e.g. CAPS LOCK FRENZY red borders).
 - **Adhere to the 4-Phase Evolutionary Arc:**
   - Phase 1: *The Customs Desk* ($0 to $1M).
   - Phase 2: *The Oval Syndicate* ($1M to $100B).
@@ -51,7 +51,7 @@ Welcome, AI Agent. This repository powers **EXECUTIVE DEGEN: SHORT THE WORLD** (
 ## 2. Tech Stack & Planned Framework
 
 - **Engine/Frontend:** React 19 + TypeScript + Vite
-- **Styling & UI:** Tailwind CSS v4 + Lucide Icons + Canvas/Framer Motion physics
+- **Styling & UI:** Tailwind CSS v4 + Lucide Icons + Canvas + hand-authored CSS `@keyframes`. **No animation library is installed.** `framer-motion` was listed here from the first commit and never added to `package.json`; every transition in the game is a CSS keyframe in `src/index.css` plus React state. If you are ever tempted to `npm install` it, that is a roadmap item, not a bug fix — see ISSUE-019 in `UI_UX_AUDIT_REPORT.md`.
 - **Audio Synthesis:** Web Audio API procedural synthesis (marker squeaks, screen thuds, cash chimes, soundboard vine-booms)
 - **State Architecture:** Zustand with persistent local storage & automated offline delta calculation
 - **Export Pipeline:** HTML Canvas / WebCodecs 9:16 vertical MP4 generator for TikTok/X C-SNOOZE Senate hearing clips

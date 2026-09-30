@@ -111,8 +111,8 @@ export const PolyGriftTab: React.FC = () => {
   return (
     <div className="h-full min-h-0 flex flex-col gap-2 select-none">
       <div className="shrink-0">
-        <div className="flex items-center justify-between t-micro font-mono text-stone-400 border-b border-stone-800 pb-1.5">
-          <div className="flex items-center gap-1.5 text-amber-400 font-bold">
+        <div className="flex items-center justify-between t-micro font-mono text-term-ink-3 border-b border-term-line pb-1.5">
+          <div className="flex items-center gap-1.5 text-accent-ink font-bold">
             <Target className="w-3.5 h-3.5" />
             <span>POLY-GRIFT PREDICTION BOOK</span>
           </div>
@@ -124,11 +124,11 @@ export const PolyGriftTab: React.FC = () => {
       <div className="flex-1 min-h-0 space-y-2 overflow-y-auto custom-scrollbar pr-0.5">
         {INITIAL_POLYGRIFT_BETS.map((bet) => (
             <div key={bet.id} className="surface-terminal-well rounded-lg p-2 space-y-1.5">
-              <span className="font-sans font-medium text-phosphor-300 block text-xs leading-snug">
+              <span className="font-sans font-medium text-term-ink-1 block text-xs leading-snug">
                 {bet.title}
               </span>
-              <div className="flex items-center justify-between t-caption font-mono text-phosphor-600">
-                <span>Chance: <strong className="text-phosphor-400">{bet.probYes}%</strong></span>
+              <div className="flex items-center justify-between t-caption font-mono text-term-ink-3">
+                <span>Chance: <strong className="text-term-ink-2">{bet.probYes}%</strong></span>
                 <span>Payout Multiplier: {bet.oddsYes}x / {bet.oddsNo}x</span>
               </div>
               <div className="grid grid-cols-2 gap-1.5 pt-0.5">
@@ -143,8 +143,8 @@ export const PolyGriftTab: React.FC = () => {
                   )}
                   className={`py-1 rounded border font-mono font-bold t-micro flex items-center justify-center gap-1 active:scale-95 transition-all ${
                     tooBroke
-                      ? 'bg-phosphor-900 border-phosphor-700/40 text-phosphor-600 cursor-not-allowed'
-                      : 'bg-emerald-900/60 hover:bg-emerald-800 border-emerald-700/60 text-emerald-300 cursor-pointer'
+                      ? 'bg-well border-term-line-strong/40 text-term-ink-3 cursor-not-allowed'
+                      : 'bg-well/60 hover:bg-well-2 border-term-line-strong/60 text-term-ink-1 cursor-pointer'
                   }`}
                 >
                   <CheckCircle2 className="w-2.5 h-2.5" />
@@ -161,8 +161,8 @@ export const PolyGriftTab: React.FC = () => {
                   )}
                   className={`py-1 rounded font-mono font-bold t-micro flex items-center justify-center gap-1 active:scale-95 transition-all ${
                     tooBroke
-                      ? 'surface-terminal-well text-phosphor-600 cursor-not-allowed'
-                      : 'surface-terminal-well hover:border-phosphor-500/60 text-phosphor-300 cursor-pointer'
+                      ? 'surface-terminal-well text-term-ink-3 cursor-not-allowed'
+                      : 'surface-terminal-well hover:border-term-line-strong/60 text-term-ink-1 cursor-pointer'
                   }`}
                 >
                   <XCircle className="w-2.5 h-2.5" />
@@ -174,7 +174,7 @@ export const PolyGriftTab: React.FC = () => {
       </div>
 
       {feedback && (
-        <div className="shrink-0 p-1.5 rounded bg-gold-500/20 border border-gold-500/40 text-center font-mono t-micro font-bold text-gold-400 animate-pulse">
+        <div className="shrink-0 p-1.5 rounded bg-accent/20 border border-accent-ink/40 text-center font-mono t-micro font-bold text-accent-ink animate-pulse">
           {feedback}
         </div>
       )}

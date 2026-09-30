@@ -31,6 +31,17 @@ import { CRONY_FAVOR_MAX } from '../../constants/balance';
 export const SLOP_DECAY_PER_SECOND = 0.2;
 
 /**
+ * Heat at which the radar reads CRITICAL, and the app root lights the panic
+ * wash. Lifted out of `SlopRadarTab` in Phase 2.1 because two surfaces now need
+ * the same number: the tab's own status word, and the cockpit-wide alarm. A
+ * second copy would let the radar say CRITICAL while the room stayed calm.
+ */
+export const SLOP_CRITICAL_THRESHOLD = 75;
+
+/** Heat at which the radar reads ELEVATED. Below this it is DOCILE. */
+export const SLOP_ELEVATED_THRESHOLD = 50;
+
+/**
  * Minimum gap between raids, so one bad trade cannot chain-seize repeatedly.
  *
  * Exported in SECONDS as well, because the S.L.O.P. radar and the perk copy

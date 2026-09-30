@@ -12,20 +12,20 @@
     padding: 0;
     user-select: none;
     overscroll-behavior: none;
-    background-color: #0c0a09;
-    color: #f5f5f4;
+    background-color: var(--color-ground);
+    color: var(--color-ink-1);
     font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
 
   ::selection {
-    background-color: #f59e0b;
-    color: #0c0a09;
+    background-color: var(--color-accent);
+    color: var(--color-ink-1);
   }
 
   :focus-visible {
-    outline: 2px solid #fbbf24;
+    outline: 2px solid var(--color-accent-ink);
     outline-offset: 2px;
   }
 
@@ -36,62 +36,211 @@
 }
 
 /* ===================================================================
-   DESIGN DIRECTION: [Newsprint & Classified Documents]
-   The satire is a stack of government paperwork. So the UI is built
-   from three material layers rather than a flat dark dashboard:
-     1. NEWSPRINT  — aged paper surfaces, warm off-white, ink-on-paper
+   DESIGN DIRECTION: [Newsprint & Classified Documents] -> [TUNGSTEN]
+
+   The satire is a stack of government paperwork. Three material layers:
+
+     1. NEWSPRINT  — paper stocks, ink-on-paper
      2. CLASSIFIED — redaction bars, wax seals, stamp bleed
      3. TERMINAL   — phosphor green BagHolder Pro, monospace telemetry
+
+   [TUNGSTEN] adds the thing the three layers were missing: LIGHT.
+
+   It is 3am, there is one desk lamp, and the paper is the only bright
+   thing in the room. Concretely that means three decisions:
+
+     - The paper has real STOCKS. Four of them, a genuine step apart. The
+       old ramp had `newsprint-50` and `newsprint-100` 4% apart and they
+       were the desk and a sheet resting on it, so nothing read as an
+       object and the app was one flat beige field. The value order is
+       now INVERTED: 50 is the paper, 200 is the pad it rests on, and a
+       sheet is lighter than the surface under it.
+
+     - The desk is LIT, not filled. A tight tungsten pool from the upper
+       left — where `StampIllustration` throws its cast shadow, because
+       light and shadow have to agree or the object floats — with an
+       opaque falloff to a dark rim. A broad soft pool over a large
+       surface is indistinguishable from no pool at all.
+
+     - The room is DARK. `surround-room` is near-black with a fast-dying
+       warm spill, so the cockpit reads as a lit desk in an unlit room
+       rather than a beige page on a brown page.
+
+   INVARIANT: the two wings stay two wings. The left is a green CRT and
+   the right is cream paper, and that separation is load-bearing — it is
+   how a player knows which world they are in without reading. Do not
+   converge them. In particular do NOT move the terminal to amber: amber
+   is the right wing's accent, and a monochrome-with-one-alarm scheme
+   would also leave the plan's own designated clip (3.3 fat-finger
+   autocorrect, a +10 000% pump) with no loud channel available, since
+   the panic scale is contractually reserved for states where the player
+   is losing something or racing a clock.
    =================================================================== */
 @theme {
-  /* -- Newsprint / paper ------------------------------------------------ */
-  --color-newsprint-50: #f6f1e3;
-  --color-newsprint-100: #ece4d0;
-  --color-newsprint-200: #ddd2b8;
-  --color-newsprint-300: #c4b696;
-  --color-newsprint-400: #a89a7a;
-  --color-newsprint-800: #4a4133;
-  --color-newsprint-900: #332c22;
-  --color-newsprint-950: #211c15;
+  /* ===================================================================
+     [TUNGSTEN] A WARM DESK, ONE DARK MACHINE, FOUR CHROMATIC ROLES.
 
-  /* -- Classified redaction / stamps ------------------------------------- */
-  --color-redaction-500: #0f0f0f;
-  --color-redaction-700: #050505;
-  --color-wax-500: #9f1239;
-  --color-wax-600: #881337;
-  --color-stampblue-500: #1d4ed8;
-  --color-stampblue-700: #1e3a8a;
+     Every value below was SOLVED against the surface ladder rather than
+     picked, and the derivations are recorded so a future refactor cannot
+     quietly undo them. The bar for each decision is written next to it.
 
-  /* -- Terminal phosphor ------------------------------------------------ */
-  --color-phosphor-300: #86efac;
-  --color-phosphor-400: #4ade80;
-  --color-phosphor-500: #22c55e;
-  --color-phosphor-600: #16a34a;
-  --color-phosphor-900: #052e16;
+     ---------------------------------------------------------------------
+     1. THE VALUE LADDER HAS STEPS.
+        The previous dark system measured ΔE 3.6 between canvas and its
+        first surface. That single number IS the "it's all one flat field"
+        complaint — at that separation there is no visible edge, so nothing
+        reads as raised. It is also why a first attempt at this palette
+        failed: ground→panel came out at 4.5 and panel→card at 3.8, which is
+        the same defect in a lighter key.
 
-  /* -- Dealmaker gold (the golden Sharpie) ------------------------------ */
-  --color-gold-300: #fcd34d;
-  --color-gold-400: #fbbf24;
-  --color-gold-500: #f59e0b;
-  --color-gold-600: #d97706;
-  --color-gold-900: #78350f;
+        The ladder now steps ΔE 7.0 and 7.1, and the terminal is ΔE 69.5
+        away from the ground — a real material boundary, not a tint.
+     ---------------------------------------------------------------------
+     2. ONE SECOND MATERIAL, AND IT IS THE MACHINE.
+        Imhof's fourth rule: "if a picture is composed of two or more large
+        enclosed areas in different colors, then the picture falls apart."
+        A three-pane cockpit is three large enclosed areas. Two of them
+        share the warm ground and are separated by a value step; the third
+        is the terminal, and it is the ONE exception — a dark cool screen
+        inset in a warm room, which is what a monitor physically is, and
+        which is the only way a machine can read as a machine.
+
+        A mid-light screen was tried and does not work: at L* 71 no
+        saturated green, red and amber can all reach 4.5:1, and the
+        terminal is the P&L surface, so all three must appear there. The
+        solver puts green at 4.36, red at 4.35 and amber at 4.11. The
+        screen has to be dark or the game's core information is illegible.
+     ---------------------------------------------------------------------
+     3. TINTED NEUTRALS. Chroma falls off as the surfaces lighten
+        (7.4 → 5.8 → 2.6), which is correct: the large quiet areas carry
+        the most tint and the smallest, brightest surface is nearly
+        achromatic. A warm ground is what makes an amber accent read as
+        lamplight rather than as an alert.
+     ---------------------------------------------------------------------
+     4. FOUR CHROMATIC FAMILIES, ONE ROLE EACH, AND EVERY ONE IS A PAIR.
+        Tufte: more than 20 or 30 colours produce not diminishing but
+        NEGATIVE returns. Four is the cap and each is bound to a single job
+        the way Balatro binds each chip to a permanent hue.
+
+          accent  amber   interactive, active, selected, heat, the lamp
+          live    green   affirmative — up, profit, affordable, GO
+          dead    red     negative — down, loss, crisis, raid
+          signal  blue    the market terminal's information layer, only
+
+        A PAIR because on a light ground a bright chroma cannot hold text:
+        GOV.UK's own focus yellow is 1.18:1 on a warm ground and Robin
+        Neon is 1.03:1. So each family ships an `-ink` step for text and
+        borders on the warm surfaces, a `-soft` step for text on the dark
+        screen, and a bare vivid reserved for fills — which always take
+        `on-fill` or `ink-1` on top. There is no bare vivid used as text
+        anywhere, and the contrast gate enforces that.
+     ---------------------------------------------------------------------
+     5. THE CAPTION INK IS SOLVED, NOT CHOSEN.
+        `ink-3` carries `t-caption` at 9.5px, where SC 1.4.3 grants no
+        exemption. It is the value that clears 4.5:1 on the WARMING surface
+        it lands on, and it was found by sweeping candidates, not by
+        taste. Its only job is to be legible.
+     =================================================================== */
+
+  /* -- THE WARM LADDER. The largest areas, the quietest. -------------- */
+  --color-ground: #d6d2c4;      /* L* 84.2  C*  7.4 — the desk field */
+  --color-panel: #e9e5da;       /* L* 91.0  C*  5.8 — a pane, +7.0 */
+  --color-card: #f9f7f2;        /* L* 97.3  C*  2.6 — a card,  +7.1 */
+
+  --color-line: #a9a48f;        /* structural hairline, 1.65:1 on ground */
+  --color-line-soft: #d4d0c2;   /* dividers inside a panel */
+  --color-line-strong: #7d7863; /* interactive control borders, 4.14:1 */
+
+  /* -- INK on the warm surfaces. --------------------------------------- */
+  --color-ink-1: #1a1815;       /* 11.7:1 on ground */
+  --color-ink-2: #443f36;       /*  6.9:1 */
+  --color-ink-3: #453f34;       /*  6.9:1 on ground, 8.3 on panel — the
+                                    9.5px caption step, solved not picked */
+  --color-ink-4: #8a8474;       /* disabled; carries no meaning */
+  --color-on-fill: #f7f5f0;     /* a label on a saturated fill */
+
+  /* -- THE MACHINE. One second material, cool against warm. ---------- */
+  --color-well: #202a36;        /* L* 16.6  C* -9.1 — ΔE 69.5 from ground */
+  --color-well-2: #2a3646;      /* nested readouts, gauge tracks */
+  --color-term-ink-1: #eef2f7; /* 12.9:1 on the well */
+  --color-term-ink-2: #b3c0cf;  /*  7.9:1 */
+  /* The caption step ON the screen. Solved against the WORST surface it
+     reaches, which is `well-2` and not `well` — `well-2` is the LIGHTER of the
+     two, so light text loses contrast there. The first value tried, #8d9bad,
+     measured 5.1:1 on `well` and 4.3:1 on `well-2` and would have shipped a
+     failing caption in every nested readout. Going darker is the wrong
+     direction and makes it worse. */
+  --color-term-ink-3: #99a5b6;  /*  4.9:1 on well-2, 5.8:1 on well */
+  --color-term-line: #46566a;   /* decorative, inside the screen */
+  --color-term-line-strong: #65778e; /* interactive, 3.17:1 */
+
+  /* -- ACCENT: the lamp, the Golden Sherpie, heat, "interactive". ---- */
+  --color-accent-ink: #70490c;  /* 5.2:1 on ground */
+  --color-accent: #e8a33d;      /* FILL ONLY on paper — takes ink-1, 8.2:1 */
+  /* Same hex as `accent`, and deliberately a separate token. `accent` is
+     permitted as a FILL on the warm surfaces; `accent-soft` is the same
+     gold permitted as TEXT on the dark screen, where it measures 6.7:1.
+     The two are the same colour doing the same job — the tokens differ in
+     where they are ALLOWED, which is the entire point of the pair rule.
+     `accent` as text on paper would be roughly 1.5:1; there is no check
+     that stops that except this comment and the probe below. */
+  --color-accent-soft: #e8a33d;
+  --color-accent-wash: #f2e4c8; /* selected / active background */
+
+  /* -- LIVE: affirmative. --------------------------------------------- */
+  --color-live-ink: #255831;    /* 5.5:1 on ground */
+  --color-live: #457347;        /* FILL ONLY — takes on-fill, 5.1:1 */
+  --color-live-soft: #4ade80;   /* 8.3:1 ON THE SCREEN */
+  --color-live-wash: #dfe9dd;
+
+  /* -- DEAD: the only alarm. ------------------------------------------ */
+  --color-dead-ink: #8a2b19;    /* 5.7:1 on ground */
+  --color-dead: #b34826;        /* FILL ONLY — takes on-fill, 5.0:1 */
+  --color-dead-soft: #f76a6e;   /* 5.0:1 on the screen */
+  --color-dead-wash: #f0dcd4;
+
+  /* -- SIGNAL: THE INSTITUTION'S OWN VOICE — the official stamp, and
+        the market terminal's data layer. One role: the machine and the
+        state speak in blue, and nothing decorative does.
+
+        Widened from "terminal only" because the customs stamp is that same
+        voice — it is literally the government writing on your paperwork, in
+        the ink the government uses. Four families is a cap, so the honest
+        move was to name the role wider, not to add a blue. ------------ */
+  --color-signal-ink: #254574;  /* 6.4:1 on ground */
+  --color-signal: #406aa3;      /* FILL ONLY — takes on-fill, 5.1:1 */
+  --color-signal-soft: #7aa8e0; /* 5.9:1 on the screen */
+  --color-signal-wash: #dee5ee;
 }
 
+
+
+
 @layer utilities {
-  /* INVARIANT: the app relies on a real 3-step dim hierarchy for visual grouping.
-     These MUST stay distinct — forcing stone-500 and stone-600 to the same value
-     flattens every panel into one undifferentiated grey and reads as visual noise. */
+  /* Tailwind's stone steps are overridden onto the theme's ink ladder.
+
+     INVARIANT: these MUST stay distinct — collapsing them flattens every panel
+     into one undifferentiated grey and reads as visual noise.
+
+     They were #78716c and #57534e, values chosen for the previous DARK ground.
+     Reused unchanged on the warm ground, #78716c measured roughly 2.6:1 at
+     t-caption and was a silent failure: no gate could see it, because the class
+     name looked like a stock Tailwind colour and the token gate has no opinion
+     about those. The values here are now the ink steps, which are solved
+     against the surfaces they actually land on. */
   .text-stone-500 {
-    color: #78716c; /* muted metadata — ~4.7:1 on stone-950 */
+    color: var(--color-ink-3); /* muted metadata — 6.9:1 on the ground */
   }
   .text-stone-600 {
-    color: #57534e; /* de-emphasized / decorative only */
+    color: var(--color-ink-4); /* de-emphasized / decorative only */
   }
 
   /* =================================================================
      TYPE SCALE — the single source of truth for type size.
      Seven named tiers, sized against the viewport scale so the whole
-     cockpit scales as one unit on sub-1080p laptops.
+     cockpit scales as one unit on sub-1080p laptops — plus four
+     stamp-relative tiers at the end of the block, which are the documented
+     exception and explain themselves.
 
      INVARIANT: these tiers are the ONLY way to set font size on
      player-facing UI. Arbitrary values (`text-[9px]`) are banned: they
@@ -132,28 +281,142 @@
   }
 
   /* =================================================================
-     MATERIAL SURFACES
-     ================================================================= */
+     [2.3] THE STAMP SCALE — the one exception, and why it is one.
+     -----------------------------------------------------------------
+     Every tier above is sized against `--viewport-scale`, which assumes
+     a control of roughly FIXED size on a screen of roughly fixed size.
+     The rubber stamp is neither.
 
-  /* Aged paper — for documents, certificates, objectives cards. */
-  .surface-newsprint {
-    background-color: var(--color-newsprint-100);
-    background-image:
-      radial-gradient(circle at 18% 12%, rgba(160, 130, 80, 0.13), transparent 45%),
-      radial-gradient(circle at 84% 78%, rgba(120, 95, 55, 0.16), transparent 50%),
-      repeating-linear-gradient(
-        0deg,
-        rgba(90, 70, 40, 0.035) 0px,
-        rgba(90, 70, 40, 0.035) 1px,
-        transparent 1px,
-        transparent 3px
-      );
-    color: var(--color-newsprint-900);
+     It used to be `w-44 h-44 sm:w-52 md:w-60` — a hard-coded 176/208/240px
+     circle. But the desk is a zero-scroll flex column, and the space left
+     for the stamp is whatever survives after the props, the directive
+     sheet, the gauges and the command row. That is 134px in steady state
+     and 69px while a crisis is ringing, so a fixed 240px button overflowed
+     its own container by up to 95px and painted over the directive sheet.
+     The overflow was not cosmetic: the centre desk was already
+     over-subscribed before Phase 2, and a ringing crisis — the exact
+     moment the player most needs to read the desk — was the worst case.
+
+     So the stamp now SIZES ITSELF to the space it is given, and its
+     lettering has to size with it. A `t-micro` on a 130px stamp is
+     10.5px of text on a 130px disc: illegible, and it was already
+     illegible at 240px because the four stacked lines plus a yield tag
+     overflowed the circle's inner width.
+
+     These three tiers are in `cqw` — percent of the nearest container's
+     width. `ClickerButton` sets `container-type: size` on the button
+     itself, so the stamp face is its own typographic viewport. Using the
+     scale rather than arbitrary values is the point: the invariant above
+     bans `text-[9px]` because arbitrary sizes stopped scaling, and
+     `cqw` typed inline would be exactly that failure wearing a longer
+     name. Extend the scale instead of bypassing it.
+
+     INVARIANT: these render correctly ONLY inside the stamp's container.
+     With no query container, `cqw` falls back to the small viewport, so
+     a `.t-stamp-*` used anywhere else would size off the window. They are
+     named for one control and must not leak.
+     ================================================================= */
+  .t-stamp-plate {
+    /* The agency / instrument name above the verb. */
+    font-size: 5.4cqw;
+    line-height: 1.2;
+  }
+  .t-stamp-verb {
+    /* CONFISCATE / SIGN ORDER — the largest thing on the object. */
+    font-size: 8.8cqw;
+    line-height: 1.05;
+  }
+  .t-stamp-sub {
+    /* The qualifier under the verb: [BY AGENT 412], 24k Golden Sherpie. */
+    font-size: 5.4cqw;
+    line-height: 1.2;
+  }
+  .t-stamp-tag {
+    /* The yield tag. Must be legible: it is the number the player plans
+       around, and it is the one element that is a HUD, not decoration. */
+    font-size: 6.6cqw;
+    line-height: 1.1;
   }
 
-  /* Classified document header — black bar with a stamped serial. */
+  /* -----------------------------------------------------------------
+     [2.3] THE SMALL-STAMP FALLBACK.
+
+     The stamp's size is a CONSEQUENCE of the desk budget, not a choice:
+     it takes whatever is left after the props, the directive sheet, the
+     gauges and the command row. Measured, that is ~300px on a 980px
+     desk at 1080p, 152px at 1366x768, and 132px at 1280x720.
+
+     At 132px the plate name and the qualifier render at 5.4cqw = 7.1px.
+     That is not "small", it is a smudge — and it is the worst kind of
+     defect in this repo's terms, because the smudge is a WORD. A player
+     on a 720p laptop cannot read the instrument name off the instrument.
+
+     So the face sheds its detail instead of shrinking it. Below 170px the
+     two qualifier lines are removed and the verb grows to take the room.
+     What survives is the two things that carry decisions — the verb and
+     the yield — and the object still reads as a stamp, because the barrel,
+     the shoulder and the rubber are geometry, not type.
+
+     This is a container query on the button's OWN container, which is the
+     whole reason the stamp is a container: the breakpoint follows the
+     space the stamp actually got, rather than the space the viewport
+     happens to have. A viewport media query would get this wrong in both
+     directions — too small on a roomy 1080p desk, too large on a 720p one.
+     ----------------------------------------------------------------- */
+  @container stamp (max-width: 170px) {
+    .t-stamp-plate,
+    .t-stamp-sub {
+      display: none;
+    }
+    .t-stamp-verb {
+      font-size: 13cqw;
+    }
+  }
+
+  /* =================================================================
+  /* =================================================================
+     [TUNGSTEN] MATERIAL SURFACES — A WARM DESK, ONE DARK MACHINE
+
+     INVARIANT: [The Panes Are The Same Colour At Different Values]
+     Imhof, fourth rule: "If a picture is composed of two or more large
+     enclosed areas in different colors, then the picture falls apart." A
+     three-pane cockpit is three large enclosed areas. The previous theme
+     made them three colours — green CRT, cream parchment, a third tint —
+     which is that rule in its most literal form, and the reason a large
+     re-skin of the parchment palette still read as disjointed.
+
+     So the desk and the management pane share the warm ground and are
+     separated by a value step plus a hairline. They read as one cockpit
+     with two compartments. The terminal is the ONE exception and it earns
+     it: a dark cool screen inset in a warm room is what a monitor
+     physically is, and it is the only way a machine reads as a machine.
+
+     A mid-light screen was tried and does not work. At L* 71 no saturated
+     green, red and amber can all reach 4.5:1 — the solver puts them at
+     4.36, 4.35 and 4.11 — and the terminal is the P&L surface, so all
+     three must appear there. The screen has to be dark or the game's
+     core information is illegible.
+
+     INVARIANT: [Depth Is Lightness, Not Shadow]
+     On a light ground a soft drop shadow reads as dirt rather than as
+     height. Separation here is carried by the ladder (ΔE 7.0 and 7.1) and
+     a 1px hairline. The only shadows in the system belong to `.prop-
+     object`, because props stand on things and panels do not.
+     ================================================================= */
+
+  /* A document. The paperwork satire now lives in the TYPE — monospace,
+     redaction bars, hairline rules — and not in a differently-coloured
+     rectangle for every pane. */
+  .surface-newsprint {
+    background-color: var(--color-card);
+    border-color: var(--color-line);
+    color: var(--color-ink-1);
+  }
+
+  /* Classified — the redaction bar, and the machine's own chrome. The one
+     surface that is neither warm nor paper: it belongs to the screen. */
   .surface-classified {
-    background-color: var(--color-redaction-700);
+    background-color: var(--color-well);
     background-image: repeating-linear-gradient(
       45deg,
       rgba(255, 255, 255, 0.05) 0px,
@@ -161,76 +424,107 @@
       transparent 2px,
       transparent 6px
     );
+    color: var(--color-term-ink-1);
   }
 
-  /* Phosphor terminal screen — BagHolder Pro, telemetry, S.L.O.P. Radar. */
+  /* The screen. Dark, cool, and scanlined. NOT green: green means
+     "affirmative" here, and tinting every terminal surface with it would
+     spend the semantic channel on chrome — which is exactly how the paper
+     half ended up borrowing the affirmative colour in the first place. */
   .surface-terminal {
-    background-color: #04140a;
-    background-image:
-      radial-gradient(ellipse at 50% 0%, rgba(34, 197, 94, 0.14), transparent 70%),
-      repeating-linear-gradient(
-        0deg,
-        rgba(0, 0, 0, 0.32) 0px,
-        rgba(0, 0, 0, 0.32) 1px,
-        transparent 1px,
-        transparent 3px
-      );
-    color: var(--color-phosphor-300);
+    background-color: var(--color-well);
+    background-image: repeating-linear-gradient(
+      0deg,
+      rgba(0, 0, 0, 0.22) 0px,
+      rgba(0, 0, 0, 0.22) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    color: var(--color-term-ink-1);
   }
 
-  /* =================================================================
-     THE DESK [B6]
-     The centre blotter. The GDD already calls it a "Parchment Directive",
-     so this makes that literal: a warm cream parchment with a darker
-     vignette at the edges, as if the paper is lit from above and the desk
-     falls off into shadow at the periphery.
+  /* A recessed well inside the screen — readouts, gauge tracks, sub-panels.
+     One step up from its parent so nesting still separates.
 
-     This is the single largest unthemed surface in the app — roughly 40%
-     of the screen and the thing the player looks at most — so it carries
-     most of the visual identity of the [Newsprint & Classified] direction.
-     ================================================================= */
-  .surface-desk {
-    background-color: var(--color-newsprint-50);
-    background-image:
-      radial-gradient(ellipse 120% 80% at 50% 0%, rgba(255, 252, 240, 0.95), transparent 70%),
-      radial-gradient(ellipse 100% 100% at 50% 100%, rgba(120, 95, 55, 0.22), transparent 65%),
-      repeating-linear-gradient(
-        0deg,
-        rgba(90, 70, 40, 0.028) 0px,
-        rgba(90, 70, 40, 0.028) 1px,
-        transparent 1px,
-        transparent 3px
-      );
-    color: var(--color-newsprint-900);
-  }
-
-  /* A recessed well INSIDE a phosphor screen — the readouts, gauge tracks and
-     sub-panels of BagHolder Pro. Lighter than the screen bezel so nested
-     elements still separate, but still green-black rather than neutral grey.
-     Used instead of an ad-hoc `bg-stone-950` inside terminal tabs. */
+     INVARIANT: [The Screen Ladder Stops At Two Steps]
+     A third step was measured and cannot carry the caption ink: the
+     9.5px terminal caption clears 5.1:1 on the well but only 3.5:1 on a
+     lighter third step. Rather than lighten the caption and lose the tier,
+     the ladder stops here and nested readouts use `term-ink-2` and up. */
   .surface-terminal-well {
-    background-color: var(--color-phosphor-900);
-    background-image: linear-gradient(rgba(34, 197, 94, 0.05), rgba(34, 197, 94, 0.05));
-    border-color: rgba(22, 163, 74, 0.28);
-    color: var(--color-phosphor-300);
+    background-color: var(--color-well-2);
+    border-color: var(--color-term-line);
+    color: var(--color-term-ink-1);
   }
 
-  /* A single sheet of paper lying on the desk — for cards and objects
-     resting on the blotter. Lighter and flatter than the desk itself so
-     stacked documents still read as distinct layers. */
+  /* [TUNGSTEN] THE STAGE — the centre column, where the stamp lands.
+     The same warm ground as every other pane, one value step up, with a
+     single low-alpha pool of accent standing in for the desk lamp. The
+     pool marks where the light is and does nothing else: a bright pool
+     under the hero control turns the hero control into a decoration. */
+  .surface-desk {
+    background-color: var(--color-panel);
+    background-image: radial-gradient(
+      ellipse 72% 54% at 34% 4%,
+      color-mix(in srgb, var(--color-accent) 12%, transparent),
+      transparent 68%
+    );
+    color: var(--color-ink-1);
+    border-color: var(--color-line);
+  }
+
+  /* A card resting on a pane. One step up, hairline border. */
   .surface-sheet {
-    background-color: var(--color-newsprint-100);
-    background-image:
-      radial-gradient(circle at 20% 15%, rgba(160, 130, 80, 0.10), transparent 50%),
-      radial-gradient(circle at 82% 85%, rgba(120, 95, 55, 0.12), transparent 55%);
-    color: var(--color-newsprint-900);
+    background-color: var(--color-card);
+    border-color: var(--color-line);
+    color: var(--color-ink-1);
   }
 
-  /* Faint CRT bloom without a filter (filters kill perf on the hot path). */
-  .text-glow-phosphor {
+  /* The room. The quietest large surface in the app — Imhof's third rule:
+     "large area backgrounds should do their work most quietly." Not a
+     `surface-*` token, so no component can reach for it by accident. */
+  .surround-room {
+    background-color: var(--color-ground);
+  }
+
+  /* An OBJECT resting on the stage — the phone, the gold box, the
+     shredder. Props stand on things, so these get a contact shadow;
+     panels do not, because on a light ground a panel shadow reads as
+     dirt. */
+  .prop-object {
+    border-radius: 3px;
+    box-shadow: 0 1px 2px color-mix(in srgb, var(--color-ink-1) 18%, transparent);
+  }
+
+
+  /* [2.1] The panic wash. A single inset ring + tint that fires while a
+     countdown is running or a raid is in flight. Deliberately NOT a
+     full-screen red overlay: the Phase 0 audit removed three competing
+     `absolute inset-0` banners, and reintroducing one as a global effect
+     would be the same defect wearing a new hat. This is a border and a
+     faint wash, so the cockpit stays readable underneath it. */
+  .panic-wash {
+    box-shadow:
+      inset 0 0 0 2px var(--color-dead-ink),
+      inset 0 0 calc(60px / var(--viewport-scale, 1))
+        color-mix(in srgb, var(--color-dead) 14%, transparent);
+  }
+
+  .panic-wash-strong {
+    box-shadow:
+      inset 0 0 0 3px var(--color-dead-ink),
+      inset 0 0 calc(90px / var(--viewport-scale, 1))
+        color-mix(in srgb, var(--color-dead) 26%, transparent);
+  }
+
+  /* Faint screen bloom without a filter (filters kill perf on the hot
+     path). Driven from the token so it cannot drift off the live step. */
+  .text-glow-live {
     text-shadow:
-      0 0 calc(4px / var(--viewport-scale, 1)) rgba(74, 222, 128, 0.75),
-      0 0 calc(12px / var(--viewport-scale, 1)) rgba(34, 197, 94, 0.35);
+      0 0 calc(4px / var(--viewport-scale, 1))
+        color-mix(in srgb, var(--color-live-soft) 55%, transparent),
+      0 0 calc(12px / var(--viewport-scale, 1))
+        color-mix(in srgb, var(--color-live-soft) 25%, transparent);
   }
 
   /* NOTE: `.text-glow-gold` and `.redaction-bar` were removed here. Both were
@@ -266,8 +560,22 @@
   background: rgba(245, 158, 11, 0.6);
 }
 
+/* [ISSUE-009] The marquee used to run translateX(0) -> translateX(-50%) at a
+   constant rate and restart on the frame, so the seam between the two copies was
+   invisible and the whole thing read as one endless unbroken sentence — which is
+   exactly the feeling of a live newswire, and exactly why the audit filed it as
+   unreadable: there was no point at which the eye could tell one cycle had ended.
+
+   The dwell at the end is the fix, and it has to live in the KEYFRAMES rather
+   than in a second element. Two halves are rendered (one `aria-hidden`) and the
+   animation is `-50%`, so 100% and 0% are geometrically identical and the hold
+   happens precisely at the seam — the one place a reader would naturally look
+   for a break. `linear` timing is kept deliberately: an `ease-in-out` would
+   slow the text at the seam instead of pausing it, which reads as the ticker
+   stuttering rather than as a breath. */
 @keyframes marquee {
   0% { transform: translateX(0%); }
+  93% { transform: translateX(-50%); }
   100% { transform: translateX(-50%); }
 }
 
@@ -310,6 +618,46 @@
   48%  { transform: translate3d(0, calc(-2px / var(--viewport-scale, 1)), 0) scale(0.99); }
   72%  { transform: translate3d(0, 0, 0) scale(1.005); }
   100% { transform: translate3d(0, 0, 0) scale(1); }
+}
+
+/* [FIRST SLAM] The attention ring — ISSUE-002, "no guidance on the first frame".
+
+   Progressive disclosure in this cockpit was complete at the CHANNEL level
+   (sealed dossiers) and absent at the ELEMENT level: on frame 1 the player saw a
+   fully-lit, fully-styled stamp and three equally-lit props, with nothing saying
+   which one the game wants. This is the one non-verbal signal that closes that
+   gap without adding a tutorial overlay on top of a tutorial directive.
+
+   It is a RING AROUND the hero object rather than a pulse on the object itself,
+   for two reasons. The stamp button already carries a one-shot `animate-stamp-
+   slam*` class, and both classes set the `animation` shorthand on the same
+   element — so a pulse on the button is a coin toss over which one wins, and
+   during a frenzy the losing class is silently dead. And the ring must not
+   compete with `StampIllustration` for the rubber face, which is the part of the
+   object that says CONFISCATE.
+
+   Reduced motion is handled by the global clamp below: the animation collapses
+   to a single iteration that ends on the 100% keyframe, which is the ring at
+   full opacity — i.e. still a visible, static ring. The affordance survives;only
+   the breathing is dropped. */
+@keyframes attention-ring {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--color-accent-ink) 55%, transparent),
+      0 0 0 0 color-mix(in srgb, var(--color-accent-ink) 32%, transparent),
+      0 0 0 0 color-mix(in srgb, var(--color-accent) 26%, transparent);
+  }
+  55% {
+    box-shadow:
+      0 0 0 1px color-mix(in srgb, var(--color-accent-ink) 55%, transparent),
+      0 0 0 7px color-mix(in srgb, var(--color-accent-ink) 0%, transparent),
+      0 0 30px 6px color-mix(in srgb, var(--color-accent) 26%, transparent);
+  }
+}
+
+.animate-attention-ring {
+  animation: attention-ring 2.4s ease-in-out infinite;
 }
 
 /* A slow, low-amplitude glow. `animate-pulse` runs at Tailwind's default 2s on

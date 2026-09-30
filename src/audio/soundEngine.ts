@@ -35,10 +35,10 @@ class SoundEngine {
   }
 
   /**
-   * Procedural Sharpie Squeak.
+   * Procedural Sherpie Squeak.
    * Pitch modulates dynamically with click frequency (200Hz -> 850Hz).
    */
-  public playSharpieSqueak(clickSpeedMultiplier: number = 1.0) {
+  public playSherpieSqueak(clickSpeedMultiplier: number = 1.0) {
     if (this.isMuted) return;
     this.initContext();
     if (!this.ctx || !this.masterGain) return;

@@ -25,10 +25,16 @@ import { StocksOptionsTab } from './tabs/StocksOptionsTab';
 import { PolyGriftTab } from './tabs/PolyGriftTab';
 import { SlopRadarTab } from './tabs/SlopRadarTab';
 
-const TABS: { id: LeftChannelTab; label: string; shortcut: string }[] = [
-  { id: 'stocks', label: 'STOCKS', shortcut: '1' },
-  { id: 'radar', label: 'S.L.O.P.', shortcut: '2' },
-  { id: 'polygrift', label: 'POLY-GRIFT', shortcut: '3' },
+/* `short` is the fallback label when the strip is too narrow. The left terminal
+   is 4/12 and packs only three channels, so these fit at 1080p today and the
+   short forms are here so that ADDING a fourth channel cannot silently re-break
+   the same bug [A Truncated Tab Name Is A Feature Nobody Asked For] was filed
+   against. `POLY` is deliberately the coinage the game already uses in prose —
+   "the Poly-Grift casino floor" — rather than a first letter. */
+const TABS: { id: LeftChannelTab; label: string; short: string; shortcut: string }[] = [
+  { id: 'stocks', label: 'STOCKS', short: 'STOCKS', shortcut: '1' },
+  { id: 'radar', label: 'S.L.O.P.', short: 'S.L.O.P.', shortcut: '2' },
+  { id: 'polygrift', label: 'POLY-GRIFT', short: 'POLY', shortcut: '3' },
 ];
 
 export const TelemetryConsolePane: React.FC = () => {
@@ -67,7 +73,7 @@ export const TelemetryConsolePane: React.FC = () => {
          green-on-black with scanlines, so the two wings read as different
          MATERIALS (terminal vs classified paperwork) rather than two dark
          rectangles. The right wing keeps `panel`. */
-      className="surface-terminal border-phosphor-600/30"
+      className="surface-terminal border-term-line-strong/30"
       bodyClassName="p-2.5"
       header={
         <TabStrip
@@ -91,7 +97,7 @@ export const TelemetryConsolePane: React.FC = () => {
            removes the last fork of the pane-footer markup. */}
         <StatusStrip
           accent="phosphor"
-          icon={<Activity className="w-3 h-3 text-gold-400" aria-hidden />}
+          icon={<Activity className="w-3 h-3 text-accent-ink" aria-hidden />}
           /* INVARIANT: [The Label Names All Three Channels It Hosts]
              This pane hosts Stocks / S.L.O.P. / PolyGrift, so "BAGHOLDER PRO
              FEED" named one of the three. `StatusStrip`'s label is a
@@ -103,8 +109,8 @@ export const TelemetryConsolePane: React.FC = () => {
           label={`${TABS.length} CHANNELS`}
           right={
             <>
-              <Radio className="w-3 h-3 text-phosphor-400 animate-pulse" aria-hidden />
-              <span className="text-gold-400 font-bold">{isSealed ? 'CHANNEL SEALED' : '0ms LATENCY'}</span>
+              <Radio className="w-3 h-3 text-term-ink-2 animate-pulse" aria-hidden />
+              <span className="text-accent-ink font-bold">{isSealed ? 'CHANNEL SEALED' : '0ms LATENCY'}</span>
             </>
           }
         />
@@ -125,7 +131,7 @@ export const TelemetryConsolePane: React.FC = () => {
           <div
             role="status"
             aria-live="polite"
-            className="shrink-0 px-2 py-1 border-t border-gold-600/50 bg-gold-500/15 text-center font-mono t-micro font-bold text-gold-300"
+            className="shrink-0 px-2 py-1 border-t border-accent-ink/50 bg-accent/15 text-center font-mono t-micro font-bold text-accent-ink"
           >
             {lastAutoMatchNotice}
           </div>

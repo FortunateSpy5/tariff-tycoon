@@ -25,15 +25,13 @@
 
 import { CRONY_FAVOR_MAX } from '../../constants/balance';
 import type { GamePhase } from '../../types/desk';
+import { AUTOPEN_CLICKS_PER_SECOND, autopenBaseValueForPhase } from './passiveRates';
 
-/** Clicks per second contributed by the AI Autopen Interns upgrade. */
-const AUTOPEN_CLICKS_PER_SECOND = 5;
-
-/** Base value of one autopen click in Phase 1. */
-const AUTOPEN_BASE_PHASE_1 = 5.0;
-
-/** Base value of one autopen click in Phase 2 and beyond. */
-const AUTOPEN_BASE_PHASE_2_PLUS = 50.0;
+// INVARIANT: [The Autopen Rate Lives In passiveRates, Not Here]
+// These were three private constants in this file, and the cockpit's $/s readout
+// has to render the same number the tick charges. Duplicating them would put a
+// second copy of the rate in the repo, which is precisely the hazard the Phase 0
+// pass closed for `RAID_BRIBE_COST` and the ink refill. See `passiveRates`.
 
 export interface PassiveInput {
   phase: GamePhase;
@@ -74,10 +72,9 @@ export function tickPassiveEconomy(input: PassiveInput): PassiveResult {
   // 1. Agency cash
   let cashGain = input.passiveCashPerSecond * input.deltaSeconds;
 
-  // 2. AI Autopen Interns
+  // 2. AI Autopen Interns — a FLAT rate, by design. See `autopenBaseValueForPhase`.
   if (input.hasAutopenArmy) {
-    const base = input.phase === 1 ? AUTOPEN_BASE_PHASE_1 : AUTOPEN_BASE_PHASE_2_PLUS;
-    cashGain += base * AUTOPEN_CLICKS_PER_SECOND * input.deltaSeconds;
+    cashGain += autopenBaseValueForPhase(input.phase) * AUTOPEN_CLICKS_PER_SECOND * input.deltaSeconds;
   }
 
   // 3. Bilateral tariff duties

@@ -62,8 +62,9 @@
   * **Paper trades:** the first 3 contracts are risk-free (losses refund, wins pay). Combined with the 5-step directive tutorial, the player learns the verb without going bankrupt on a first guess.
 
 #### Phase 2+ Clicker: The Golden Squeak & Tantrum System ($1M+)
+* **Naming ruling — "Golden Sherpie", permanently:** the marker is **Sherpie**, never Sharpie. Sharpie is a registered trademark of a real manufacturer, and AGENTS.md forbids trademarked corporate brands outright; a parody that keeps the actual product name is the one form of parody that carries no First Amendment protection, because it is also indistinguishable from passing off. "Sherpie" is a one-letter move that is unmistakably the same word and unmistakably not that word. It is **not a typo and must never be corrected** — an audit filed it as a misspelling, and the correct resolution was to document the ruling here and in the hotkey dock (the game's only manual), NOT to change the name. Audio method: `sound.playSherpieSqueak`.
 * **Setting:** The Resolute Desk in the Oval Office.
-* **The Interaction:** Clicking slams an oversized 24k Golden Sharpie onto an official Executive Order parchment with physical screen shake, ink splatter particles, and procedural squeaks ($200\text{Hz} \to 850\text{Hz}$).
+* **The Interaction:** Clicking slams an oversized 24k Golden Sherpie onto an official Executive Order parchment with physical screen shake, ink splatter particles, and procedural squeaks ($200\text{Hz} \to 850\text{Hz}$).
 * **Stamina & "The Desperation Dry Nib Squeak":**
   * Base Ink: $I_{\max} = 100 \text{ Units}$. Consumption: $1.25 \text{ Units/click}$; passive recovery is $0.5$ units/second.
   * When $I > 0$: normal yield and $+1.5\%$ Tantrum/click ($+2.25\%$ with Diet Soda Desk Drip).
@@ -144,7 +145,7 @@ $$\text{YAP} = [\text{TIME\_PREFIX}] + [\text{TARGET\_ENTITY}] + [\text{BIZARRE\
 | **1** | **N.O.C.L.O.U.D. (Weather Bureau)** | **+$250,000** | +15% Shipping Speed | **Cat-5 Hurricanes**: Shipping halts 15s. | **Emergency Umbrella Tariffs**: Click desk to levy 500% emergency duty on rain gear! |
 | **2** | **F.A.T. (Food & Toxin)** | **+$1,200,000** | +30% CAPS LOCK Frenzy duration | **Mystery Sludge Recall**: Revenue reverses 10s. | Rebrand sludge as **"Patriot Protein Paste"** to double institutional profits! |
 | **3** | **A.I.R. (Aviation Admin)** | **+$4,500,000** | 0ms execution on BagHolder Pro | **Runway Incursions**: 10% shipments crash. | Sell crash scrap to foreign metal dealers for immediate cash! |
-| **4** | **S.M.O.G. (Environment)** | **+$15,000,000** | +25% Passive industrial revenue | **Flammable Tap Water**: Sharpie catches fire. | Sign orders with **"Scorched Earth Directives"** (+50% foreign tariff rate). |
+| **4** | **S.M.O.G. (Environment)** | **+$15,000,000** | +25% Passive industrial revenue | **Flammable Tap Water**: Sherpie catches fire. | Sign orders with **"Scorched Earth Directives"** (+50% foreign tariff rate). |
 | **5** | **S.N.A.I.L. (Postal Service)** | **+$50,000,000** | 100% margin on foreign trade parcel duties | **14% Lost Parcel Paradox**: Orders lost in mail. | Unlock **"Unclaimed Cargo Mystery Box Auctions"** under BagHolder Pro! |
 | **6** | **S.L.O.P. (Securities Comm)** | **+$180,000,000** | Suspicion accumulation -75%; 5,000x leverage | **Ponzi Cascade**: Stock rug-pulls to $0.00 every 3m. | Front-run the rug-pull with automated short puts! |
 | **7** | **S.H.A.K.E. (Tax Service)** | **+$650,000,000** | +50% Retained corporate profit growth | **Honesty Box Deficit**: Debt compounds +10%. | Blame the deficit on trading partners to justify 1,000% retaliatory tariffs! |

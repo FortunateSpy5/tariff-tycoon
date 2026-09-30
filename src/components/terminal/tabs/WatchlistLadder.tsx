@@ -38,7 +38,7 @@ export const WatchlistLadder: React.FC<WatchlistLadderProps> = ({
   /* Watchlist Ladder (All 9 Stocks) — rows share the available height so the
      ladder fills its column instead of leaving a gap beneath the last row. */
   <Card material="term" density="flush" className="flex-1 min-h-0 flex flex-col overflow-hidden">
-    <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar divide-y divide-phosphor-600/20 flex flex-col">
+    <div className="flex-1 min-h-0 overflow-y-auto custom-scrollbar divide-y divide-term-line-strong/20 flex flex-col">
       {symbols.map((sym) => {
         const stk = stocks[sym];
         if (!stk) return null;
@@ -58,18 +58,18 @@ export const WatchlistLadder: React.FC<WatchlistLadderProps> = ({
             {...hint(stockHint(sym, stk, tariffRates), name)}
             className={`w-full text-left flex justify-between items-center px-2 py-1.5 min-h-[30px] flex-1 cursor-pointer transition-colors ${
               isSelected
-                ? 'bg-phosphor-900 text-gold-300 shadow-[inset_2px_0_0_0] shadow-gold-500'
-                : 'hover:bg-phosphor-900/60'
+                ? 'bg-well text-accent-ink shadow-[inset_2px_0_0_0] shadow-accent'
+                : 'hover:bg-well/60'
             }`}
           >
             <div className="flex items-center gap-1.5">
-              <span className="font-mono font-bold t-micro text-phosphor-300">${sym}</span>
-              <span className="t-caption text-phosphor-600 hidden sm:inline">{stk.sector.split(' ')[0]}</span>
+              <span className="font-mono font-bold t-micro text-term-ink-1">${sym}</span>
+              <span className="t-caption text-term-ink-3 hidden sm:inline">{stk.sector.split(' ')[0]}</span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="font-mono font-semibold t-micro text-phosphor-300">{rowPriceLabel(stk)}</span>
+              <span className="font-mono font-semibold t-micro text-term-ink-1">{rowPriceLabel(stk)}</span>
               <span
-                className={`t-caption font-mono ${isUp ? 'text-emerald-400' : 'text-red-400'}`}
+                className={`t-caption font-mono ${isUp ? 'text-term-ink-2' : 'text-dead-soft'}`}
                 aria-hidden
               >
                 {isUp ? '▲' : '▼'}

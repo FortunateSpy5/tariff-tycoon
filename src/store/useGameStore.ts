@@ -139,6 +139,11 @@ export const useGameStore = create<GameStore>()(
         // rather than inventing a falsy value, so an old save upgrades to hints
         // ON — see `hintsEnabled` in `settingsSlice.ts`.
         hintsEnabled: state.hintsEnabled,
+        // INVARIANT: dismissal is permanent (see `settingsSlice`). A save written
+        // before this key existed restores `undefined`, which would defeat the
+        // `includes` check in `FirstVisitCoach` — `undefined.includes` throws —
+        // so it is rehydrated to an empty list alongside the slice default.
+        dismissedCoachMarks: state.dismissedCoachMarks ?? [],
         // Persist the ACTUAL last-saved timestamp (refreshed every 5s by updateLastSaved),
         // NOT Date.now(). Overwriting it here on every serialization would reset the offline
         // window to ~0 on each tick, silently disabling the Palm-a-Grifto offline protocol.
@@ -193,6 +198,10 @@ export const useGameStore = create<GameStore>()(
         const RIGHT_TABS: RightChannelTab[] = ['brief', 'dump', 'unlocks', 'tariffs', 'caymans'];
         if (!LEFT_TABS.includes(state.activeLeftTab)) state.activeLeftTab = 'stocks';
         if (!RIGHT_TABS.includes(state.activeRightTab)) state.activeRightTab = 'brief';
+        // Same reasoning as the tab ids above: a save predating the coach marks
+        // rehydrates with the key absent, and `FirstVisitCoach` reads
+        // `dismissedCoachMarks.includes(...)` unguarded on every frame.
+        state.dismissedCoachMarks = state.dismissedCoachMarks ?? [];
         const now = Date.now();
         const offlineSeconds = Math.max(0, (now - state.lastSavedTimestamp) / 1000);
 

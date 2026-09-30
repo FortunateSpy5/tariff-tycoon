@@ -13,7 +13,7 @@ This repository houses **EXECUTIVE DEGEN: SHORT THE WORLD** (*The Art of the 3:0
      ▼                       ▼                       ▼                       ▼
 [ DESK CLICKER ]     [ BAGHOLDER PRO ]       [ D.U.M.P. AUSTERITY ]  [ PRESTIGE MATRIX ]
 Rubber Stamp (P1)     Options Terminal        Agency Scraping         Caymans (SIS)
-Sharpie Squeak (P2)   Procedural YAPs         Disaster Capitalism     America LLC (ED)
+Sherpie Squeak (P2)   Procedural YAPs         Disaster Capitalism     America LLC (ED)
 CAPS LOCK Frenzy      S.L.O.P. Suspicion      Inflation Heat          Ontological ($10^42)
 ```
 
@@ -68,7 +68,7 @@ To optimize for AI context precision, deterministic edits, and clean builds, the
 ```
 src/
 ├── types/              # Pure TypeScript discriminated unions & domain interfaces (NO runtime logic)
-│   ├── desk.ts         # Stamp, Sharpie, Ink, Stamina, Tantrum meter
+│   ├── desk.ts         # Stamp, Sherpie, Ink, Stamina, Tantrum meter
 │   ├── market.ts       # Stocks, 1000x Put/Call Options, VEX volatility, S.L.O.P. suspicion
 │   ├── nations.ts      # Parodied nations & multi-tier begging tiers
 │   ├── yap.ts          # Procedural post types (backs the decree certificate)
@@ -97,9 +97,9 @@ src/
 │   └── useGameStore.ts # Root unified store with persistent localStorage
 ├── audio/              # Procedural Web Audio API sound synthesis (zero audio asset bloat)
 │   ├── soundEngine.ts  # Master AudioContext & gain buses
-│   └── synths/         # procedural sharpie squeak, desk thud, cha-ching chimes
+│   └── synths/         # procedural Sherpie Squeak, desk thud, cha-ching chimes
 ├── components/         # Granular React components grouped by functional domain
-│   ├── desk/           # Rubber Stamp, Golden Sharpie, Blotter, ExecutiveGauges, FeedbackLayer
+│   ├── desk/           # Rubber Stamp, Golden Sherpie, Blotter, ExecutiveGauges, FeedbackLayer
 │   ├── terminal/       # BagHolder Pro ticker, chart, options launcher, lethal YAP modal
 │   ├── dump/           # D.U.M.P. agency liquidation drawer, hazard ticker, SituationRoom
 │   ├── share/          # Decree certificate PNG renderer + prestige run summary

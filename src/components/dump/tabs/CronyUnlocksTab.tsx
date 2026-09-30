@@ -68,13 +68,13 @@ export const CronyUnlocksTab: React.FC = () => {
     <div className="h-full min-h-0 flex flex-col gap-2 select-none">
       <div className="shrink-0">
         <DossierHeader
-          icon={<Award className="w-3.5 h-3.5 text-gold-500" />}
+          icon={<Award className="w-3.5 h-3.5 text-accent-ink" />}
           title="Oligarch Lobbying Upgrades"
           status="Permanent Multipliers"
         />
 
         {!hasTariffAccess && (
-          <p className="mt-2 border-l-2 border-amber-500/70 bg-amber-950/20 px-2 py-1 t-micro text-stone-400">
+          <p className="mt-2 border-l-2 border-accent-ink/70 bg-accent-wash/70 px-2 py-1 t-micro text-ink-3">
             Your first purchase gets you a seat at the tariff dials.
           </p>
         )}
@@ -91,24 +91,24 @@ export const CronyUnlocksTab: React.FC = () => {
                 key={upg.id}
                 className={`p-2 rounded-lg border transition-all ${
                   isOwned
-                    ? 'bg-newsprint-200 border-newsprint-300 opacity-60'
-                    : 'surface-sheet border-newsprint-300 hover:border-emerald-600/60'
+                    ? 'bg-card border-line opacity-60'
+                    : 'surface-sheet border-line hover:border-live-ink/60'
                 }`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <div className="flex items-center gap-1.5 font-mono font-bold text-newsprint-900 text-xs">
+                    <div className="flex items-center gap-1.5 font-mono font-bold text-ink-2 text-xs">
                       <span>{upg.name}</span>
-                      <Sparkles className="w-2.5 h-2.5 text-gold-600" />
+                      <Sparkles className="w-2.5 h-2.5 text-accent-ink" />
                     </div>
-                    <p className="t-caption text-newsprint-800 font-mono mt-0.5 leading-snug">
+                    <p className="t-caption text-ink-3 font-mono mt-0.5 leading-snug">
                       {upg.description}
                     </p>
                   </div>
 
                   <div className="shrink-0 text-right">
                     {isOwned ? (
-                      <span className="px-2 py-0.5 rounded bg-emerald-600/20 border border-emerald-700/50 text-emerald-800 font-mono t-caption font-bold flex items-center gap-1">
+                      <span className="px-2 py-0.5 rounded bg-live-wash/20 border border-live-ink/50 text-live-ink font-mono t-caption font-bold flex items-center gap-1">
                         <Check className="w-2.5 h-2.5" />
                         ACQUIRED
                       </span>
@@ -125,8 +125,8 @@ export const CronyUnlocksTab: React.FC = () => {
                           `Buy the ${upg.name} for ${formatCurrency(upg.cost)}`
                         )}
                         className={`px-2.5 py-1 rounded font-mono t-micro font-bold transition-all ${
-                          canAffordIt ? 'bg-emerald-600 hover:bg-emerald-500 text-newsprint-50 active:scale-95 shadow cursor-pointer font-black'
-                            : 'bg-newsprint-300 text-newsprint-800 cursor-not-allowed'
+                          canAffordIt ? 'bg-live-wash hover:bg-live-wash text-ink-1 active:scale-95 shadow cursor-pointer font-black'
+                            : 'bg-panel text-ink-3 cursor-not-allowed'
                         }`}
                       >
                         {formatCurrency(upg.cost)}
@@ -140,7 +140,7 @@ export const CronyUnlocksTab: React.FC = () => {
       </div>
 
       {feedback && (
-        <div className="shrink-0 p-1.5 rounded bg-emerald-600/15 border border-emerald-700/50 text-center font-mono t-micro font-bold text-emerald-800 animate-pulse">
+        <div className="shrink-0 p-1.5 rounded bg-live-wash/15 border border-live-ink/50 text-center font-mono t-micro font-bold text-live-ink animate-pulse">
           {feedback}
         </div>
       )}

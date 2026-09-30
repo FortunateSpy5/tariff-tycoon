@@ -9,7 +9,8 @@ This rule file defines strict, non-negotiable architectural invariants for the v
 1. **Strict Viewport Containment:**
    - The game is explicitly designed as a **desktop game** (optimized for fullscreen desktop browsers and Electron packaging).
    - **Zero Vertical Window Scrolling:** The root shell must be strictly bounded to the viewport.
-   - Root classes required: `h-screen h-[100dvh] w-screen w-[100dvw] overflow-hidden select-none overscroll-none bg-stone-950 flex flex-col`.
+   - Root classes required: `h-screen h-[100dvh] w-screen w-[100dvw] overflow-hidden select-none overscroll-none surround-room flex flex-col`.
+     - The surface class is `surround-room`, **not** `bg-stone-950`. It shipped as `bg-stone-950` in this file for the entire dark-desk era and was never updated when the root moved onto the warm `ground` material in [TUNGSTEN] — so the rule told every agent to reintroduce an unthemed stock surface on the one element `theme:check` and `token:check` most need to be clean. The bare `stone-*` family is now banned outright on player-facing code by Rule B of `check-token-integrity.mjs` (`--stock-budget 0`), which is how the next version of this line gets caught.
    - Never allow `document.body` or `#root` to generate a window-level scrollbar under any circumstances.
 2. **Internal Scroll Containment:**
    - Scrollable lists (e.g. D.U.M.P. agency cards, order books, trade logs) must be strictly confined to their parent container using `overflow-y-auto custom-scrollbar` with an explicit `max-h` or `flex-1 min-h-0`.

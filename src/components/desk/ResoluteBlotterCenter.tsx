@@ -12,8 +12,12 @@ import { ClickerButton } from './ClickerButton';
 import { ExecutiveGauges } from './ExecutiveGauges';
 import { FeedbackLayer } from './FeedbackLayer';
 import { DirectiveSheet } from './DirectiveSheet';
-import { RedPhoneProp, GoldBoxProp, SubpoenaShredderProp } from './props';
+import { IncomeReadout } from './IncomeReadout';
+import { RedPhoneProp } from './props/RedPhoneProp';
+import { GoldBoxProp } from './props/GoldBoxProp';
+import { SubpoenaShredderProp } from './props/SubpoenaShredderProp';
 import { generateProceduralYap } from '../../engine/systems/yapEngine';
+import { isFirstSlam } from '../../engine/systems/onboardingEngine';
 import {
   INK_COST_PER_YAP,
   WALK_BACK_PUMP_MULTIPLIER,
@@ -51,6 +55,11 @@ export const ResoluteBlotterCenter: React.FC = () => {
   const yapCooldownSeconds = useGameStore((s) => s.yapCooldownSeconds);
   const inkLevel = useGameStore((s) => s.inkLevel);
   // Raid + crisis feedback moved to <FeedbackLayer> (see the priority note there).
+
+  // ISSUE-002 [Progressive Disclosure At The Element Level]. One predicate for
+  // the whole tray rather than one per prop, so "when does the desk finish
+  // introducing itself" is answerable in a single place. See `isFirstSlam`.
+  const isFirstSlamPending = isFirstSlam(useGameStore((s) => s.tutorialStepIndex));
 
   const [printFeedback, setPrintFeedback] = useState<string | null>(null);
   const [yapFeedback, setYapFeedback] = useState<string | null>(null);
@@ -132,7 +141,7 @@ export const ResoluteBlotterCenter: React.FC = () => {
     // meant the [Newsprint & Classified] direction existed only in the chrome
     // around it. The GDD already called this a "Parchment Directive"; now it
     // is literally paper. Everything nested inside is dark ink on cream.
-    <div className="h-full min-h-0 flex flex-col gap-2 surface-desk border border-newsprint-400 rounded-xl p-3 shadow-2xl relative overflow-hidden select-none">
+    <div className="h-full min-h-0 flex flex-col gap-2 surface-desk border border-line rounded-xl p-3 shadow-2xl relative overflow-hidden select-none">
       
       {/* Special Counsel Raid / Asset Seizure Alert
           REDESIGN: this used to be a standalone banner competing with three
@@ -144,16 +153,32 @@ export const ResoluteBlotterCenter: React.FC = () => {
         hasWalkBackCall={hasWalkBackCall}
       />
 
+      {/* Phase 2.5: the cockpit readout. Placed directly under the feedback
+          layer and above the props so the $/s and the two countdowns occupy the
+          top of the desk, where a player glances first — the plan's Finding D
+          was that income was invisible and the timers were 10px captions. */}
+      <IncomeReadout />
+
       {/* Interactive Prop Tray
           The Crisis Call owns a full-width row because it is the primary
           Phase 1 mechanic and expands substantially while a crisis is ringing.
-          Gold Box and Shredder share the second row. */}
+          Gold Box and Shredder share the second row.
+
+          [2.2] Each prop carries `prop-object` plus its own sub-degree rotation.
+          The GDD asked for "physical props" and the desk was already calling
+          itself a parchment directive — the two were competing because a phone
+          rendered as a rounded card. A hard shadow and a slightly different
+          angle per prop is what makes them read as things ON the paper. */}
       <div className="grid grid-cols-2 gap-2 shrink-0">
-        <div className="col-span-2">
+        <div className="col-span-2 prop-object -rotate-[0.3deg]">
           <RedPhoneProp />
         </div>
-        <GoldBoxProp />
-        <SubpoenaShredderProp />
+        <div className="prop-object rotate-[0.4deg]">
+          <GoldBoxProp dormant={isFirstSlamPending} />
+        </div>
+        <div className="prop-object -rotate-[0.5deg]">
+          <SubpoenaShredderProp />
+        </div>
       </div>
 
       {/* Parchment Directive / Seizure Log — a stamped sheet on the blotter.
@@ -178,7 +203,7 @@ export const ResoluteBlotterCenter: React.FC = () => {
                 ? `Printer cooling down: ${printerCooldownRemaining}s. One tray, one pull a minute.`
                 : `Print $100,000 of emergency cash and raise suspicion by ${PRINTER_HEAT}%. 60s between pulls. It is the loudest button in the game and the heaviest single hit of S.L.O.P. heat you will find outside a shotgun YAP.`,
             )}
-            className={`w-full py-1.5 px-3 text-newsprint-950 font-black rounded-lg font-mono uppercase tracking-wider text-[11px] shadow-lg flex items-center justify-center gap-2 transition-all border border-emerald-700/60 ${printerCooldownRemaining > 0 ? 'bg-newsprint-300 text-newsprint-800 cursor-not-allowed' : 'bg-gradient-to-r from-emerald-700 via-gold-500 to-emerald-700 hover:opacity-95 text-newsprint-50 cursor-pointer active:scale-95'}`}
+            className={`w-full py-1.5 px-3 text-ink-1 font-black rounded-lg font-mono uppercase tracking-wider text-[11px] shadow-lg flex items-center justify-center gap-2 transition-all border border-live-ink/60 ${printerCooldownRemaining > 0 ? 'bg-panel text-term-ink-3 cursor-not-allowed' : 'bg-gradient-to-r from-live via-accent to-live hover:opacity-95 text-term-ink-1 cursor-pointer active:scale-95'}`}
           >
             <Printer className={`w-3.5 h-3.5 ${printerCooldownRemaining > 0 ? '' : 'animate-bounce'}`} />
             <span>{printerCooldownRemaining > 0 ? `COOLING DOWN (${printerCooldownRemaining}s)` : 'PRINT $BRRR (+$100k, +15% S.L.O.P.)'}</span>
@@ -200,21 +225,21 @@ export const ResoluteBlotterCenter: React.FC = () => {
             {...hint(
               `SEALED CHANNEL — BagHolder Pro. It opens on your FIRST SLAM, not on a cash threshold. The causal shorting loop (open a PUT, fire a YAP, settle the crash) is the entire game, so it cannot sit behind a grind you have to earn your way to.`
             )}
-            className="flex-1 py-2 bg-newsprint-200/70 border border-newsprint-400 text-newsprint-800 font-mono text-center text-xs rounded-lg uppercase tracking-wider"
+            className="flex-1 py-2 bg-card/70 border border-line text-term-ink-3 font-mono text-center text-xs rounded-lg uppercase tracking-wider"
           >
             SLAM THE STAMP ONCE TO UNSEAL BAGHOLDER PRO
           </div>
         ) : isWalkBackWindowActive ? (
           <div className="flex w-full items-stretch gap-2">
             <div
-              className="flex-1 border border-gold-600/50 bg-gold-500/15 px-2 py-1.5 font-mono"
+              className="flex-1 border border-accent-ink/50 bg-accent/15 px-2 py-1.5 font-mono"
               role="status"
               aria-live="polite"
             >
-              <span className="block t-micro font-black text-gold-900">
+              <span className="block t-micro font-black text-accent-ink">
                 CLARIFICATION WINDOW // {Math.ceil(walkBackSecondsRemaining)}s
               </span>
-              <span className="block t-micro leading-snug text-newsprint-900">
+              <span className="block t-micro leading-snug text-ink-2">
                 {hasWalkBackCall
                   ? `CALL ARMED ON $${lastTargetStockSymbol}. Return the market to the desk.`
                   : `Arm a matching $${lastTargetStockSymbol} CALL in the market terminal, then walk it back.`}
@@ -234,8 +259,8 @@ export const ResoluteBlotterCenter: React.FC = () => {
               )}
               className={`shrink-0 px-3 py-2 font-mono t-micro font-black uppercase transition-all ${
                 hasWalkBackCall
-                  ? 'animate-calm-glow bg-emerald-600 text-newsprint-50 hover:bg-emerald-500 cursor-pointer'
-                  : 'bg-newsprint-300 text-newsprint-800 cursor-not-allowed'
+                  ? 'animate-calm-glow bg-live-wash text-term-ink-1 hover:bg-live-wash cursor-pointer'
+                  : 'bg-panel text-term-ink-3 cursor-not-allowed'
               }`}
             >
               <RotateCcw className="mx-auto mb-0.5 h-4 w-4" />
@@ -256,18 +281,18 @@ export const ResoluteBlotterCenter: React.FC = () => {
               )}
               className={`px-2.5 py-2 rounded-lg font-mono t-micro font-bold border flex items-center gap-1 cursor-pointer transition-all active:scale-95 shrink-0 ${
                 yapTargetMode === 'selected'
-                  ? 'bg-gold-500/25 border-gold-600 text-gold-900 hover:border-gold-700'
-                  : 'bg-stampblue-500/20 border-stampblue-500 text-stampblue-700 hover:border-stampblue-700'
+                  ? 'bg-accent/25 border-accent-ink text-accent-ink hover:border-accent-ink'
+                  : 'bg-signal-wash/20 border-signal-ink text-signal-ink hover:border-signal-ink'
               }`}
             >
               {yapTargetMode === 'selected' ? (
                 <>
-                  <Crosshair className="w-3.5 h-3.5 text-gold-600" />
+                  <Crosshair className="w-3.5 h-3.5 text-accent-ink" />
                   <span>Short ${selectedStock}</span>
                 </>
               ) : (
                 <>
-                  <Sparkles className="w-3.5 h-3.5 text-stampblue-500" />
+                  <Sparkles className="w-3.5 h-3.5 text-signal-ink" />
                   <span>Shotgun (+25%)</span>
                 </>
               )}
@@ -287,10 +312,10 @@ export const ResoluteBlotterCenter: React.FC = () => {
               )}
               className={`flex-1 py-2 rounded-lg font-mono uppercase tracking-wider flex items-center justify-center gap-1.5 text-xs font-black transition-all shadow-lg ${
                 cooldownRemaining > 0
-                  ? 'bg-newsprint-300 text-newsprint-800 border border-newsprint-400 cursor-not-allowed'
+                  ? 'bg-panel text-term-ink-3 border border-line cursor-not-allowed'
                   : inkLevel < 20
-                  ? 'bg-newsprint-200 text-gold-900 border border-gold-600/50 cursor-not-allowed'
-                  : 'bg-gradient-to-r from-wax-600 via-wax-500 to-wax-600 hover:opacity-95 text-newsprint-50 active:scale-95 cursor-pointer'
+                  ? 'bg-card text-accent-ink border border-accent-ink/50 cursor-not-allowed'
+                  : 'bg-gradient-to-r from-dead via-dead to-dead hover:opacity-95 text-term-ink-1 active:scale-95 cursor-pointer'
               }`}
             >
               <Send className="w-3.5 h-3.5" />
@@ -307,7 +332,7 @@ export const ResoluteBlotterCenter: React.FC = () => {
         </div>
 
         {lastWalkBackNotice && !isWalkBackWindowActive && (
-          <p className="w-full min-w-0 border border-emerald-800/50 bg-emerald-700/15 px-2 py-1 text-center font-mono t-caption leading-snug text-emerald-900 break-words" role="status" aria-live="polite">
+          <p className="w-full min-w-0 border border-live-ink/50 bg-live-wash/15 px-2 py-1 text-center font-mono t-caption leading-snug text-live-ink break-words" role="status" aria-live="polite">
             {lastWalkBackNotice}
           </p>
         )}

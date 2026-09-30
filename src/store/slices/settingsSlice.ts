@@ -17,6 +17,22 @@ export interface SettingsSlice {
   hintsEnabled: boolean;
   lastSavedTimestamp: number;
 
+  /**
+   * First-visit nudges the player has already dismissed. See `FirstVisitCoach`.
+   *
+   * INVARIANT: [Dismissal Is Permanent, Not Per Session]
+   * These prompts exist to fix a first impression. A prompt that reappears on
+   * every reload stops being an introduction and becomes a nagging mechanic the
+   * player learns to click through without reading — which is strictly worse
+   * than never showing it, because it also trains them to ignore the one line
+   * of chrome that might have been telling them something.
+   *
+   * A plain array of ids rather than booleans so adding a nudge cannot collide
+   * with an existing key, and so a wipe can enumerate them.
+   */
+  dismissedCoachMarks: string[];
+  dismissCoachMark: (id: string) => void;
+
   toggleMute: () => void;
   toggleScreenShake: () => void;
   toggleHints: () => void;
@@ -34,6 +50,15 @@ export const createSettingsSlice: StateCreator<GameStore, [], [], SettingsSlice>
   // Defaulting to `false` would silently delete every explanation on upgrade.
   hintsEnabled: true,
   lastSavedTimestamp: Date.now(),
+  dismissedCoachMarks: [],
+
+  dismissCoachMark: (id) => {
+    // Guarded against a double-fire racing itself into a duplicate entry: the
+    // array is persisted, and a doubled id would persist a doubled id forever.
+    const current = get().dismissedCoachMarks;
+    if (current.includes(id)) return;
+    set({ dismissedCoachMarks: [...current, id] });
+  },
 
   toggleMute: () => {
     const nextMuted = !get().isMuted;

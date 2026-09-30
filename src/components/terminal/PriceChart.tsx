@@ -129,14 +129,14 @@ export const PriceChart: React.FC<PriceChartProps> = ({
       {/* Header: whose tape this is, the live mark, and the last YAP that hit it. */}
       <div className="flex items-end justify-between gap-2 px-2 pt-1.5">
         <div className="min-w-0">
-          <span className="block t-micro font-mono font-bold text-phosphor-300">${symbol} TAPE</span>
-          <span className="block t-caption font-mono text-phosphor-600">
+          <span className="block t-micro font-mono font-bold text-term-ink-1">${symbol} TAPE</span>
+          <span className="block t-caption font-mono text-term-ink-3">
             {hasTape ? `${time.windowSeconds}s WINDOW // ${time.tape}` : 'AWAITING FIRST PRINT'}
           </span>
         </div>
         <div className="shrink-0 text-right">
-          <span className="block t-body font-mono font-bold text-gold-400">${mark.toFixed(2)}</span>
-          <span className={`block t-caption font-mono ${delta.up ? 'text-emerald-400' : 'text-red-400'}`}>
+          <span className="block t-body font-mono font-bold text-accent-ink">${mark.toFixed(2)}</span>
+          <span className={`block t-caption font-mono ${delta.up ? 'text-term-ink-2' : 'text-dead-soft'}`}>
             {delta.text} VS BASE
           </span>
         </div>
@@ -253,7 +253,7 @@ export const PriceChart: React.FC<PriceChartProps> = ({
                 key={i}
                 style={{ left: AXIS_GUTTER_PCT, top: yPct(label.y) }}
                 className={`absolute -translate-y-1/2 whitespace-nowrap t-caption font-mono ${
-                  label.tone === 'base' ? 'text-gold-400' : 'text-phosphor-600'
+                  label.tone === 'base' ? 'text-accent-ink' : 'text-term-ink-3'
                 }`}
               >
                 {label.text}
@@ -263,7 +263,7 @@ export const PriceChart: React.FC<PriceChartProps> = ({
         {!hasTape && (
           <span
             style={{ left: AXIS_GUTTER_PCT, width: `calc(100% - ${AXIS_GUTTER_PCT})` }}
-            className="absolute inset-y-0 flex items-center justify-center t-caption font-mono text-phosphor-600"
+            className="absolute inset-y-0 flex items-center justify-center t-caption font-mono text-term-ink-3"
           >
             NO PRINTS ON THE TAPE
           </span>
@@ -272,22 +272,22 @@ export const PriceChart: React.FC<PriceChartProps> = ({
 
       {/* Time axis, in seconds. See [The Window Must Not Read As A Day]. */}
       <div className="flex items-center justify-between gap-2 px-2 py-1">
-        <span className="t-caption font-mono text-phosphor-600">{hasTape ? time.left : 'NO TAPE'}</span>
+        <span className="t-caption font-mono text-term-ink-3">{hasTape ? time.left : 'NO TAPE'}</span>
         {/* Duplicates the accessible name's impact clause, so it is painted for the
             eye and not announced twice. The severity and excursion live in the tooltip. */}
         <span
           aria-hidden
           className={`truncate t-caption font-mono ${
             chip.tone === 'crash'
-              ? 'font-bold text-red-400'
+              ? 'font-bold text-dead-soft'
               : chip.tone === 'rally'
-                ? 'font-bold text-emerald-400'
-                : 'text-phosphor-600'
+                ? 'font-bold text-term-ink-2'
+                : 'text-term-ink-3'
           }`}
         >
           {chip.text}
         </span>
-        <span className="t-caption font-mono text-phosphor-600">{hasTape ? 'NOW' : ''}</span>
+        <span className="t-caption font-mono text-term-ink-3">{hasTape ? 'NOW' : ''}</span>
       </div>
     </Card>
   );

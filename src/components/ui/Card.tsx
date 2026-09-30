@@ -43,13 +43,19 @@ export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
   children?: React.ReactNode;
 }
 
+/* `classified` has no call site yet, but the material is documented and the
+   class must not rot while it waits: `border-stone-950` was the only stock
+   Tailwind colour left in this file and it was a stock colour by accident —
+   inherited from the old dark desk, where a near-black hairline read as an edge
+   on a near-black bar. `ink-1` is the palette's own answer and renders the same
+   subtle dark edge, from a token the theme can move. */
 const MATERIAL_CLASS: Record<CardMaterial, string> = {
-  sheet: 'surface-sheet border-newsprint-300',
-  desk: 'surface-desk border-newsprint-400',
-  term: 'surface-terminal border-phosphor-600/35',
-  paper: 'surface-newsprint border-newsprint-300',
-  panel: 'bg-newsprint-900 border-newsprint-800',
-  classified: 'surface-classified border-stone-950',
+  sheet: 'surface-sheet border-line',
+  desk: 'surface-desk border-line',
+  term: 'surface-terminal border-term-line-strong/35',
+  paper: 'surface-newsprint border-line',
+  panel: 'bg-well border-line-strong',
+  classified: 'surface-classified border-ink-1',
 };
 
 const DENSITY_CLASS = {
@@ -59,9 +65,9 @@ const DENSITY_CLASS = {
 } as const;
 
 const ACCENT_CLASS = {
-  gold: 'before:bg-gold-500',
-  phosphor: 'before:bg-phosphor-500',
-  red: 'before:bg-red-500',
+  gold: 'before:bg-accent',
+  phosphor: 'before:bg-well-2',
+  red: 'before:bg-dead',
   none: '',
 } as const;
 
@@ -90,9 +96,19 @@ export const Card: React.FC<CardProps> = ({
  * Uses the shared type scale instead of ad-hoc `t-micro font-mono`.
  *
  * INVARIANT: text colour is INHERITED from the card's material, not set here.
- * A hard-coded stone text colour is illegible on paper. Components that place
- * text on a Card must use the `text-newsprint-*` scale for paper surfaces and
- * `text-stone-*` only inside `material="term"` / `material="panel"`.
+ * A hard-coded dark text colour is illegible on paper. Components that place
+ * text on a Card must use the `ink-*` ladder for the warm materials (`sheet` /
+ * `desk` / `paper`) and the `term-ink-*` ladder inside `material="term"` or
+ * `material="panel"`.
+ *
+ * CORRECTED [ISSUE-012]: this used to name `text-newsprint-*` for paper and
+ * `text-stone-*` for the dark materials, and neither existed. `newsprint-*` was
+ * renamed to `ink-*` in the [TUNGSTEN] palette pass; `stone-*` was never a legal
+ * text step on a paper surface — `index.css` had to override `.text-stone-500`
+ * onto `ink-3` as a stopgap for precisely this mistake, which is a comment
+ * admitting the rule was being violated in the file that defines the tokens.
+ * Both families are now hard-failed by Rule B of `check-token-integrity.mjs` at
+ * `--stock-budget 0`, so the sentence above names tokens a grep can find.
  */
 export const CardHeader: React.FC<{
   title: string;

@@ -34,7 +34,7 @@ const CHANNEL_PURPOSE: Record<string, string> = {
   // the trade war is actually resolving", which is the one claim in the whole
   // channel that the YAP loop is not built on.
   polygrift:
-    'Poly-Grift. Prediction markets on the de-dollarization thesis. The house sets these prices and they never move — the only question is whether the house guessed your position right.',
+    'Poly-Grift. Prediction markets on the de-dollarization thesis. The house sets the price and it never moves — the only question is whether the house guessed your position right. The book explains itself in-channel; hover each slip for its odds.',
   brief: 'The Situation Room. Where the run stands, what the next milestone costs, and what is currently bleeding.',
   dump: 'The D.U.M.P. liquidation tree. Hatchet your own agency for instant cash and a permanent perk, and take a quarter of the favor price back as kickback.',
   // Corrected: the shop sells the tungsten nib, autopen interns, the diet-soda
@@ -86,7 +86,7 @@ export const PaneShell: React.FC<PaneShellProps> = ({
   className = '',
 }) => (
   <div
-    className={`h-full min-h-0 flex flex-col overflow-hidden select-none rounded-xl border border-redaction-700 bg-newsprint-950 shadow-2xl ${className}`}
+    className={`h-full min-h-0 flex flex-col overflow-hidden select-none rounded-xl border border-line bg-panel shadow-sm ${className}`}
   >
     {header}
     <div className={`relative flex min-h-0 flex-1 flex-col overflow-hidden ${bodyClassName}`}>
@@ -102,22 +102,89 @@ export const PaneShell: React.FC<PaneShellProps> = ({
  * INVARIANT: both cockpit tab strips use this. The only difference between the
  * wings is the active-tab accent, passed as `accent` — never a forked copy of
  * this markup, which is how the two strips drifted apart in the first place.
+ *
+ * INVARIANT: [A Truncated Tab Name Is A Feature Nobody Asked For]
+ * The right deck packs five channels into a 3/12 column, which at the 1720px cap
+ * is ~65px a tab — and `[D] D.U.M.P.` next to `[U] UNLOCKS` next to `[T] TARIFFS`
+ * next to `[C] CAYMANS` does not fit in 65px once the hotkey badge, the 4px gap
+ * and the 8px of padding are added. Every one of them silently ellipsised to
+ * `[D] D.U…`, so the deck whose job is to make four headline systems NAMABLE was
+ * hiding the names of three of them.
+ *
+ * Three fixes were rejected. Shrinking the type step for 5+ tabs is a rule about
+ * a COUNT, so adding a sixth channel re-breaks it silently. Dropping the hotkey
+ * badge to make room removes information instead of abbreviating it. And a
+ * viewport media query measures the wrong axis: the right deck is 3/12 and the
+ * left terminal 4/12, so one breakpoint either shortens the left strip on a wide
+ * monitor where its labels fit perfectly, or leaves the right strip truncated at
+ * 2560px.
+ *
+ * What is left is a CONTAINER query, and there are three traps in it, all three
+ * of which this file has already fallen into:
+ *
+ *   1. THE CONTAINER MUST BE THE BUTTON. `@container` without a name resolves
+ *      against the NEAREST ancestor container — with the container on the strip,
+ *      a 238px strip against a 92px threshold showed the long label on every tab
+ *      while every tab was actually 44px wide. The tell is that BOTH spans lay
+ *      out at once and the word renders as `BRIEFBRIEF`.
+ *   2. THE QUERY MEASURES THE CONTENT BOX, NOT THE BORDER BOX. `clientWidth`
+ *      includes the 8px of padding, so a breakpoint documented against
+ *      `clientWidth` fires 8px early and silently steals the badge from tabs
+ *      that had room for it.
+ *   3. A `max-width` container variant SET TO `inline` HIDES NOTHING. A
+ *      `<span>` is already `display: inline` by default, so that variant
+ *      re-states the status quo instead of overriding it, and both labels render
+ *      at every width. (Written without the literal `at max-[…px]` utility
+ *      syntax: Tailwind scans raw source text for class candidates INCLUDING
+ *      inside comments, so writing one out in prose makes the compiler emit a
+ *      real rule for it — and a placeholder like `Npx` in that rule is a build
+ *      failure, not a warning. This exact comment cost one build to discover.)
+ *      Both label spans therefore need `hidden` as a BASE with the query as the
+ *      override, which is what makes the two arms genuinely exclusive.
+ *
+ * THRESHOLDS, MEASURED NOT GUESSED. In layout px at `t-micro`, from a probe
+ * rendered in the live document: badge `[C] ` = 26, gap = 4, padding = 8.
+ * Longest full label is `POLY-GRIFT` (left strip) = 71; longest `short` is
+ * `TARIFF` = 53. So the three bands are:
+ *
+ *   content >= 104  badge + FULL label   needs 26+4+71 = 101
+ *   content >=  86  badge + SHORT label  needs 26+4+53 =  83
+ *   below            SHORT label only    needs 53 against >= 85
+ *
+ * Each leaves 3px of slack, and no band is narrower than what its own content
+ * requires. The numbers move with the type scale, which is why they are written
+ * here next to the measurements rather than hidden in a constant.
+ *
+ * `container-type: inline-size` on the button is safe alongside `flex-1`: the
+ * button's width comes from its flex share (basis 0%), never from its contents,
+ * so `contain: inline-size` cannot feed back into the layout it is measuring.
+ *
+ * The full label is still the accessible name; only the visible text abbreviates,
+ * and the `hint()` below is unchanged either way.
  */
 export const TabStrip: React.FC<{
-  tabs: ReadonlyArray<{ id: string; label: string; shortcut: string; locked?: boolean }>;
+  tabs: ReadonlyArray<{
+    id: string;
+    label: string;
+    /** Abbreviation used when the strip is too narrow for `label`. */
+    short?: string;
+    shortcut: string;
+    locked?: boolean;
+  }>;
   activeId: string;
   onSelect: (id: string) => void;
   /** Accent for the active tab. Terminal = phosphor, right deck = gold. */
   accent?: 'phosphor' | 'gold';
   className?: string;
 }> = ({ tabs, activeId, onSelect, accent = 'phosphor', className = '' }) => (
-  <div className={`flex shrink-0 items-center gap-1 border-b border-redaction-700 bg-redaction-700 p-1 ${className}`}>
+  <div className={`flex shrink-0 items-center gap-1 border-b border-term-line bg-well-2 p-1 ${className}`}>
     {tabs.map((tab) => {
       const isActive = tab.id === activeId;
       const active =
         accent === 'phosphor'
-          ? 'bg-phosphor-500 text-redaction-700'
-          : 'bg-gold-500 text-redaction-700';
+          ? 'bg-well-2 text-term-ink-1'
+          : 'bg-accent text-ink-1';
+      const short = tab.short ?? tab.label;
       return (
         <button
           key={tab.id}
@@ -127,19 +194,35 @@ export const TabStrip: React.FC<{
              only; it must never be wired to `disabled`. */
           aria-pressed={isActive}
           /* INVARIANT: the visible `[1] STOCKS` text is already a sufficient
-             accessible name, so only `data-hint` is written here. See `hint()`. */
+             accessible name, so only `data-hint` is written here. See `hint()`.
+             The name stays honest while the visible label abbreviates, because
+             `aria-label` is absent — an abbreviation is a display concern, and
+             screen readers get the full `CHANNEL_PURPOSE` sentence. */
           {...hint((CHANNEL_PURPOSE[tab.id] ?? UNDOCUMENTED_CHANNEL) + (tab.locked ? SEALED_SUFFIX : ''))}
-          className={`flex min-w-0 flex-1 items-center justify-center gap-1 rounded px-1 py-1 text-center font-mono t-micro font-bold transition-colors ${
+          className={`@container flex min-w-0 flex-1 items-center justify-center gap-1 rounded px-1 py-1 text-center font-mono t-micro font-bold transition-colors ${
             isActive
               ? `${active} font-black shadow-md`
               : tab.locked
                 /* Unselected + locked: visibly sealed, but still a live target. */
-                ? 'text-newsprint-500 hover:bg-redaction-500 hover:text-newsprint-200'
-                : 'text-newsprint-300 hover:bg-redaction-500 hover:text-newsprint-100'
+                ? 'text-term-ink-3 hover:bg-well hover:text-term-ink-1'
+                : 'text-term-ink-2 hover:bg-well hover:text-term-ink-1'
           }`}
         >
-          <span className="shrink-0">[{tab.shortcut}]</span>
-          <span className="truncate">{tab.label}</span>
+          {/* INVARIANT: [The Label Outranks The Hotkey Badge]
+             The badge is the thing to lose. It is a convenience — the hotkey is
+             also in the hint, and `HotkeyFooterHUD` deliberately does not repeat
+             channel keys (see [This Bar Owns The Verbs. The Tabs Own The
+             Channels.]). A deck that reads `BRIEF DUMP CRONY TARIFF CAYMN` is
+             still a usable deck; a deck that reads `[B] [D] [U] [T] [C]` is a row
+             of punctuation, and that is measurably what happens if the badge
+             keeps priority — see the thresholds above. */}
+          <span className="shrink-0 @max-[85px]:hidden">[{tab.shortcut}]</span>
+          {/* Both spans need a `hidden` BASE, not just a query — see trap 3 in
+              the header comment. With it, the two arms are exclusive: >= 104px
+              shows the full label, < 104px the short one, and no width shows
+              both or neither. */}
+          <span className="truncate hidden @[104px]:inline">{tab.label}</span>
+          <span className="truncate hidden @max-[103px]:inline">{short}</span>
           {tab.locked && <Lock className="h-2.5 w-2.5 shrink-0" aria-hidden="true" />}
         </button>
       );
@@ -169,7 +252,7 @@ export const StatusStrip: React.FC<{
 }> = ({ icon, label, right, accent = 'gold', className = '' }) => (
   <div
     className={`flex shrink-0 items-center justify-between border-t px-3 py-1.5 font-mono t-micro ${
-      accent === 'phosphor' ? 'border-phosphor-600/30 bg-newsprint-950 text-phosphor-300/70' : 'border-redaction-700 bg-redaction-700 text-newsprint-400'
+      accent === 'phosphor' ? 'border-term-line-strong/30 bg-ink-1 text-term-ink-1/70' : 'border-term-line bg-well-2 text-term-ink-3'
     } ${className}`}
   >
     <div className="flex min-w-0 items-center gap-1.5">

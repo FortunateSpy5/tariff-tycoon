@@ -91,13 +91,13 @@ export const BilateralTariffsTab: React.FC = () => {
     <div className="h-full min-h-0 flex flex-col gap-2 select-none">
       <div className="shrink-0">
         <DossierHeader
-          icon={<Globe className="w-3.5 h-3.5 text-gold-500" />}
+          icon={<Globe className="w-3.5 h-3.5 text-accent-ink" />}
           title="Bilateral Tariff Dials"
           status={`Total Duties: +${formatCurrency(tariffRevenuePerSecond)}/s`}
         />
 
         {!hasPrestigeAccess && (
-          <p className="mt-2 border-l-2 border-amber-500/70 bg-amber-950/20 px-2 py-1 t-micro text-stone-400">
+          <p className="mt-2 border-l-2 border-accent-ink/70 bg-accent-wash/70 px-2 py-1 t-micro text-ink-3">
             Change a dial to qualify for the Cayman reorganization.
           </p>
         )}
@@ -121,17 +121,17 @@ export const BilateralTariffsTab: React.FC = () => {
               <Card key={nation.id} density="tight" className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <div>
-                    <span className="font-bold text-newsprint-900 text-xs block">
+                    <span className="font-bold text-ink-2 text-xs block">
                       {nation.name}
                     </span>
-                    <span className="t-caption text-newsprint-800 font-mono block">
+                    <span className="t-caption text-ink-3 font-mono block">
                       Chief Exports: {nation.chiefExports.join(', ')}
                     </span>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="t-caption text-emerald-700 font-mono font-semibold">
+                      <span className="t-caption text-live-ink font-mono font-semibold">
                         Duty: +${nationIncome.toFixed(1)}/s
                       </span>
-                      <span className="t-caption text-wax-600 font-mono flex items-center gap-0.5">
+                      <span className="t-caption text-dead-ink font-mono flex items-center gap-0.5">
                         <TrendingDown className="w-2.5 h-2.5" />
                         Depresses: {nation.linkedStocks.map((s) => `$${s}`).join(', ')}
                       </span>
@@ -141,12 +141,12 @@ export const BilateralTariffsTab: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <div className="text-right">
                       <span className={`font-mono font-black text-sm block ${
-                        isPunitive ? 'text-wax-600 animate-pulse' : currentRate >= 100 ? 'text-wax-500' : 'text-newsprint-900'
+                        isPunitive ? 'text-dead-ink animate-pulse' : currentRate >= 100 ? 'text-dead-ink' : 'text-ink-2'
                       }`}>
                         {currentRate}%
                       </span>
                       {isPunitive && (
-                        <span className="t-caption text-gold-700 font-mono block">+Trade Heat</span>
+                        <span className="t-caption text-accent-ink font-mono block">+Trade Heat</span>
                       )}
                     </div>
                     <div className="flex flex-col gap-0.5">
@@ -157,7 +157,7 @@ export const BilateralTariffsTab: React.FC = () => {
                           upHint(nation, currentRate, Math.min(500, currentRate + 25)),
                           `Raise the tariff on ${nation.name} by 25 points`
                         )}
-                        className={`px-1.5 py-0.5 bg-wax-600 hover:bg-wax-500 border border-wax-700 text-newsprint-50 font-mono t-caption font-bold rounded cursor-pointer active:scale-95 ${currentRate >= 500 ? 'opacity-50 cursor-not-allowed hover:bg-wax-600' : ''}`}
+                        className={`px-1.5 py-0.5 bg-dead hover:bg-dead border border-dead-ink text-ink-1 font-mono t-caption font-bold rounded cursor-pointer active:scale-95 ${currentRate >= 500 ? 'opacity-50 cursor-not-allowed hover:bg-dead' : ''}`}
                       >
                         +25%
                       </button>
@@ -168,7 +168,7 @@ export const BilateralTariffsTab: React.FC = () => {
                           downHint(nation, currentRate, Math.max(0, currentRate - 25)),
                           `Lower the tariff on ${nation.name} by 25 points`
                         )}
-                        className={`px-1.5 py-0.5 bg-newsprint-300 hover:bg-newsprint-200 border border-newsprint-400 text-newsprint-900 font-mono t-caption font-bold rounded cursor-pointer active:scale-95 ${currentRate <= 0 ? 'opacity-50 cursor-not-allowed hover:bg-newsprint-300' : ''}`}
+                        className={`px-1.5 py-0.5 bg-panel hover:bg-card border border-line text-ink-2 font-mono t-caption font-bold rounded cursor-pointer active:scale-95 ${currentRate <= 0 ? 'opacity-50 cursor-not-allowed hover:bg-panel' : ''}`}
                       >
                         -25%
                       </button>
@@ -177,8 +177,8 @@ export const BilateralTariffsTab: React.FC = () => {
                 </div>
 
                 {/* Diplomatic Begging Cable */}
-                <div className="bg-newsprint-200/70 rounded p-1.5 border border-newsprint-300 t-caption font-sans italic text-newsprint-800 flex items-start gap-1.5">
-                  <MessageSquareQuote className="w-3 h-3 text-gold-600 shrink-0 mt-0.5" />
+                <div className="bg-card/70 rounded p-1.5 border border-line t-caption font-sans italic text-ink-3 flex items-start gap-1.5">
+                  <MessageSquareQuote className="w-3 h-3 text-accent-ink shrink-0 mt-0.5" />
                   <span>"{cableText}"</span>
                 </div>
               </Card>
@@ -186,7 +186,7 @@ export const BilateralTariffsTab: React.FC = () => {
           })}
       </div>
 
-      <div className="shrink-0 p-2 bg-newsprint-200/60 border border-newsprint-400 rounded t-micro text-newsprint-800 italic">
+      <div className="shrink-0 p-2 bg-card/60 border border-line rounded t-micro text-ink-3 italic">
         "Tariffs produce continuous Treasury duties while depressing foreign stock valuations. Tariffs above 250% risk trade war blowback and Heat accumulation."
       </div>
     </div>

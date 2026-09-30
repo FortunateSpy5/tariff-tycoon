@@ -54,11 +54,11 @@ export const DirectiveSheet: React.FC<{
   return (
     <div
       {...hint(sheetHint, 'Directive sheet — your latest decree')}
-      className={`surface-sheet border border-newsprint-300 rounded-lg p-2.5 text-center shadow-sm shrink-0 transition-all duration-100 relative ${
+      className={`surface-sheet border border-line rounded-lg p-2.5 text-center shadow-sm shrink-0 transition-all duration-100 relative ${
         isRecoilActive ? 'animate-recoil' : ''
-      } ${isPulseActive ? 'ring-2 ring-wax-500/50 animate-calm-glow' : ''}`}
+      } ${isPulseActive ? 'ring-2 ring-dead-ink/50 animate-calm-glow' : ''}`}
     >
-      <div className="flex items-center justify-center gap-1.5 t-micro font-mono font-bold tracking-widest text-wax-600 uppercase">
+      <div className="flex items-center justify-center gap-1.5 t-micro font-mono font-bold tracking-widest text-dead-ink uppercase">
         {isLive ? (
           <Megaphone className="w-3.5 h-3.5" aria-hidden />
         ) : (
@@ -73,7 +73,7 @@ export const DirectiveSheet: React.FC<{
         </span>
       </div>
 
-      <p className="text-newsprint-800 italic text-xs mt-1 line-clamp-2 font-serif px-2">
+      <p className="text-ink-3 italic text-xs mt-1 line-clamp-2 font-serif px-2">
         {lastYapPost?.rawText ??
           (phase === 1
             ? '"Foreign brie and uninspected produce confiscated for emergency redistribution."'
@@ -81,8 +81,8 @@ export const DirectiveSheet: React.FC<{
       </p>
 
       {lastYapPost && (
-        <div className="mt-1 flex items-center justify-center gap-2 t-micro font-mono text-newsprint-800">
-          <span className="text-wax-600">Tariff {lastYapPost.tariffPercentage}%</span>
+        <div className="mt-1 flex items-center justify-center gap-2 t-micro font-mono text-ink-3">
+          <span className="text-dead-ink">Tariff {lastYapPost.tariffPercentage}%</span>
           <span className="opacity-40">·</span>
           <span>Impact ×{lastYapPost.impactMultiplier.toFixed(2)}</span>
           <span className="opacity-40">·</span>

@@ -16,17 +16,34 @@
  * overlay here.
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ShieldAlert, Flame, Printer, Siren, X, RotateCcw } from 'lucide-react';
 import { useGameStore } from '../../store/useGameStore';
 import { resolveFeedback, type FeedbackTone } from './feedbackPriority';
 import { hint } from '../ui/hint';
 
+/**
+ * ISSUE-004: how long a resolved crisis keeps the slot it no longer needs.
+ *
+ * INVARIANT: [A Notice Expires Of Its Own Accord]
+ * The crisis outcome is the LOWEST-priority entry in `feedbackPriority` — it is
+ * purely informational, it is beaten by anything else that happens to fire, and
+ * it rendered above the directive sheet and under the stamp until somebody found
+ * its dismiss button. A message that has already been delivered and cannot be
+ * missed again is dead weight on the one surface the player is trying to read.
+ *
+ * 5s is long enough to read a two-clause sentence at 9.5px monospace, and short
+ * enough that it is gone before the next crisis can spawn. Two exits, both here
+ * and in `deskSlice.clickDesk`: the timer catches the player who stops slamming,
+ * the slam catches the player who does not look up long enough to wait.
+ */
+const CRISIS_NOTICE_MS = 5000;
+
 const TONE: Record<FeedbackTone, { bg: string; border: string; text: string }> = {
-  red: { bg: 'bg-red-950/95', border: 'border-red-500', text: 'text-red-200' },
-  amber: { bg: 'bg-amber-950/95', border: 'border-amber-500', text: 'text-amber-200' },
-  emerald: { bg: 'bg-emerald-950/95', border: 'border-emerald-500', text: 'text-emerald-200' },
-  blue: { bg: 'bg-newsprint-900/95', border: 'border-newsprint-700', text: 'text-newsprint-100' },
+  red: { bg: 'bg-ink-1/95', border: 'border-dead-ink', text: 'text-dead-soft' },
+  amber: { bg: 'bg-dead/15', border: 'border-accent-ink', text: 'text-accent-ink' },
+  emerald: { bg: 'bg-well/95', border: 'border-live-ink', text: 'text-live-soft' },
+  blue: { bg: 'bg-well/95', border: 'border-line-strong', text: 'text-term-ink-1' },
 };
 
 export const FeedbackLayer: React.FC<{
@@ -40,6 +57,16 @@ export const FeedbackLayer: React.FC<{
   const lastWalkBackNotice = useGameStore((s) => s.lastWalkBackNotice);
   const lastCrisisOutcome = useGameStore((s) => s.lastCrisisOutcome);
   const dismissCrisisOutcome = useGameStore((s) => s.dismissCrisisOutcome);
+
+  /* ISSUE-004 — the timer half of "auto-dismiss the stale crisis banner". Keyed
+     on the MESSAGE, not on a boolean, so back-to-back crises (SUPPRESSED, then
+     SWEAR IN inside 5s) each get their own full window instead of the second one
+     inheriting the first one's remaining time and vanishing on arrival. */
+  useEffect(() => {
+    if (!lastCrisisOutcome) return;
+    const id = window.setTimeout(dismissCrisisOutcome, CRISIS_NOTICE_MS);
+    return () => window.clearTimeout(id);
+  }, [lastCrisisOutcome, dismissCrisisOutcome]);
 
   const feedback = resolveFeedback({
     lastRaidMessage,
@@ -80,7 +107,7 @@ export const FeedbackLayer: React.FC<{
             // hover text and still no name.
             'Dismiss this alert'
           )}
-          className="ml-auto shrink-0 text-stone-400 hover:text-stone-100 p-0.5 cursor-pointer"
+          className="ml-auto shrink-0 text-term-ink-3 hover:text-term-ink-1 p-0.5 cursor-pointer"
         >
           <X className="w-3.5 h-3.5" />
         </button>

@@ -1,10 +1,7 @@
 /**
- * Dual-Phase Clicker Button
- * Phase 1: Heavy Blue Rubber Stamp [CONFISCATED - BY ORDER OF AGENT 412] at the
- *   Deeply Terminal Annex.
- * Phase 2+: Oversized 24k Golden Sherpie signing executive orders on the Resolute
- *   blotter.
- * Compact fluid layout guarantees zero overflow on 720p/768p laptop viewports.
+ * Dual-Phase Clicker Button — the hero tap target.
+ * Phase 1: a rubber stamp at the Deeply Terminal Annex. Phase 2+: the 24k Golden
+ * Sherpie signing on the Resolute blotter. Fluid layout, zero overflow at 720p.
  *
  * INVARIANT: [The Verb On The Stamp Must Be True]
  * The Phase 2+ face read `SIGN TARIFF`, but clicking it set no tariff — the YAP
@@ -13,11 +10,11 @@
  */
 
 import React, { useState, useRef } from 'react';
-import { PenTool, Stamp, Sparkles } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useGameStore } from '../../store/useGameStore';
 import { calculateInkRefillTotal } from '../../engine/math/formulas';
 import { resolveClickPayout, TUNGSTEN_NIB_MULTIPLIER } from '../../engine/systems/clickPayout';
+import { isFirstSlam } from '../../engine/systems/onboardingEngine';
 import { hasPerk } from '../../engine/systems/perkEngine';
 import { formatCurrency } from '../../engine/math/bigNumber';
 import {
@@ -35,25 +32,10 @@ import {
   FLASH_DIP_VALUATION_MULTIPLIER,
   SHELL_COMPANY_TAP_MULTIPLIER,
 } from '../../constants/perks';
-import { CUSTOMS_STAMP_NAME } from '../../constants/setting';
 import { hint } from '../ui/hint';
-
-interface FloatingNumber {
-  id: number;
-  x: number;
-  y: number;
-  text: string;
-}
-
-/** Ink splatter droplet. One-shot, self-cleaning on animation end. */
-interface InkSplatter {
-  id: number;
-  x: number;
-  y: number;
-  size: number;
-  /** Phase 1 stamps blue; the Golden Sherpie bleeds gold. */
-  color: string;
-}
+import { StampIllustration } from './StampIllustration';
+import { StampFaceLabel } from './StampFaceLabel';
+import { InkParticles, type FloatingNumber, type InkSplatter } from './InkParticles';
 
 export const ClickerButton: React.FC = () => {
   const phase = useGameStore((s) => s.phase);
@@ -74,6 +56,15 @@ export const ClickerButton: React.FC = () => {
   // names to force a replay — the standard trick for retriggering one-shot CSS.
   const [slamNonce, setSlamNonce] = useState(0);
   const nextIdRef = useRef(0);
+  /* The ink splatters and floating numbers are `position: absolute` children of
+     this component's root, but the click's coordinates are naturally relative to
+     the BUTTON. Those are two different boxes: the root is as wide as the wider of
+     the stamp and the caption, so once the stamp shrinks (a ringing crisis takes
+     the desk from ~300px to ~130px) the root stays wide and every droplet lands
+     displaced from the click that made it — 11px at 1080p, and it grows from
+     there. Measuring against this ref instead of the button's rect makes the two
+     boxes the same box in every state. */
+  const rootRef = useRef<HTMLDivElement>(null);
 
   const dryClicksCount = useGameStore((s) => s.dryClicksCount || 0);
   const activeUpgrades = useGameStore((s) => s.activeUpgrades);
@@ -81,10 +72,9 @@ export const ClickerButton: React.FC = () => {
   const flashDipSecondsRemaining = useGameStore((s) => s.flashDipSecondsRemaining);
 
   // The CHARGED yield, from the same function `clickDesk` charges with. This used
-  // to call `calculateClickValue` directly and so silently omitted the Heavy
-  // Tungsten Nib's doubling — the hero number in the game was understated by
-  // 100% for anyone who owned the cheapest upgrade in the shop. See
-  // `engine/systems/clickPayout.ts`.
+  // to call `calculateClickValue` directly, silently omitting the Heavy Tungsten
+  // Nib's doubling — the hero number was understated by 100% for anyone owning the
+  // cheapest upgrade. See `engine/systems/clickPayout.ts`.
   const { earnedCash: clickValue } = resolveClickPayout({
     phase,
     baseValue: 5.0,
@@ -99,6 +89,15 @@ export const ClickerButton: React.FC = () => {
 
   const isDry = inkLevel <= 0 && !isCapsFrenzy;
 
+  /* ISSUE-002 [First-Frame Guidance]. Keyed off the TUTORIAL INDEX, not
+     `totalClicks === 0`, for the reason `onboardingEngine` documents at length:
+     an interrupted session, a migrated save, or a player who skipped onboarding
+     all have clicks and no first slam, and a click-count test would either
+     re-nag a returning player or strand them. `isFirstSlam` is the predicate the
+     engine itself uses to open the market, so "before your first slam" means
+     one thing everywhere in the app. */
+  const isFirstSlamPending = isFirstSlam(tutorialStepIndex);
+
   // The hint states the whole contract of the button: cost, yield, and the
   // thing the player is actually chasing (the tantrum meter behind it). The
   // hero control had NO hover text at all, which meant its two real rules —
@@ -109,14 +108,14 @@ export const ClickerButton: React.FC = () => {
   // order" would be the same lie `SIGN TARIFF` was — a second control using a
   // different verb, with the hover contradicting the label this time.
   const verb = phase === 1 ? 'Confiscate contraband' : 'Sign an executive order';
-  // INVARIANT: the dry branch must state the JAMMED yield too. "10% of the inked
-  // yield" is only true for the first 30 dry clicks; after that the nib jams and
-  // the engine pays 2%. The player who has been dry long enough to read this
-  // tooltip is the one reading a number that has already stopped being true.
-  // What is actually multiplying this slam. The stamp's `+X / tap` tag is the
-  // one number the player plans around, so the hover has to be able to account
-  // for it — and the multipliers are read from the engine's own inputs, never
-  // re-typed, because a figure in copy is a figure that rots.
+  // What is actually multiplying this slam. The `+X / tap` tag is the number the
+  // player plans around, so the hover must account for it — and the multipliers
+  // are read from the engine's inputs, never re-typed: a figure in copy rots.
+  //
+  // INVARIANT: the dry branch states the JAMMED yield too. "10% of the inked
+  // yield" is true only for the first 30 dry clicks; after that the nib jams and
+  // the engine pays 2%. A player dry long enough to read this tooltip is the one
+  // reading a number that has already stopped being true.
   const tapSources = [
     activeUpgrades.includes('heavy_tungsten_nib')
       ? ` Heavy Tungsten Nib x${TUNGSTEN_NIB_MULTIPLIER}.`
@@ -138,18 +137,36 @@ export const ClickerButton: React.FC = () => {
     : `${verb}. Costs ${INK_PER_CLICK} ink and regains ${INK_REGEN_PER_SECOND}/s. Every inked slam builds Tantrum — 100% triggers CAPS LOCK FRENZY, ${FRENZY_CLICK_MULTIPLIER}x yield for ${FRENZY_DURATION_SECONDS}s.${tapSources}${flashDipClause}`;
   const clickerName = isDry ? 'Dry stamp' : verb;
 
-  // C1: the recoil used to fire on BOTH the stamp face and the directive card
-  // at 100% tantrum, and the slam travelled 14px. During CAPS LOCK FRENZY the
-  // player clicks many times a second, so the impacts overlapped into a
-  // continuous judder. At high tantrum we now swap to the damped slam and halve
-  // the recoil: the impact still reads, but it no longer fights the cursor.
+  /* INVARIANT: [The Tag Explains The Number It Sits Under]
+     The yield tag is the one element on the object that is a HUD rather than
+     scenery — it is the figure the player plans a session around — so it
+     carries its own hint instead of relying on the whole button's. The tag's
+     figure comes from the same `resolveClickPayout` the tick charges with, so
+     what it says and what it pays cannot drift apart. */
+  const yieldTagHint = `THIS SLAM PAYS ${formatCurrency(clickValue)}. ${
+    isDry
+      ? `Your nib is dry, so this is the ${Math.round(
+          dryClicksCount >= DRY_CLICK_JAM_THRESHOLD
+            ? DRY_CLICK_JAM_YIELD_MULTIPLIER
+            : DRY_CLICK_YIELD_MULTIPLIER
+        )}% dry rate, not the inked one — and it builds no Tantrum.`
+      : isCapsFrenzy
+      ? `FRENZY IS LIVE, so this is ${FRENZY_CLICK_MULTIPLIER}x the inked rate. Ink is held, not topped up, so the tank you brought is the tank you get back.`
+      : `This is the inked rate for one slam, after every multiplier you own. It is the number the shop's Tungsten Nib, the Sovereign Immunity Slips and the Shell Company perk all scale.`
+  }`;
+
+  // C1: the recoil used to fire on BOTH the stamp face and the directive card at
+  // 100% tantrum, and the slam travelled 14px. During FRENZY the player clicks
+  // many times a second, so the impacts overlapped into a continuous judder. At
+  // high tantrum we swap to the damped slam and halve the recoil: it still reads,
+  // but it no longer fights the cursor.
   const isRecoilActive = screenShakeEnabled && (isCapsFrenzy || isHighTantrum);
   const slamClass = isHighTantrum
     ? 'animate-stamp-slam-calm'
     : slamNonce % 2 === 0
     ? 'animate-stamp-slam'
     : 'animate-stamp-slam-alt';
-  const inkColor = isCapsFrenzy ? '#ef4444' : phase === 1 ? '#3b82f6' : '#fbbf24';
+  const inkColor = isCapsFrenzy ? 'var(--color-dead)' : phase === 1 ? 'var(--color-signal)' : 'var(--color-accent-soft)';
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
     if (!clickDesk()) return;
@@ -163,11 +180,17 @@ export const ClickerButton: React.FC = () => {
         particleCount: 15,
         spread: 45,
         origin: { y: 0.6 },
-        colors: ['#ef4444', '#f59e0b', '#dc2626'],
+        colors: ['var(--color-dead)', 'var(--color-accent)', 'var(--color-dead-ink)'],
       });
     }
 
-    const rect = e.currentTarget.getBoundingClientRect();
+    /* INVARIANT: [Particles Are Measured Against The Box They Render In]
+       The splatters and floating numbers are absolutely positioned in the ROOT,
+       so their coordinates must be relative to the root — not to `e.currentTarget`,
+       which is the button. The two boxes differ whenever the caption is wider
+       than the stamp, which is exactly the cramped-crisis case. */
+    const host = rootRef.current ?? e.currentTarget;
+    const rect = host.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
@@ -182,11 +205,9 @@ export const ClickerButton: React.FC = () => {
     setFloatingNumbers((prev) => [...prev.slice(-5), newFloater]);
 
     // INVARIANT: [The Stamp Must Bleed]
-    // AGENTS.md mandates "ink splatters" as part of the tactile feedback contract.
-    // Before this, the hero object emitted nothing but a number — the single
-    // most screenshot-worthy asset in a game about slamming a rubber stamp was
-    // inert. Three droplets per slam, deterministic offsets so a fast clicker
-    // doesn't produce visual noise, capped so the array never grows unbounded.
+    // AGENTS.md mandates ink splatters as tactile feedback. Before this the hero
+    // emitted nothing but a number. Three droplets per slam, deterministic offsets
+    // so a fast clicker produces no noise, capped so the array stays bounded.
     if (!isDry) {
       const angles = [0.6, 2.7, 4.4];
       setSplatters((prev) => {
@@ -203,106 +224,144 @@ export const ClickerButton: React.FC = () => {
   };
 
   return (
-    <div className="relative flex flex-col items-center justify-center p-1.5 select-none my-auto">
-      {/* Ink splatter — physical feedback that the stamp actually bleeds */}
-      {splatters.map((s) => (
-        <span
-          key={s.id}
-          onAnimationEnd={() => setSplatters((prev) => prev.filter((i) => i.id !== s.id))}
-          className="absolute rounded-full pointer-events-none animate-ink-bloom z-20"
-          style={{
-            left: `${s.x}px`,
-            top: `${s.y}px`,
-            width: `${s.size}px`,
-            height: `${s.size}px`,
-            backgroundColor: s.color,
-            boxShadow: `0 0 ${s.size}px ${s.color}`,
-          }}
-        />
-      ))}
+    /* INVARIANT: [The Stamp Takes The Space It Is Given, And Only That Space]
+       The root is `h-full`; the button is sized off a wrapper definite on both
+       axes. This was a hard-coded `w-44 sm:w-52 md:w-60` circle on a zero-scroll
+       flex column, so height and available space came from two unrelated numbers:
+       134px of room against a 240px button, and 69px while a crisis rang. It
+       overflowed by up to 95px and painted over the directive sheet. `my-auto`
+       made it worse, pushing the overflow out of BOTH ends of the column. */
+    <div
+      ref={rootRef}
+      className="relative h-full min-h-0 flex flex-col items-center justify-center gap-1 p-1 select-none"
+    >
+      {/* THE SQUARE. The stamp's size is derived here, not from its own
+          contents, and that indirection is load-bearing: the button cannot be
+          its own `container-type: size`, because as a centred flex item its
+          width would be fit-content — the width of its own `cqw` lettering —
+          and the browser resolves that cycle to ZERO. An earlier draft did
+          exactly that and the stamp collapsed to a 4px sliver.
 
-      {/* Floating Cash Indicators with pure onAnimationEnd cleanup */}
-      {floatingNumbers.map((floater) => (
-        <span
-          key={floater.id}
-          onAnimationEnd={() => {
-            setFloatingNumbers((prev) => prev.filter((item) => item.id !== floater.id));
-          }}
-          className="absolute font-black text-xs sm:text-sm pointer-events-none animate-float-fade font-mono text-emerald-400 drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)] z-30"
-          style={{ left: `${floater.x}px`, top: `${floater.y - 15}px` }}
-        >
-          {floater.text}
-        </span>
-      ))}
-
-      {/* Main Interactive Button */}
-      <button
-        onClick={handleClick}
-        onMouseDown={() => setIsPressed(true)}
-        onMouseUp={() => setIsPressed(false)}
-        onMouseLeave={() => setIsPressed(false)}
-        onTouchStart={() => setIsPressed(true)}
-        onTouchEnd={() => setIsPressed(false)}
-        {...hint(clickerHint, clickerName)}
-        className={`relative group w-44 h-44 sm:w-52 sm:h-52 md:w-60 md:h-60 rounded-full flex flex-col items-center justify-center cursor-pointer stamp-face transition-[transform,box-shadow] duration-75 ${
-          isPressed ? 'scale-95' : 'hover:scale-[1.02]'
-        } ${slamClass} ${
-          isCapsFrenzy
-            ? 'bg-gradient-to-br from-red-600 via-amber-600 to-red-700 ring-4 ring-red-500/40 animate-calm-glow'
-            : phase === 1
-            ? 'bg-gradient-to-br from-blue-700 via-indigo-800 to-blue-950 ring-4 ring-blue-500/30'
-            : 'bg-gradient-to-br from-amber-400 via-amber-500 to-amber-700 ring-4 ring-amber-400/40'
-        }`}
+          This wrapper is `flex-1 min-h-0 w-full` in the desk column, so it is
+          definite on both axes and does not depend on the button at all. The
+          side comes from `100cqh` rather than `cqw` because height is always
+          the scarce axis here: the desk column is ~470px wide and the leftover
+          strip for the stamp is 130-370px tall, so height always binds first. */}
+      <div
+        className="relative flex-1 min-h-0 w-full flex items-center justify-center"
+        style={{ containerType: 'size' }}
       >
-        {/* Glow backdrop */}
-        <div
-          className={`absolute inset-0 rounded-full blur-lg opacity-25 ${
-            isCapsFrenzy ? 'bg-red-500' : phase === 1 ? 'bg-blue-400' : 'bg-amber-300'
+        {/* [FIRST SLAM] The attention ring — ISSUE-002. Progressive disclosure
+            exists at the CHANNEL level here (sealed dossiers) but not at the
+            ELEMENT level, so on frame one the stamp and the props are all lit
+            equally and nothing says which is the verb. This is the one signal
+            that closes that gap without stacking an overlay on top of the
+            tutorial directive, which is already in the right deck.
+
+            A SIBLING of the button, not a class on it: the button carries a
+            one-shot `animate-stamp-slam*` shorthand and both utilities set
+            `animation` on the same element, so a second class there would be a
+            coin toss over which wins. Sized off the same `100cqh` as the stamp
+            from the same container, so the ring tracks the object at every
+            viewport instead of drifting when the desk column shrinks. */}
+        {isFirstSlamPending && (
+          <span
+            aria-hidden="true"
+            className="pointer-events-none absolute rounded-full animate-attention-ring"
+            style={{ width: 'min(100cqh, 320px)', height: 'min(100cqh, 320px)' }}
+          />
+        )}
+        <button
+          onClick={handleClick}
+          onMouseDown={() => setIsPressed(true)}
+          onMouseUp={() => setIsPressed(false)}
+          onMouseLeave={() => setIsPressed(false)}
+          onTouchStart={() => setIsPressed(true)}
+          onTouchEnd={() => setIsPressed(false)}
+          {...hint(clickerHint, clickerName)}
+          /* The button is now its OWN typographic viewport, which is what the
+             `t-stamp-*` tiers measure against — the one control in the app
+             whose size is not fixed by the viewport. */
+          /* The cap is the stamp's natural size, not a layout constraint: it only
+             binds when the desk column is roomy (a 980px desk leaves 369px of
+             stage), and it stops the hero object swallowing the whole blotter on
+             a tall display. Below the cap the stamp is always the leftover.
+
+             `containerName: 'stamp'` is what lets the face's small-stamp
+             fallback in `index.css` target THIS button and nothing else — an
+             unnamed `@container` would match the nearest container for every
+             component in the app. */
+          style={{
+            containerType: 'size',
+            containerName: 'stamp',
+            width: 'min(100cqh, 320px)',
+            height: 'min(100cqh, 320px)',
+          }}
+          className={`relative group shrink-0 max-w-full rounded-full flex flex-col items-center justify-center cursor-pointer stamp-face transition-[transform,box-shadow] duration-75 ${
+            isPressed ? 'scale-95' : 'hover:scale-[1.02]'
+          } ${slamClass} ${
+            /* INVARIANT: [There Is No Disc. There Is An Object On A Desk.]
+               The button used to carry a 320px fill of its own — first
+               `from-blue-700 via-indigo-800 to-blue-950`, then a dark neutral
+               radial. Both were wrong for the same reason: a filled circle
+               behind the illustration is a second, larger shape competing with
+               the thing it is supposed to contain, and at L* 15 it measured
+               almost exactly the terminal's L* 16.6. Two large dark masses,
+               side by side, one of them the hero control.
+
+               So the button has no background at all. `StampIllustration`
+               already draws everything the object needs — a metal barrel, a dark
+               ink-stained rubber, a lit rim, and a cast shadow that puts it ON
+               the desk rather than in front of it. The desk surface shows
+               through the corners, which is what a stamp lying on a blotter
+               actually looks like, and the darkest large area on screen goes
+               back to being the machine, where it belongs.
+
+               FRENZY IS THE ONE EXCEPTION, and it keeps a fill on purpose:
+               being alarming at a glance is that state's entire job, and it is
+               the only state permitted to shout. */
+            isCapsFrenzy
+              ? 'bg-[radial-gradient(circle_at_34%_26%,var(--color-dead),var(--color-dead-ink)_58%,var(--color-ink-1))] ring-4 ring-dead-ink/40 animate-calm-glow'
+              : phase === 1
+              ? ''
+              : 'bg-[radial-gradient(circle_at_34%_26%,color-mix(in_srgb,var(--color-accent)_22%,transparent),transparent_72%)]'
           }`}
-        />
+        >
+          {/* Halo only in frenzy. On a still disc it re-saturated the one
+              surface the object was finally allowed to sit quietly on. */}
+          {isCapsFrenzy && <div className="absolute inset-0 rounded-full blur-lg opacity-25 bg-dead" />}
 
-        {/* Inner Stamp / Pen Surface */}
-        <div className="relative z-10 flex flex-col items-center text-center p-2">
-          {phase === 1 ? (
-            <>
-              <Stamp className={`w-10 h-10 sm:w-12 sm:h-12 text-blue-200 mb-1 drop-shadow-md group-hover:rotate-6 transition-transform ${isRecoilActive ? 'animate-recoil' : ''}`} />
-              <span className="font-mono t-micro font-black tracking-widest text-blue-300 uppercase">
-                {CUSTOMS_STAMP_NAME}
-              </span>
-              <span className="text-lg sm:text-xl font-black text-white tracking-wider uppercase mt-0.5">
-                CONFISCATE
-              </span>
-              <span className="t-micro font-mono text-blue-200/80 mt-0.5">
-                [BY AGENT 412]
-              </span>
-            </>
-          ) : (
-            <>
-              <PenTool className={`w-10 h-10 sm:w-12 sm:h-12 text-newsprint-950 mb-1 drop-shadow group-hover:-rotate-12 transition-transform ${isRecoilActive ? 'animate-recoil' : ''}`} />
-              <span className="font-mono t-micro font-black tracking-widest text-newsprint-900 uppercase">
-                Resolute Desk
-              </span>
-              <span className="text-lg sm:text-xl font-black text-newsprint-950 tracking-wider uppercase mt-0.5">
-                {isDry ? 'DRY SCRATCH' : 'SIGN ORDER'}
-              </span>
-              <span className="t-micro font-mono text-newsprint-900/80 mt-0.5">
-                24k Golden Sherpie
-              </span>
-            </>
-          )}
+          {/* [2.3] The object. Drawn behind the lettering: on a real rubber
+              stamp the text is printed ON the rubber, so the face has to be
+              under the type, not around it. */}
+          <StampIllustration face={phase === 1 ? 'customs' : 'sherpie'} isFrenzy={isCapsFrenzy} />
 
-          {/* Current Yield Tag */}
-          <div className="theme-allow mt-2 px-2.5 py-0.5 rounded-full bg-newsprint-950/70 backdrop-blur-sm border border-newsprint-800/40 flex items-center gap-1 font-mono text-[11px] font-bold text-emerald-300 shadow">
-            <Sparkles className="w-3 h-3 text-amber-300" />
-            <span>+{formatCurrency(clickValue)} / tap</span>
-          </div>
-        </div>
-      </button>
+          <StampFaceLabel
+            clickValue={clickValue}
+            isPhase1={phase === 1}
+            isDry={isDry}
+            isRecoilActive={isRecoilActive}
+            yieldHint={yieldTagHint}
+          />
+        </button>
+      </div>
+      <InkParticles
+        splatters={splatters}
+        floatingNumbers={floatingNumbers}
+        /* Ids come from ONE shared counter, so an id belongs to at most one of
+           the two lists and this needs no `kind` argument. Both are filtered
+           anyway: they are capped at 6 and 18, and a stale id in the wrong list
+           is a no-op rather than a leak. */
+        onAnimationEnd={(id) => {
+          setSplatters((prev) => prev.filter((s) => s.id !== id));
+          setFloatingNumbers((prev) => prev.filter((f) => f.id !== id));
+        }}
+      />
 
       {/* Helper caption — copy must never lie about the economy (see audit: UI vs
           code drift). In Phase 1 it names the actual location, because "the
           customs desk" is not a place a player can picture. */}
-      <span className="mt-1.5 t-caption font-mono text-newsprint-800 text-center">
+      <span className="shrink-0 t-caption font-mono text-ink-3 text-center leading-snug">
         {phase === 1
           ? tutorialStepIndex < 1
             ? 'Slam the stamp to seize contraband. One tap unseals BagHolder Pro.'
@@ -324,7 +383,7 @@ export const ClickerButton: React.FC = () => {
           {...hint(
             `FLASH DIP — ${Math.ceil(flashDipSecondsRemaining)}s of ${FLASH_DIP_VALUATION_MULTIPLIER}x options valuation left. It is applied to the SIGNED return, so a PUT you opened before it fired is paying enormously and a CALL is dying six times as fast. It expires on a timer whether or not you use it.`
           )}
-          className="mt-1 px-2 py-0.5 rounded bg-wax-500/20 border border-wax-600/70 text-center font-mono t-caption font-black text-wax-600 animate-calm-glow"
+          className="shrink-0 mt-1 px-2 py-0.5 rounded bg-dead/20 border border-dead-ink/70 text-center font-mono t-caption font-black text-dead-ink animate-calm-glow"
         >
           FLASH DIP {Math.ceil(flashDipSecondsRemaining)}s · {FLASH_DIP_VALUATION_MULTIPLIER}x OPTIONS
         </div>

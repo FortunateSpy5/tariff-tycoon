@@ -40,7 +40,7 @@ import {
   SECRET_SALE_PAYOUT as PAYOUT,
 } from '../../../store/slices/deskPropsSlice';
 
-export const GoldBoxProp: React.FC = () => {
+export const GoldBoxProp: React.FC<{ dormant?: boolean }> = ({ dormant = false }) => {
   const sellClassifiedSecrets = useGameStore((s) => s.sellClassifiedSecrets);
   const lastSecretSaleTimestamp = useGameStore((s) => s.lastSecretSaleTimestamp);
   const treasuryCash = useGameStore((s) => s.treasuryCash);
@@ -88,11 +88,29 @@ export const GoldBoxProp: React.FC = () => {
   };
 
   return (
+    /* ISSUE-002 [Progressive Disclosure At The Element Level]. The desk used to
+       present all three props at equal weight on frame one, before the player
+       had done anything. The Gold Box is the one that matters most here, because
+       nothing else in the cockpit can be reached yet: BagHolder Pro is sealed
+       until the first slam, so there is nothing to spend the $500 on. Dormant, it
+       states that, and its slot stays exactly the size it will occupy once it
+       opens — a collapsing row here would shove the directive sheet down the
+       desk on the player's very first click.
+
+       NOT a hidden prop and not a dead button. Per [The Seal Is A Promise, Not
+       A Wall], a thing the player will eventually use must stay visible and
+       nameable; what changes is that it stops LOOKING operable. `handleClick`
+       is still wired, so a curious click still sells a blueprint — there is no
+       gate to explain, therefore no gate that can refuse silently. */
     <button
       onClick={handleClick}
       aria-disabled={isRestocking}
       {...hint(
-        isBroke
+        dormant
+          ? `Awaiting your first seizure. The box sells classified bathroom blueprints offshore for ${formatCurrency(
+              PAYOUT
+            )} and +${HEAT}% S.L.O.P. heat, on a ${COOLDOWN_SECONDS}s cooldown — and there is nothing to spend it on until you slam the stamp once, because that slam is what unseals BagHolder Pro. It opens itself the moment you do.`
+          : isBroke
           ? `Restocking for ${remaining}s — but not for you. Under ${formatCurrency(
               BROKE_THRESHOLD
             )} the desk sells on emergency terms and ignores the clock entirely. A broke player can always move a blueprint; everyone else waits.`
@@ -102,28 +120,42 @@ export const GoldBoxProp: React.FC = () => {
             )}/s of pure heat.`
           : `Sell a classified bathroom blueprint offshore: +${formatCurrency(PAYOUT)} cash and +${HEAT}% S.L.O.P. suspicion, which is what invites the raids. ${COOLDOWN_SECONDS}s cooldown. You seed with $100 and the cheapest order the terminal takes locks $500, so one blueprint roughly doubles your buying power — a nudge, not a faucet.`
       )}
-      className={`p-2 rounded-lg bg-newsprint-900 border border-newsprint-800 transition-all flex items-center gap-2 text-left group relative overflow-hidden select-none ${
-        // INVARIANT: [A Gated Prop Must LOOK Gated]
-        // The cooldown is 8s and the refills 8s, so a box that is `aria-disabled`
-        // a third of the time cannot keep `cursor-pointer` and `active:scale-95`
-        // unconditionally — it squashed under the cursor while refusing the
-        // click. `SubpoenaShredderProp` already branches this; the sibling prop
-        // was the one that did not.
-        isRestocking
-          ? 'border-newsprint-700 cursor-not-allowed opacity-70'
-          : 'border-newsprint-800 hover:border-gold-500/60 cursor-pointer active:scale-95'
+      className={`p-2 rounded-lg bg-well border transition-all flex items-center gap-2 text-left group relative overflow-hidden select-none ${
+        dormant
+          ? 'border-dashed border-line opacity-55 hover:opacity-80'
+          : // INVARIANT: [A Gated Prop Must LOOK Gated]
+            // The cooldown is 8s and the refills 8s, so a box that is
+            // `aria-disabled` a third of the time cannot keep `cursor-pointer`
+            // and `active:scale-95` unconditionally — it squashed under the
+            // cursor while refusing the click. `SubpoenaShredderProp` already
+            // branches this; the sibling prop was the one that did not.
+            isRestocking
+            ? 'border-line-strong cursor-not-allowed opacity-70'
+            : 'border-line-strong hover:border-accent-ink/60 cursor-pointer active:scale-95'
       }`}
     >
-      <div className="p-1.5 rounded-md bg-amber-950/60 border border-amber-500/30 text-amber-400 group-hover:scale-110 transition-transform">
+      {/* ISSUE-010 [No Stock Tailwind Colours On Player-Facing Surfaces].
+          Was `bg-amber-950/60` behind a `text-accent-ink` icon: a very dark
+          amber chip carrying a very dark brown glyph, which measured roughly
+          1.6:1 and was invisible for the entire time the prop was live. The
+          `accent-soft` step exists for exactly this case — the palette comment
+          in `index.css` names it as "the same gold permitted as TEXT on the dark
+          screen, where it measures 6.7:1" — and it is the only legal way to put
+          gold text on this fill. */}
+      <div className="p-1.5 rounded-md bg-accent/20 border border-accent-ink/30 text-accent-soft group-hover:scale-110 transition-transform">
         <Archive className="w-4 h-4" aria-hidden />
       </div>
       <div>
-        <div className="flex items-center gap-1 font-mono font-bold t-micro text-amber-400 group-hover:text-amber-300">
+        <div className="flex items-center gap-1 font-mono font-bold t-micro text-accent-ink group-hover:text-accent-ink">
           <span>GOLD BOX</span>
-          <Sparkles className="w-2.5 h-2.5 text-amber-300" aria-hidden />
+          <Sparkles className="w-2.5 h-2.5 text-accent-ink" aria-hidden />
         </div>
-        <span className="t-caption text-stone-500 font-mono block">
-          {isRestocking ? `Restocking (${remaining}s)` : `Sell Secrets (+${formatCurrency(PAYOUT)})`}
+        <span className="t-caption text-term-ink-3 font-mono block">
+          {dormant
+            ? 'Awaiting first seizure'
+            : isRestocking
+            ? `Restocking (${remaining}s)`
+            : `Sell Secrets (+${formatCurrency(PAYOUT)})`}
         </span>
       </div>
 
@@ -137,7 +169,7 @@ export const GoldBoxProp: React.FC = () => {
         <div
           role="status"
           aria-live="polite"
-          className="absolute inset-0 bg-newsprint-950 flex items-center justify-center t-micro font-mono font-bold text-gold-400 px-1 text-center"
+          className="absolute inset-0 bg-ink-1 flex items-center justify-center t-micro font-mono font-bold text-accent-ink px-1 text-center"
         >
           {feedback}
         </div>

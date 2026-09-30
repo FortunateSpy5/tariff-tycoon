@@ -100,9 +100,15 @@ const MAX_HEIGHT_RATIO = 0.5;
 
 const BUBBLE_ID = 'executive-degen-hint';
 
-/** Painted face. Split out so the suppressed variant can drop the shadow. */
+/** Painted face. Split out so the suppressed variant can drop the shadow.
+ *
+ *  ISSUE-010: `shadow-black/70` was the last stock Tailwind colour on a
+ *  player-facing surface. The bubble is a dark, raised object on both a warm desk
+ *  and a cool well, so what it needs is the palette's darkest ink at high alpha —
+ *  `ink-1`, not `black`, so a future theme change moves the shadow with the
+ *  surface it is attached to. */
 const VISIBLE_CLASS =
-  'pointer-events-none rounded-md border border-gold-600/50 bg-redaction-700 px-2 py-1 font-mono t-caption leading-snug text-newsprint-100 shadow-xl shadow-black/70';
+  'pointer-events-none rounded-md border border-accent-ink/50 bg-well-2 px-2 py-1 font-mono t-caption leading-snug text-term-ink-1 shadow-xl shadow-ink-1/70';
 
 /**
  * Suppressed face. `sr-only`-equivalent WITHOUT the `sr-only` class itself, so

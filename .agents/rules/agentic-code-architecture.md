@@ -34,7 +34,7 @@ src/
 │   └── useGameStore.ts # Root unified store with persistent storage and offline sync
 ├── audio/              # Procedural Web Audio API sound synthesis (zero MP3/WAV assets)
 ├── components/         # Granular React components grouped by functional domain
-│   ├── desk/           # Oval Office stamp/Sharpie, blotter, ExecutiveGauges, FeedbackLayer
+│   ├── desk/           # Oval Office stamp/Sherpie, blotter, ExecutiveGauges, FeedbackLayer
 │   ├── terminal/       # BagHolder Pro ticker, 1000x Put/Call options, lethal YAP modal
 │   ├── dump/           # Agency liquidation drawer, SituationRoom, comedic hazards banner
 │   ├── share/          # Decree certificate PNG renderer, prestige run summary

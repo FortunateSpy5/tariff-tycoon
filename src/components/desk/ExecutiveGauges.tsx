@@ -125,11 +125,11 @@ export const ExecutiveGauges: React.FC = () => {
       <Card density="tight">
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 min-w-0">
-            <Droplet className={`w-3.5 h-3.5 shrink-0 ${isDry ? 'text-wax-500' : 'text-gold-600'}`} />
-            <span className="t-micro font-bold text-newsprint-900 truncate">{inkLabel}</span>
+            <Droplet className={`w-3.5 h-3.5 shrink-0 ${isDry ? 'text-dead-ink' : 'text-accent-ink'}`} />
+            <span className="t-micro font-bold text-ink-2 truncate">{inkLabel}</span>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
-            <span className={`t-micro font-mono font-bold ${isDry ? 'text-wax-600' : 'text-newsprint-900'}`}>
+            <span className={`t-micro font-mono font-bold ${isDry ? 'text-dead-ink' : 'text-ink-2'}`}>
               {isCapsFrenzy ? '∞' : `${inkPercent}%`}
             </span>
             <button
@@ -161,10 +161,29 @@ export const ExecutiveGauges: React.FC = () => {
                         : ''
                     }. The free alternative is to stop slamming and wait ${INK_REGEN_PER_SECOND}/s.`
               )}
+              /* INVARIANT: [The One Button You Pay Money On Must Be Readable]
+                 Measured on the enabled branch: `text-ink-1` `#f6f1e3`
+                 on `bg-accent` `#d97706` is **2.82:1** at `t-caption` (9.5px).
+                 WCAG 2.1 SC 1.4.3 has no large-text exemption below 18.66px bold
+                 or 24px regular, so 4.5:1 is mandatory here and this was 1.68
+                 short of it — on the ink refill, which is the most-tapped spend
+                 control in the core loop and the one the player is about to pay
+                 at.
+
+                 `newsprint-950` is **5.31:1**. It is also the repo's established
+                 pattern for text on a gold fill: the perk buy button
+                 (`PerkConstellation`) and the raid bribe (`SlopRadarTab`) both
+                 put dark ink on gold. This button was the inconsistent one.
+
+                 The structural note, because it constrains the whole theme work:
+                 EVERY warm yellow that clears 4.5:1 on parchment `#f6f1e3` is a
+                 brown — `#94601a` is the first, and it reads as tobacco. So gold
+                 cannot be a *text* colour on paper at caption size. It can be a
+                 fill. That is why the fix is the text, not the gold. */
               className={`px-1.5 py-0.5 rounded t-caption font-mono font-bold flex items-center gap-1 transition-all ${
                 canRefill
-                  ? 'bg-gold-600 hover:bg-gold-500 text-newsprint-50 active:scale-95 cursor-pointer'
-                  : 'bg-newsprint-300 text-newsprint-800 cursor-not-allowed'
+                  ? 'bg-accent hover:bg-accent text-ink-1 active:scale-95 cursor-pointer'
+                  : 'bg-panel text-ink-3 cursor-not-allowed'
               }`}
             >
               <RefreshCw className="w-3 h-3" />
@@ -174,7 +193,7 @@ export const ExecutiveGauges: React.FC = () => {
         </div>
 
         <div
-          className="w-full h-1.5 bg-newsprint-300 rounded-full overflow-hidden mt-1"
+          className="w-full h-1.5 bg-panel rounded-full overflow-hidden mt-1"
           role="progressbar"
           aria-label={inkLabel}
           aria-valuemin={0}
@@ -184,10 +203,10 @@ export const ExecutiveGauges: React.FC = () => {
           <div
             className={`h-full transition-all duration-150 ${
               isCapsFrenzy
-                ? 'bg-gradient-to-r from-red-600 via-gold-500 to-red-600'
+                ? 'bg-gradient-to-r from-dead via-accent to-dead'
                 : isDry
-                ? 'bg-red-600'
-                : 'bg-gradient-to-r from-gold-600 to-gold-400'
+                ? 'bg-dead'
+                : 'bg-gradient-to-r from-accent to-accent'
             }`}
             style={{ width: `${isCapsFrenzy ? 100 : inkPercent}%` }}
           />
@@ -196,13 +215,13 @@ export const ExecutiveGauges: React.FC = () => {
         <div className="flex items-center gap-1 mt-0.5">
           {isDry ? (
             <>
-              <AlertTriangle className="w-3 h-3 shrink-0 text-wax-500" />
-              <span className="t-caption text-wax-600 font-semibold">
+              <AlertTriangle className="w-3 h-3 shrink-0 text-dead-ink" />
+              <span className="t-caption text-dead-ink font-semibold">
                 DRY NIB: −{Math.round((1 - jamYield) * 100)}% yield
               </span>
             </>
           ) : (
-            <span className="t-caption text-newsprint-800 truncate">
+            <span className="t-caption text-ink-3 truncate">
               {/* INVARIANT: [Do Not Promise A Refund The Engine Forbids] — this
                   read "Ink restored; none consumed during Frenzy". A frenzy
                   FREEZES the tank; `inkFrenzyEngine` carries an explicit
@@ -223,18 +242,18 @@ export const ExecutiveGauges: React.FC = () => {
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 min-w-0">
             {isCapsFrenzy ? (
-              <Siren className="w-3.5 h-3.5 shrink-0 text-wax-500" />
+              <Siren className="w-3.5 h-3.5 shrink-0 text-dead-ink" />
             ) : (
-              <Flame className={`w-3.5 h-3.5 shrink-0 ${tantrumPercent > 70 ? 'text-wax-500' : 'text-gold-600'}`} />
+              <Flame className={`w-3.5 h-3.5 shrink-0 ${tantrumPercent > 70 ? 'text-dead-ink' : 'text-accent-ink'}`} />
             )}
-            <span className="t-micro font-bold text-newsprint-900 truncate">
+            <span className="t-micro font-bold text-ink-2 truncate">
               {isCapsFrenzy ? 'CAPS LOCK FRENZY' : 'Executive Tantrum'}
             </span>
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             <span
               className={`t-micro font-mono font-bold ${
-                isCapsFrenzy ? 'text-wax-600' : tantrumPercent > 70 ? 'text-wax-600' : 'text-newsprint-900'
+                isCapsFrenzy ? 'text-dead-ink' : tantrumPercent > 70 ? 'text-dead-ink' : 'text-ink-2'
               }`}
             >
               {isCapsFrenzy ? `${Math.ceil(capsFrenzySecondsRemaining)}s` : `${tantrumPercent}%`}
@@ -267,8 +286,8 @@ export const ExecutiveGauges: React.FC = () => {
               )}
               className={`px-1.5 py-0.5 rounded t-caption font-mono font-bold flex items-center gap-1 transition-all ${
                 canVent
-                  ? 'bg-stampblue-500 hover:bg-stampblue-700 text-newsprint-50 active:scale-95 cursor-pointer'
-                  : 'bg-newsprint-300 text-newsprint-800 cursor-not-allowed'
+                  ? 'bg-signal-wash hover:bg-signal-wash text-ink-1 active:scale-95 cursor-pointer'
+                  : 'bg-panel text-ink-3 cursor-not-allowed'
               }`}
             >
               <Wind className="w-3 h-3" />
@@ -278,7 +297,7 @@ export const ExecutiveGauges: React.FC = () => {
         </div>
 
         <div
-          className="w-full h-1.5 bg-newsprint-300 rounded-full overflow-hidden mt-1"
+          className="w-full h-1.5 bg-panel rounded-full overflow-hidden mt-1"
           role="progressbar"
           aria-label="Executive Tantrum"
           aria-valuemin={0}
@@ -288,17 +307,17 @@ export const ExecutiveGauges: React.FC = () => {
           <div
             className={`h-full transition-all duration-100 ${
               isCapsFrenzy
-                ? 'bg-gradient-to-r from-red-600 via-gold-400 to-red-600'
+                ? 'bg-gradient-to-r from-dead via-accent to-dead'
                 : tantrumPercent > 70
-                ? 'bg-gradient-to-r from-gold-500 to-red-600'
-                : 'bg-gradient-to-r from-gold-600 to-gold-500'
+                ? 'bg-gradient-to-r from-accent to-dead'
+                : 'bg-gradient-to-r from-accent to-accent'
             }`}
             style={{ width: `${isCapsFrenzy ? 100 : tantrumPercent}%` }}
           />
         </div>
 
         <div className="flex items-center justify-between gap-2 mt-0.5">
-          <span className="t-caption text-newsprint-800 truncate">
+          <span className="t-caption text-ink-3 truncate">
             {isCapsFrenzy
               ? // INVARIANT: [The Frenzy Label Must Not Promise A Refund]
                 // This still read "10x CASH · INK RESTORED" after the ink
@@ -315,7 +334,7 @@ export const ExecutiveGauges: React.FC = () => {
               : `Inked +${hasDietSodaDrip ? DIET_SODA_TANTRUM_PER_CLICK : INKED_TANTRUM_PER_CLICK}% · dry +${DRY_TANTRUM_PER_CLICK}%`}
           </span>
           {!isCapsFrenzy && !isCoolingOff && (
-            <span className="t-caption text-newsprint-800/70 shrink-0">
+            <span className="t-caption text-ink-3/70 shrink-0">
               Frenzy at 100% · Vent −{TANTRUM_VENT_VEX_RELIEF} VEX
             </span>
           )}
@@ -328,7 +347,7 @@ export const ExecutiveGauges: React.FC = () => {
           <div
             role="status"
             aria-live="polite"
-            className="t-caption text-center font-mono font-bold text-gold-400 animate-pulse"
+            className="t-caption text-center font-mono font-bold text-accent-ink animate-pulse"
           >
             {refusal}
           </div>

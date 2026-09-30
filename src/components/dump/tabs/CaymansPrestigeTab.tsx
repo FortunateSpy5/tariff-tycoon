@@ -97,7 +97,7 @@ export const CaymansPrestigeTab: React.FC = () => {
           />
         )}
         <DossierHeader
-          icon={<Palmtree className="w-3.5 h-3.5 text-gold-500" />}
+          icon={<Palmtree className="w-3.5 h-3.5 text-accent-ink" />}
           title="Tier 1 Prestige: Flight to the Caymans"
           status="Permanent Sovereignty"
         />
@@ -105,14 +105,14 @@ export const CaymansPrestigeTab: React.FC = () => {
         {/* Current Slips Meter */}
         <Card density="tight" className="flex items-center justify-between">
           <div>
-            <span className="t-micro text-newsprint-800 font-mono block">Current Balance:</span>
-            <span className="font-mono font-bold text-gold-700 text-sm flex items-center gap-1">
+            <span className="t-micro text-ink-3 font-mono block">Current Balance:</span>
+            <span className="font-mono font-bold text-accent-ink text-sm flex items-center gap-1">
               <ShieldCheck className="w-4 h-4" />
               {sovereignImmunitySlips || 0} Sovereign Immunity Slips (SIS)
             </span>
           </div>
           <div className="text-right">
-            <span className="t-micro text-emerald-700 font-mono block">
+            <span className="t-micro text-live-ink font-mono block">
               +{(sovereignImmunitySlips || 0) * 10}% Click Yield Multiplier
             </span>
             {/* INVARIANT: [A Spent Slip Is Not A Click Multiplier]
@@ -130,7 +130,7 @@ export const CaymansPrestigeTab: React.FC = () => {
                       (sovereignImmunitySlips || 0) * 1000
                     ).toLocaleString()}-per-slip floor on every slam. The seed cash of the NEXT run is $1M x (unspent + earned)^1.2, so every Slip you spend on a perk is a slightly smaller company on the way back in — filing first is usually worth more than banking.`
                 )}
-                className="t-caption text-gold-700 font-mono block"
+                className="t-caption text-accent-ink font-mono block"
               >
                 {ownedPerkCount}/{PRESTIGE_PERKS.length} FILED
                 {hasPerk(unlockedPerks, 'shell_company_inception') && ` · ${SHELL_COMPANY_TAP_MULTIPLIER}x TAP`}
@@ -140,11 +140,11 @@ export const CaymansPrestigeTab: React.FC = () => {
         </Card>
 
         {/* Prestige Reset Yield Card */}
-        <div className="surface-sheet border border-newsprint-300 rounded-lg p-2.5 space-y-2">
-          <span className="text-newsprint-900 font-medium text-xs block leading-snug">
+        <div className="surface-sheet border border-line rounded-lg p-2.5 space-y-2">
+          <span className="text-ink-2 font-medium text-xs block leading-snug">
             File Chapter 11 Nation Reorganization
           </span>
-          <p className="t-micro text-newsprint-800 leading-relaxed font-sans">
+          <p className="t-micro text-ink-3 leading-relaxed font-sans">
             Dissolve the Republic into an offshore shell and start again. Treasury cash, every agency liquidation,
             every tariff dial, every crony upgrade and all S.L.O.P. heat return to zero, and any open 0DTE
             position is closed out rather than settled. You keep your Sovereign Immunity Slips: each is a permanent
@@ -152,12 +152,12 @@ export const CaymansPrestigeTab: React.FC = () => {
             soft-locked, and you keep every perk you have filed for.
           </p>
 
-          <div className="p-2 rounded bg-newsprint-200/70 border border-newsprint-300 font-mono text-xs flex justify-between items-center">
-            <span className="text-newsprint-800">Yield on Flight:</span>
-            <span className="text-emerald-700 font-bold">+{potentialSIS} SIS</span>
+          <div className="p-2 rounded bg-card/70 border border-line font-mono text-xs flex justify-between items-center">
+            <span className="text-ink-3">Yield on Flight:</span>
+            <span className="text-live-ink font-bold">+{potentialSIS} SIS</span>
           </div>
 
-          <div className="p-2 rounded bg-newsprint-200/70 border border-newsprint-300 font-mono t-caption flex justify-between items-center text-newsprint-800">
+          <div className="p-2 rounded bg-card/70 border border-line font-mono t-caption flex justify-between items-center text-ink-3">
             <span>Counted: {formatCurrency(lifetimeCashEarned || 0)} earned</span>
             <span>+ {formatCurrency(lockedCollateral)} locked</span>
           </div>
@@ -171,8 +171,8 @@ export const CaymansPrestigeTab: React.FC = () => {
             {...hint(prestigeHint, 'File Chapter 11 and flee to the Caymans')}
             className={`w-full py-2 rounded-lg font-mono t-micro font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 transition-all ${
               canPrestige
-                ? 'bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 text-newsprint-950 shadow cursor-pointer active:scale-95 font-black'
-                : 'bg-newsprint-300 text-newsprint-800 cursor-not-allowed'
+                ? 'bg-gradient-to-r from-accent to-accent hover:from-accent text-ink-1 shadow cursor-pointer active:scale-95 font-black'
+                : 'bg-panel text-ink-3 cursor-not-allowed'
             }`}
           >
             <RefreshCw className="w-3.5 h-3.5" />
@@ -193,7 +193,7 @@ export const CaymansPrestigeTab: React.FC = () => {
       </div>
 
       {feedback && (
-        <div className="shrink-0 p-1.5 rounded bg-gold-500/20 border border-gold-600/50 text-center font-mono t-micro font-bold text-gold-900 animate-pulse">
+        <div className="shrink-0 p-1.5 rounded bg-accent/20 border border-accent-ink/50 text-center font-mono t-micro font-bold text-accent-ink animate-pulse">
           {feedback}
         </div>
       )}

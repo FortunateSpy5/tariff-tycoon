@@ -14,10 +14,12 @@ import {
   RotateCcw,
   Handshake,
   ScrollText,
+  FileBadge,
 } from 'lucide-react';
 import { useGameStore } from '../../store/useGameStore';
 import { formatCurrency } from '../../engine/math/bigNumber';
 import { ResetGameModal } from '../dialogs/ResetGameModal';
+import { CertificateExporter } from '../share/CertificateExporter';
 import { hint } from '../ui/hint';
 import { CUSTOMS_LOCATION_SHORT, CUSTOMS_STAMP_NAME } from '../../constants/setting';
 import type { StockSymbol } from '../../types/market';
@@ -57,18 +59,18 @@ export const BreakingNewsBar: React.FC = () => {
 
        The marquee keeps its own dark inset well so the moving text stays
        legible — a light bar with light scrolling text would be unreadable. */
-    <div className="surface-newsprint w-full h-12 border-b-2 border-newsprint-900 shadow-md px-3 flex items-center justify-between gap-3 overflow-hidden">
+    <div className="surface-newsprint w-full h-12 border-b-2 border-line-strong shadow-md px-3 flex items-center justify-between gap-3 overflow-hidden">
       {/* 1. Left: Brand & Phase Status */}
       <div className="flex items-center gap-2 shrink-0">
-        <div className={`w-2.5 h-2.5 rounded-full ${isCapsFrenzy ? 'bg-red-600 animate-ping' : 'bg-wax-500'}`} />
-        <span className="font-black text-xs sm:text-sm tracking-wider text-newsprint-900 uppercase font-mono">
+        <div className={`w-2.5 h-2.5 rounded-full ${isCapsFrenzy ? 'bg-dead animate-ping' : 'bg-dead'}`} />
+        <span className="font-black text-xs sm:text-sm tracking-wider text-ink-2 uppercase font-mono">
           Executive Degen
         </span>
         <span
           className={`t-micro px-1.5 py-0.5 rounded-sm font-mono border font-semibold ${
             isCapsFrenzy
-              ? 'bg-wax-500 text-newsprint-50 border-wax-600'
-              : 'bg-newsprint-900 text-newsprint-100 border-newsprint-900'
+              ? 'bg-dead text-term-ink-1 border-dead-ink'
+              : 'bg-well text-term-ink-1 border-line-strong'
           }`}
         >
           {isCapsFrenzy ? 'FRENZY' : phase === 1 ? CUSTOMS_LOCATION_SHORT : 'OVAL // 3 AM'}
@@ -76,8 +78,8 @@ export const BreakingNewsBar: React.FC = () => {
       </div>
 
       {/* 2. Center: Seamless Marquee Ticker — dark inset well on paper stock */}
-      <div className="flex-1 min-w-0 flex items-center gap-2 bg-newsprint-950 py-1 px-2.5 rounded-sm border border-newsprint-900 overflow-hidden">
-        <div className="flex items-center gap-1 font-bold text-wax-500 shrink-0 uppercase tracking-wider t-micro">
+      <div className="flex-1 min-w-0 flex items-center gap-2 bg-ink-1 py-1 px-2.5 rounded-sm border border-line-strong overflow-hidden">
+        <div className="flex items-center gap-1 font-bold text-dead-soft shrink-0 uppercase tracking-wider t-micro">
           <Radio className="w-3 h-3" />
           <span className="hidden sm:inline">NEWS:</span>
         </div>
@@ -97,18 +99,38 @@ export const BreakingNewsBar: React.FC = () => {
                   const isUp = delta >= 0;
                   return (
                     <span key={sym} className="font-mono t-micro inline-flex items-center gap-1">
-                      <span className="font-bold text-newsprint-100">${sym}</span>
-                      <span className="text-newsprint-300">${stock.currentPrice.toFixed(2)}</span>
-                      <span className={isUp ? 'text-phosphor-400 font-semibold' : 'text-red-400 font-semibold'}>
+                      <span className="font-bold text-term-ink-1">${sym}</span>
+                      <span className="text-term-ink-2">${stock.currentPrice.toFixed(2)}</span>
+                      <span className={isUp ? 'text-term-ink-2 font-semibold' : 'text-dead-soft font-semibold'}>
                         {isUp ? '▲' : '▼'}{Math.abs(delta).toFixed(1)}
                       </span>
                     </span>
                   );
                 })}
 
+                {/* ISSUE-009 [Make The Two Kinds Of Content Distinguishable].
+                    Prices and headlines share one strip and one typographic voice,
+                    so a price run into a headline run read as one sentence. This
+                    is a redaction rule — the game's own visual vocabulary for "the
+                    document continues" — and it separates the live feed from the
+                    priced feed at a glance without spending a colour on it. */}
+                <span className="t-micro font-black text-dead-soft/70 shrink-0" aria-hidden>
+                  ███
+                </span>
+
                 {HEADLINES.map((headline, idx) => (
-                  <span key={idx} className="text-newsprint-200 t-micro font-sans tracking-wide">
-                    • {headline}
+                  /* ISSUE-009 [The Separator Must Not Be The Headline's Own First
+                      Character]. Every headline already opens with `//`, so a bare
+                      `•` lead-in repeated "// " twelve times became visual noise
+                      the eye skipped — and skipping the separators is what made
+                      the boundaries invisible in the first place. One geometric
+                      square per boundary does the same job at a third of the
+                      width, and the distinct glyph is what the eye latches on. */
+                  <span key={idx} className="text-term-ink-1 t-micro font-sans tracking-wide">
+                    <span className="text-dead-soft font-black" aria-hidden>
+                      ▪
+                    </span>{' '}
+                    {headline}
                   </span>
                 ))}
               </div>
@@ -121,10 +143,10 @@ export const BreakingNewsBar: React.FC = () => {
       <div className="flex items-center gap-3 sm:gap-4 shrink-0 font-mono">
         {/* Treasury Cash */}
         <div className="text-right">
-          <div className="text-xs sm:text-sm font-black text-newsprint-900 flex items-baseline justify-end gap-1">
+          <div className="text-xs sm:text-sm font-black text-ink-2 flex items-baseline justify-end gap-1">
             <span>{formatCurrency(treasuryCash)}</span>
             {passiveCashPerSecond > 0 && (
-              <span className="t-micro text-phosphor-600 font-normal">
+              <span className="t-micro text-term-ink-3 font-normal">
                 +{formatCurrency(passiveCashPerSecond)}/s
               </span>
             )}
@@ -137,7 +159,7 @@ export const BreakingNewsBar: React.FC = () => {
               rail is unreadable without its mechanism. INVARIANT: the two
               resource readouts must always say what they buy. */}
           <span
-            className="text-xs font-bold text-wax-500 flex items-center gap-1"
+            className="text-xs font-bold text-dead-soft flex items-center gap-1"
             {...hint(
               'Political capital, not cash. YAPs pay 2 each and the desk leaks 0.05 a second, capped at 9,999. Spends on the subpoena shredder, the S.L.O.P. bribe, and D.U.M.P. liquidations — which kick a quarter of the price straight back. A normal run starts you at 30.',
               'Crony Favor'
@@ -152,7 +174,7 @@ export const BreakingNewsBar: React.FC = () => {
         {sovereignImmunitySlips > 0 && (
           <div className="text-right hidden md:block">
             <span
-              className="text-xs font-bold text-newsprint-800 flex items-center gap-1"
+              className="text-xs font-bold text-term-ink-3 flex items-center gap-1"
               {...hint(
                 // roadmap: there is no perk vault yet — `unlockPerk` exists in
                 // `prestigeSlice` but is called from no component. Promising a
@@ -168,8 +190,30 @@ export const BreakingNewsBar: React.FC = () => {
           </div>
         )}
 
-        {/* Audio, Shake & Reset Controls — icons tuned for the paper stock. */}
-        <div className="flex items-center gap-0.5 border-l border-newsprint-300 pl-2">
+        {/* Audio, Shake, Share & Reset Controls — icons tuned for the paper stock. */}
+        <div className="flex items-center gap-0.5 border-l border-line pl-2">
+          {/* ISSUE-018 [Promote The Exporter Out Of The Tab It Was Buried In].
+              `[ SHARE THE DAMAGE ]` lived only in the `[B] BRIEF` tab's card list,
+              which makes the game's only virality hook undiscoverable to anyone
+              who has not opened the one channel that is mostly tutorial text —
+              and the rail is the one surface that is permanently on screen, on
+              every tab, at every phase. The rail already owns mute, shake and
+              reset for exactly this reason; share belongs with them.
+
+              The hint is `CertificateExporter`'s own and is unchanged — this is a
+              MOVE, not a new affordance, so the explanation the player already
+              read in BRIEF is the explanation they get here. The BRIEF card stays:
+              it is the only place the exporter says what the PNG contains in
+              prose, and deleting it would trade a duplicate for a worse feature. */}
+          <CertificateExporter
+            variant="icon"
+            name="Share the damage — export your latest decree as a PNG"
+          >
+            <span className="block p-1">
+              <FileBadge className="w-3.5 h-3.5 text-accent-ink" />
+            </span>
+          </CertificateExporter>
+
           <button
             onClick={toggleMute}
             /* INVARIANT: [aria-pressed Tracks The Button's OWN Action]
@@ -187,10 +231,10 @@ export const BreakingNewsBar: React.FC = () => {
                 : 'Kill the audio. The treasury does not care, and neither does your sleep schedule. [M]',
               isMuted ? 'Unmute audio' : 'Mute audio'
             )}
-            className="p-1 rounded text-newsprint-800 hover:bg-newsprint-300/50 transition-colors cursor-pointer"
+            className="p-1 rounded text-term-ink-3 hover:bg-panel/50 transition-colors cursor-pointer"
           >
             {isMuted ? (
-              <VolumeX className="w-3.5 h-3.5 text-wax-500" />
+              <VolumeX className="w-3.5 h-3.5 text-dead-soft" />
             ) : (
               <Volume2 className="w-3.5 h-3.5" />
             )}
@@ -203,12 +247,12 @@ export const BreakingNewsBar: React.FC = () => {
                 : 'Recoil is off. Every stamp and every settlement lands without moving the screen. Cosmetic only. [Z]',
               'Toggle screen shake'
             )}
-            className="p-1 rounded text-newsprint-800 hover:bg-newsprint-300/50 transition-colors cursor-pointer"
+            className="p-1 rounded text-term-ink-3 hover:bg-panel/50 transition-colors cursor-pointer"
           >
             {screenShakeEnabled ? (
-              <Zap className="w-3.5 h-3.5 text-wax-500" />
+              <Zap className="w-3.5 h-3.5 text-dead-soft" />
             ) : (
-              <ShieldAlert className="w-3.5 h-3.5 text-newsprint-300" />
+              <ShieldAlert className="w-3.5 h-3.5 text-term-ink-2" />
             )}
           </button>
           <button
@@ -217,7 +261,7 @@ export const BreakingNewsBar: React.FC = () => {
               `Chapter 7. Opens a confirmation that DELETES the executive_degen_save_v1 key from this browser and reloads the page. Unlike a Flight to the Caymans, nothing is grandfathered: your treasury, lifetime cash, options profit, every open contract, all unlocked channels, every D.U.M.P. liquidation, the active tariffs, the crony favor, the unlocked perks, the flight count, and every Sovereign Immunity Slip are erased. You come back to ${CUSTOMS_STAMP_NAME} with $100, the tutorial, and all channels re-sealed.`,
               'Reset game'
             )}
-            className="p-1 rounded text-newsprint-800 hover:bg-wax-500 hover:text-newsprint-50 transition-colors cursor-pointer ml-0.5"
+            className="p-1 rounded text-term-ink-3 hover:bg-dead hover:text-term-ink-1 transition-colors cursor-pointer ml-0.5"
           >
             <RotateCcw className="w-3.5 h-3.5" />
           </button>

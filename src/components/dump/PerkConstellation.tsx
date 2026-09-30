@@ -63,9 +63,9 @@ export const PerkConstellation: React.FC = () => {
     <Card material="paper" className="shrink-0">
       <CardHeader
         title="Perk Constellation"
-        icon={<Sparkles className="w-3.5 h-3.5 text-gold-600" />}
+        icon={<Sparkles className="w-3.5 h-3.5 text-accent-ink" />}
         right={
-          <span className="t-caption font-mono font-black text-gold-700 shrink-0">
+          <span className="t-caption font-mono font-black text-accent-ink shrink-0">
             {ownedCount}/{PRESTIGE_PERKS.length} · {slipsHeld} SIS
           </span>
         }
@@ -85,20 +85,20 @@ export const PerkConstellation: React.FC = () => {
               key={perk.id}
               className={`rounded-lg border p-1.5 transition-colors ${
                 owned
-                  ? 'border-gold-600/60 bg-gold-500/10'
+                  ? 'border-accent-ink/60 bg-accent/10'
                   : isNext
-                    ? 'border-gold-500 hover:border-gold-400 bg-gold-500/5'
-                    : 'border-newsprint-300 bg-newsprint-200/60'
+                    ? 'border-accent-ink hover:border-accent-ink bg-accent/5'
+                    : 'border-line bg-card/60'
               }`}
             >
               <div className="flex items-start justify-between gap-1">
-                <span className="t-micro font-black uppercase leading-tight text-newsprint-900 min-w-0">
+                <span className="t-micro font-black uppercase leading-tight text-ink-2 min-w-0">
                   {perk.name}
                 </span>
 
                 {owned ? (
                   <span
-                    className="shrink-0 px-1 py-0.5 rounded bg-gold-600/20 border border-gold-700/60 text-gold-800 font-mono t-caption font-black"
+                    className="shrink-0 px-1 py-0.5 rounded bg-accent/20 border border-accent-ink/60 text-accent-ink font-mono t-caption font-black"
                     aria-label={`${perk.name} owned`}
                   >
                     FILED
@@ -113,19 +113,40 @@ export const PerkConstellation: React.FC = () => {
                         ? `Buy ${perk.name} for ${perk.cost} Sovereign Immunity Slip${perk.cost === 1 ? '' : 's'}`
                         : undefined
                     )}
+                    /* ISSUE-015 [A Price Without Its Unit Is Not A Price].
+                       This rendered a bare `{perk.cost}` behind a 10px lock glyph.
+                       A `3` on its own is unreadable — the player cannot tell
+                       whether it is a cost, a count of remaining purchases, or a
+                       rank, and the lock at 10px was too small to resolve as an
+                       icon at all. The unit goes on the chip and the glyph grows to
+                       a size that is actually a glyph.
+
+                       Only the LOCKED branch carries a unit. An affordable card
+                       shows a bare gold number against the same dark fill the
+                       owned chip uses, so the unit is reserved for the state that
+                       needs it — otherwise every affordable chip grows a label
+                       and the constellation gets noisier, not clearer. */
                     className={`shrink-0 px-1 py-0.5 rounded font-mono t-caption font-black flex items-center gap-0.5 transition-all ${
                       canAffordIt && hasPrestigeAccess
-                        ? 'bg-gradient-to-r from-gold-500 to-gold-600 text-newsprint-950 hover:from-gold-400 active:scale-95 cursor-pointer'
-                        : 'bg-newsprint-300 text-newsprint-800 cursor-not-allowed'
+                        ? 'bg-gradient-to-r from-accent to-accent text-ink-1 hover:from-accent active:scale-95 cursor-pointer'
+                        : 'bg-panel text-ink-3 cursor-not-allowed border border-dashed border-line'
                     }`}
                   >
-                    {!canAffordIt && <Lock className="w-2.5 h-2.5" aria-hidden />}
+                    {!canAffordIt && <Lock className="w-3 h-3" aria-hidden />}
                     {perk.cost}
+                    {!canAffordIt && (
+                      <span className="text-ink-4 font-bold" aria-hidden>
+                        SIS
+                      </span>
+                    )}
+                    {!canAffordIt && (
+                      <span className="sr-only">Sovereign Immunity Slips</span>
+                    )}
                   </button>
                 )}
               </div>
 
-              <div className="t-caption font-mono font-bold text-gold-700 leading-tight mt-0.5">
+              <div className="t-caption font-mono font-bold text-accent-ink leading-tight mt-0.5">
                 {perk.effectLabel}
               </div>
               {/* INVARIANT: [The Card Must Warn Before The Purchase]
@@ -135,11 +156,11 @@ export const PerkConstellation: React.FC = () => {
                   swamped by the $1,000-per-Slip floor from the very next Slip
                   onward, so the crossover is printed on the card itself. */}
               {perk.id === 'shell_company_inception' && shellCrossover > 0 && (
-                <p className="t-caption text-wax-600 font-mono leading-snug mt-0.5">
+                <p className="t-caption text-dead-ink font-mono leading-snug mt-0.5">
                   DIES AT {shellCrossover} SLIPS
                 </p>
               )}
-              <p className="t-caption text-newsprint-800/90 leading-snug mt-0.5">{perk.summary}</p>
+              <p className="t-caption text-ink-3/90 leading-snug mt-0.5">{perk.summary}</p>
             </div>
           );
         })}
@@ -148,7 +169,7 @@ export const PerkConstellation: React.FC = () => {
       {/* One line, and computed. A second copy of the prestige exponent written
           out here is a second thing to rot; `lifetimeCashForSlips` inverts the
           real constants instead. */}
-      <p className="t-caption font-mono text-newsprint-800/80 leading-snug mt-1.5">
+      <p className="t-caption font-mono text-ink-3/80 leading-snug mt-1.5">
         All six: {TOTAL_PERK_COST} Slips — {formatCurrency(lifetimeCashForSlips(TOTAL_PERK_COST))} of
         lifetime earnings, cash term only.
       </p>
@@ -157,7 +178,7 @@ export const PerkConstellation: React.FC = () => {
         <div
           role="status"
           aria-live="polite"
-          className="mt-1.5 t-caption text-center font-mono font-bold text-wax-600 animate-pulse"
+          className="mt-1.5 t-caption text-center font-mono font-bold text-dead-ink animate-pulse"
         >
           {refusal}
         </div>

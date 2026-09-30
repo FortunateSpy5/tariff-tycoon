@@ -4,10 +4,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && npm run theme:check && npm run hover:check && npm run size:check && vite build",
+    "build": "tsc -b && npm run theme:check && npm run token:check && npm run hover:check && npm run contrast:probe && npm run size:check && vite build",
     "lint": "oxlint",
     "theme:check": "node scripts/check-theme-coverage.mjs --budget 0",
+    "token:check": "node scripts/check-token-integrity.mjs --budget 30 --stock-budget 0",
     "hover:check": "node scripts/check-hover-coverage.mjs --budget 0",
+    "contrast:probe": "node scripts/probe-contrast.mts",
     "size:check": "node scripts/check-file-sizes.mjs",
     "preview": "vite preview"
   },

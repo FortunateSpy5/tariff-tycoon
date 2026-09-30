@@ -5,11 +5,246 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>EXECUTIVE DEGEN: SHORT THE WORLD</title>
-    <meta name="description" content="An unhinged satirical macroeconomic incremental clicker of presidential executive orders, causal market shorting, and financial nihilism." />
-    <meta name="theme-color" content="#0a0a0c" />
+    <meta
+      name="description"
+      content="An unhinged satirical macroeconomic incremental clicker of presidential executive orders, causal market shorting, and financial nihilism."
+    />
+    <!-- ISSUE-001. Was `#0a0a0c`, a near-black left over from the pre-[TUNGSTEN]
+         dark desk. The room the game actually renders in is `ground` #d6d2c4, so
+         the browser chrome, the mobile task switcher, and the OS window frame all
+         advertised a colour the player never sees. Mobile Safari and Android
+         Chrome tint their own chrome from this value, so a stale dark hex paints
+         a dark bar around a light game. -->
+    <meta name="theme-color" content="#d6d2c4" />
+
+    <!-- ===================================================================
+         THE BOOT SPLASH — ISSUE-001, "First-Second Black Screen On Launch".
+
+         WHY THIS IS INLINE AND NOT IN REACT:
+         The complaint was a ~500ms void between first paint and hydration, during
+         which the document has no content at all: the stylesheet is imported from
+         `src/main.tsx`, so Vite has not fetched it yet and there is nothing to
+         render. Any splash that is itself a React component has exactly the same
+         gap as the void it was meant to fill. This block is therefore static
+         markup plus an inline `<style>` — it is in the HTML stream, so it paints
+         on the first frame, before any network request resolves.
+
+         WHY IT LOOKS LIKE THIS:
+         The colours are lifted verbatim from the `@theme` block in
+         `src/index.css` — `ground`, `ink-1`, `ink-3`, `accent`, `accent-ink`,
+         `dead-ink` — and the tungsten pool sits at the SAME `34% 4%` origin as
+         `.surface-desk`. That is the whole design brief: the handoff has to be
+         invisible, so the splash is not a "loading screen" in a different style,
+         it is the room the player is about to walk into, with the lamp already on.
+         Matching the surround room also means a slow paint reads as "the desk
+         materialising" rather than as "the app failed".
+
+         `main.tsx` removes this node inside a `flushSync`, so it cannot outlive
+         the first committed cockpit frame and then flash away a beat later.
+         =================================================================== -->
+    <style>
+      #boot {
+        position: fixed;
+        inset: 0;
+        z-index: 9999;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 14px;
+        overflow: hidden;
+        background-color: #d6d2c4;
+        background-image: radial-gradient(
+          ellipse 72% 54% at 34% 4%,
+          rgba(232, 163, 61, 0.12),
+          transparent 68%
+        );
+        color: #1a1815;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+          Oxygen, Ubuntu, Cantarell, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* The lamp itself. A slow breathing glow, not a spinner — there is nothing
+         to report progress on, and a spinner implies a known duration. */
+      #boot .boot-lamp {
+        width: 132px;
+        height: 132px;
+        border-radius: 9999px;
+        border: 2px solid #7d7863;
+        background-color: #e9e5da;
+        background-image: radial-gradient(
+          circle at 34% 26%,
+          rgba(232, 163, 61, 0.55),
+          rgba(232, 163, 61, 0.08) 62%,
+          transparent 74%
+        );
+        animation: boot-lamp-breathe 2.6s ease-in-out infinite;
+      }
+
+      #boot .boot-mark {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-weight: 900;
+        letter-spacing: 0.24em;
+        text-transform: uppercase;
+        font-size: 13px;
+        color: #1a1815;
+      }
+
+      #boot .boot-strap {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 10px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #70490c;
+        margin-top: -6px;
+      }
+
+      #boot .boot-status {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 9.5px;
+        letter-spacing: 0.16em;
+        text-transform: uppercase;
+        color: #453f34;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      /* A live region, so the boot line is announced rather than merely painted.
+         `polite` because nothing here is urgent. */
+      #boot .boot-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 9999px;
+        background-color: #8a2b19;
+        animation: boot-ping 1.6s ease-in-out infinite;
+      }
+
+      /* Written by the failure watchdog below, only if the module never boots. */
+      #boot .boot-fail {
+        display: none;
+        max-width: 34em;
+        padding: 12px 14px;
+        border: 1px solid #8a2b19;
+        color: #8a2b19;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 11px;
+        line-height: 1.6;
+        text-align: center;
+      }
+
+      @keyframes boot-lamp-breathe {
+        0%,
+        100% {
+          box-shadow: 0 0 0 0 rgba(232, 163, 61, 0.28);
+        }
+        50% {
+          box-shadow: 0 0 44px 10px rgba(232, 163, 61, 0.16);
+        }
+      }
+
+      @keyframes boot-ping {
+        0%,
+        100% {
+          opacity: 0.35;
+        }
+        50% {
+          opacity: 1;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        #boot .boot-lamp,
+        #boot .boot-dot {
+          animation: none;
+        }
+        #boot .boot-dot {
+          opacity: 0.8;
+        }
+      }
+    </style>
   </head>
   <body>
+    <div id="boot" role="status" aria-live="polite">
+      <div class="boot-lamp" aria-hidden="true"></div>
+      <div class="boot-mark">Executive Degen</div>
+      <div class="boot-strap">Short the World</div>
+      <div class="boot-status">
+        <span class="boot-dot" aria-hidden="true"></span>
+        <span>3:00 AM // warming the lamp</span>
+      </div>
+      <div class="boot-fail" id="boot-fail">
+        THE DESK DID NOT POWER UP.<br />
+        The cockpit is a single-page app and its module bundle never executed.<br />
+        Reload. If it keeps failing, the service worker cache is stale — hard-reload
+        with Ctrl+Shift+R.
+      </div>
+    </div>
+
+    <noscript>
+      <!-- AGENTS.md bans documenting a feature that does not exist. This game is
+           a JavaScript clicker; without JS there is no game, so the honest
+           fallback is a refusal in the same voice rather than an empty page. -->
+      <div
+        style="
+          position: fixed;
+          inset: 0;
+          z-index: 10000;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 24px;
+          background-color: #d6d2c4;
+          color: #1a1815;
+          font-family: system-ui, sans-serif;
+          text-align: center;
+        "
+      >
+        <div style="max-width: 34em; line-height: 1.7">
+          <strong style="display: block; letter-spacing: 0.2em; text-transform: uppercase">
+            Executive Degen: Short the World
+          </strong>
+          <span style="color: #8a2b19">
+            The Oval Office runs on JavaScript. With scripting off there is no
+            executive order, no market, and no stamp — only a very expensive desk
+            lamp. Enable JavaScript and reload.
+          </span>
+        </div>
+      </div>
+    </noscript>
+
     <div id="root"></div>
+
+    <!-- ISSUE-001, the failure half. `main.tsx` deletes #boot on the first
+         committed cockpit frame; if that never happens — a bundle that throws on
+         import, a stale service-worker chunk, a syntax error in a dependency —
+         the splash would otherwise sit there forever presenting a game that is
+         never going to load. After 8s, say so out loud and name the fix.
+         Inline and unconditional: it must not depend on the module that failed. -->
+    <script>
+      (function () {
+        var watchdog = setTimeout(function () {
+          var boot = document.getElementById('boot');
+          if (!boot) return;
+          var fail = document.getElementById('boot-fail');
+          if (!fail) return;
+          var status = boot.querySelector('.boot-status span:last-child');
+          if (status) status.textContent = 'connection lost';
+          fail.style.display = 'block';
+        }, 8000);
+        // Cleared by the same inline handler main.tsx's flushSync relies on: the
+        // boot node disappearing IS the success signal, so observe it rather than
+        // having main.tsx reach back into this closure.
+        new MutationObserver(function (_, observer) {
+          if (!document.getElementById('boot')) {
+            clearTimeout(watchdog);
+            observer.disconnect();
+          }
+        }).observe(document.body, { childList: true, subtree: true });
+      })();
+    </script>
+
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

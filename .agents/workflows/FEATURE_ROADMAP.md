@@ -26,7 +26,7 @@ This document outlines the development phases for **EXECUTIVE DEGEN: SHORT THE W
 ---
 
 ## Phase 1: The Core Clicker & Tactile Blotter (Sprint 1)
-- [x] **Canvas / DOM Executive Blotter:** Leather desk surface, parchment Executive Order, and Golden Sharpie cursor/stamp.
+- [x] **Canvas / DOM Executive Blotter:** Leather desk surface, parchment Executive Order, and Golden Sherpie cursor/stamp.
 - [x] **Squeak & Audio Physics:** Procedural pitch-shifting squeak SFX, screen recoil, and ink particle splatter.
 - [x] **Stamina & Refill Engine:** Ink meter (100 units), depletion rate, and exponential refill cost button ($25 \times 1.15^n$).
 - [x] **Tantrum Meter & CAPS LOCK FRENZY:** Rhythmic click detection, 10x multiplier mode, and post-frenzy slump.

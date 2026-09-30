@@ -27,17 +27,35 @@ import { hint } from '../../ui/hint';
 import {
   CRISIS_BOOK,
   CRISIS_TIER_MULTIPLIERS,
+  CRISIS_WINDOW_SECONDS,
   crisisBasePayoutForPhase,
   crisisTierForElapsed,
   secondsToNextTier,
 } from '../../../constants/crisis';
 
+/**
+ * ISSUE-010 + a contrast repair. The severity ladder was five STOCK Tailwind
+ * colours (`orange-400`, `red-200`, `bg-red-900`) painted onto a DARK crisis
+ * card, and two of its five rungs were warm-PAPER inks — `text-accent-ink` is
+ * #70490c, a tobacco brown, and on `bg-ink-1/70` that is about 1.7:1. Half the
+ * ladder was unreadable on the surface it was drawn for.
+ *
+ * The ramp is rebuilt on the four sanctioned families, and it escalates by FILL
+ * and WEIGHT rather than by hue, because the palette has exactly two warm/alarm
+ * steps and pretending otherwise meant borrowing a fifth colour:
+ *
+ *   paper -> gold outline -> gold fill -> red outline -> red fill
+ *
+ * Every step is a documented pairing from `index.css`: `term-ink-2` (7.9:1 on
+ * the well), `accent-soft` and `dead-soft` (the two steps permitted as text ON
+ * the screen, 6.7:1 and 5.0:1), and `dead` as a fill under `dead-soft`.
+ */
 const SEVERITY_STYLE: Record<string, string> = {
-  WHISPER: 'text-newsprint-300 border-newsprint-700',
-  CONCERN: 'text-amber-300 border-amber-500',
-  PROTEST: 'text-orange-400 border-orange-500',
-  EMERGENCY: 'text-red-400 border-red-500',
-  'CIVIL WAR': 'text-red-200 border-red-300 bg-red-900/60',
+  WHISPER: 'text-term-ink-2 border-term-line-strong',
+  CONCERN: 'text-accent-soft border-accent-soft/60',
+  PROTEST: 'text-accent-soft bg-accent/25 border-accent-soft',
+  EMERGENCY: 'text-dead-soft border-dead-soft',
+  'CIVIL WAR': 'text-dead-soft bg-dead/40 border-dead-soft font-black',
 };
 
 export const RedPhoneProp: React.FC = () => {
@@ -81,8 +99,21 @@ export const RedPhoneProp: React.FC = () => {
     const body = (
       <>
         <div
+          /* [TUNGSTEN] THE HANDSET IS A RED PHONE.
+             Both classes here used to be dead tokens — `bg-ground` and
+             `text-dead-soft` were both undefined — so the icon chip on the
+             crisis handset rendered as a pale beige square on a dark square.
+             The single most thematically load-bearing dead reference in the
+             repo was making the red phone cream.
+
+             With the ramp complete it resolves to `wax-400` on `newsprint-800`
+             at 4.03:1, which is still a fail, and it is the wrong idea anyway:
+             a dark chip with pink text is not a red telephone. It is now a wax
+             fill with a lit edge, which is what a bakelite handset under a
+             desk lamp looks like, and the `isBroke` branch is the drained
+             version of the same object. */
           className={`p-1.5 rounded-md shrink-0 ${
-            isBroke ? 'bg-wax-500 text-newsprint-50' : 'bg-newsprint-800 text-wax-400'
+            isBroke ? 'bg-panel text-term-ink-3' : 'bg-dead text-dead-soft'
           }`}
         >
           {/* The handset rattles, not the row — see `crisis-ring` in index.css. */}
@@ -94,8 +125,8 @@ export const RedPhoneProp: React.FC = () => {
         </div>
 
         <div className="min-w-0 flex-1">
-          <span className="font-mono font-bold t-micro block text-red-400">CRISIS CALL</span>
-          <span className="t-micro text-stone-500 font-mono block truncate">
+          <span className="font-mono font-bold t-micro block text-dead-soft">CRISIS CALL</span>
+          <span className="t-micro text-term-ink-3 font-mono block truncate">
             {isBroke ? 'BAILOUT AVAILABLE' : `Standby · next in ${nextIn}s`}
           </span>
         </div>
@@ -106,10 +137,10 @@ export const RedPhoneProp: React.FC = () => {
           <div className="flex items-center gap-2 shrink-0">
             <div className="flex gap-0.5 w-16" aria-hidden="true">
               {CRISIS_TIER_MULTIPLIERS.map((m) => (
-                <div key={m} className="h-1 flex-1 rounded-full bg-newsprint-800" />
+                <div key={m} className="h-1 flex-1 rounded-full bg-ground" />
               ))}
             </div>
-            <span className="t-micro font-mono text-newsprint-500 whitespace-nowrap">
+            <span className="t-micro font-mono text-term-ink-3 whitespace-nowrap">
               Peak {formatCurrency(peak)}
             </span>
           </div>
@@ -119,8 +150,8 @@ export const RedPhoneProp: React.FC = () => {
 
     const shell = `w-full p-2 rounded-lg border text-left select-none flex items-center gap-2 transition-colors ${
       isBroke
-        ? 'bg-red-950/80 border-red-600 text-red-200 animate-crisis-alarm'
-        : 'bg-newsprint-900 border-newsprint-800 text-newsprint-300'
+        ? 'bg-ink-1/80 border-dead-ink text-dead-soft animate-crisis-alarm'
+        : 'bg-well border-line-strong text-term-ink-2'
     }`;
 
     return isBroke ? (
@@ -140,7 +171,7 @@ export const RedPhoneProp: React.FC = () => {
               ? ''
               : ' Not available while you are in debt — a loan is repaid by the slam floor, not by the phone.')
         )}
-        className={`${shell} cursor-pointer group hover:border-red-400`}
+        className={`${shell} cursor-pointer group hover:border-dead-ink`}
       >
         {body}
       </button>
@@ -165,6 +196,10 @@ export const RedPhoneProp: React.FC = () => {
   const maxPayout = Math.round(base * CRISIS_TIER_MULTIPLIERS[CRISIS_TIER_MULTIPLIERS.length - 1]);
   const toNext = secondsToNextTier(activeCrisis.elapsedSeconds);
   const isMaxTier = tier >= CRISIS_TIER_MULTIPLIERS.length - 1;
+  // Phase 2.4: time left before the crisis auto-resolves as a suppression.
+  // Derived from the book's own window, so retuning `CRISIS_WINDOW_SECONDS`
+  // moves this number with it instead of leaving a stale 30 on the strip.
+  const secondsLeft = Math.max(0, Math.ceil(CRISIS_WINDOW_SECONDS - activeCrisis.elapsedSeconds));
 
   return (
     /* INVARIANT: this card carries no shake of its own. It holds the two buttons
@@ -173,26 +208,33 @@ export const RedPhoneProp: React.FC = () => {
        tier, in a halo. The previous `animate-ring` rotated this entire panel
        +/-10deg at 0.4s, which displaced SWEAR IN and IGNORE continuously. */
     <div
-      className={`p-2 rounded-lg border-2 bg-red-950/70 flex flex-col gap-1.5 relative overflow-hidden select-none shadow-lg shadow-red-950/50 ${
-        isMaxTier ? 'border-red-300 animate-crisis-alarm' : 'border-red-600'
+      className={`p-2 rounded-lg border-2 bg-ink-1/70 flex flex-col gap-1.5 relative overflow-hidden select-none shadow-lg shadow-ink-1/50 ${
+        isMaxTier ? 'border-dead-ink animate-crisis-alarm' : 'border-dead-ink'
       }`}
     >
       <div className="flex items-start gap-2">
-        <div className="p-1.5 rounded-md bg-red-600 text-stone-950 shrink-0">
+        <div className="p-1.5 rounded-md bg-dead text-on-fill shrink-0">
           {/* Was `animate-bounce`, which compounded with the card's own ring into
               a judder. The rattle is the whole signal; bounce was redundant. */}
           <PhoneCall className="w-4 h-4 animate-crisis-ring" />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <span className="font-mono font-bold t-micro text-red-300 shrink-0">3:00 AM CALL</span>
+            <span className="font-mono font-bold t-micro text-dead-soft shrink-0">3:00 AM CALL</span>
             <span
               className={`t-caption font-mono px-1 rounded border shrink-0 ${SEVERITY_STYLE[tierDef?.severity ?? 'WHISPER']}`}
             >
               {tierDef?.severity}
             </span>
           </div>
-          <span className="t-micro text-red-100/90 font-sans block leading-tight line-clamp-2">
+          {/* ISSUE-010. Was `text-red-100/90` — a stock Tailwind cream tinted with red,
+              which put the crisis headline on a stock ramp that has no
+              counterpart in the palette and no measured contrast on this
+              surface. `term-ink-1` is 12.9:1 on the well and is the documented
+              body step on the screen; the crisis already has two alarm channels
+              (the border, the alarm animation, and the severity chip beside it)
+              so the headline itself does not need to be tinted to be alarming. */}
+          <span className="t-micro text-term-ink-1 font-sans block leading-tight line-clamp-2">
             {tierDef?.headline}
           </span>
         </div>
@@ -203,14 +245,32 @@ export const RedPhoneProp: React.FC = () => {
         {CRISIS_TIER_MULTIPLIERS.map((m, i) => (
           <div
             key={m}
-            className={`h-1 flex-1 rounded-full transition-colors ${i <= tier ? 'bg-red-400' : 'bg-red-950/80'}`}
+            className={`h-1 flex-1 rounded-full transition-colors ${i <= tier ? 'bg-dead-wash' : 'bg-ink-1/80'}`}
           />
         ))}
       </div>
 
       <div className="flex items-center justify-between gap-1">
-        <span className="t-micro font-mono text-newsprint-200 shrink-0">
-          {isMaxTier ? 'MAX' : `+${CRISIS_TIER_MULTIPLIERS[tier + 1]}x in ${toNext}s`}
+        {/* Phase 2.4: a REAL countdown.
+            This read "MAX" at the top tier and "+2.5x in 3s" below it — so at max
+            severity, the exact moment the wager stops escalating, the strip went
+            silent about time. The player could not tell whether answering now or
+            in four seconds was a different decision, which is the entire decision
+            the card exists to pose.
+
+            At max tier the ladder is done and the payout is locked, so the only
+            remaining question is "how long do I have to think" — which is
+            exactly what a timer answers. `secondsLeft` is derived from the book's
+            own escalation length rather than typed, because a stale copy here
+            would be a lie about a clock. */}
+        <span className="t-micro font-mono text-term-ink-1 shrink-0">
+          {isMaxTier ? (
+            <span className="text-dead-soft font-bold">
+              MAX · <span className="text-term-ink-1">{secondsLeft}s LEFT</span>
+            </span>
+          ) : (
+            `+${CRISIS_TIER_MULTIPLIERS[tier + 1]}x in ${toNext}s`
+          )}
         </span>
         <button
           onClick={swearInCrisis}
@@ -225,7 +285,7 @@ export const RedPhoneProp: React.FC = () => {
               maxPayout
             )} — but each tier you let it climb costs another ${CRISIS_HEAT_PER_TIER} heat if you answer, and the tantrum is forfeited outright if you let it ring out. Ignore it instead and it costs you nothing but the meter.`,
           )}
-          className="px-1.5 py-1 rounded bg-emerald-600 hover:bg-emerald-500 text-stone-950 font-mono font-black t-micro cursor-pointer active:scale-95 transition-all shrink-0"
+          className="px-1.5 py-1 rounded bg-live-wash hover:bg-live-wash text-term-ink-1 font-mono font-black t-micro cursor-pointer active:scale-95 transition-all shrink-0"
         >
           SWEAR IN {formatCurrency(nowPayout)}
         </button>
@@ -234,14 +294,14 @@ export const RedPhoneProp: React.FC = () => {
           {...hint(
             `Issue a statement and move on. No payout, no heat — and no tantrum, which is the real cost: the meter you were saving toward a ${FRENZY_CLICK_MULTIPLIER}x FRENZY does not move at all. Doing nothing resolves it the same way.`
           )}
-          className="px-1.5 py-1 rounded bg-newsprint-800 hover:bg-newsprint-700 border border-newsprint-700 text-newsprint-200 font-mono font-bold t-micro cursor-pointer active:scale-95 transition-all shrink-0 flex items-center gap-0.5"
+          className="px-1.5 py-1 rounded bg-ground hover:bg-ground border border-line-strong text-term-ink-1 font-mono font-bold t-micro cursor-pointer active:scale-95 transition-all shrink-0 flex items-center gap-0.5"
         >
           <PhoneOff className="w-2.5 h-2.5" />
           <span>IGNORE</span>
         </button>
       </div>
 
-      <span className="t-caption font-mono text-newsprint-300 leading-none">
+      <span className="t-caption font-mono text-term-ink-2 leading-none">
         Peak pays {formatCurrency(maxPayout)} · max heat
         {` · a raid auto-bribe costs ${RAID_BRIBE_COST} Favor`}
       </span>

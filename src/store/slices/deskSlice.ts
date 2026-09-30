@@ -146,7 +146,7 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
     } else if (isDry) {
       sound.playDryScratch();
     } else {
-      sound.playSharpieSqueak();
+      sound.playSherpieSqueak();
     }
 
     // INVARIANT: [The Quoted Yield Is The Charged Yield]
@@ -214,6 +214,14 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
       flashDipSecondsRemaining: flashDip.secondsRemaining,
       totalFlashDipsTriggered: flashDip.totalTriggered,
       lastClickTimestamp: now,
+      // ISSUE-004 [Stale Banners Must Not Hold The Desk]. The crisis outcome
+      // notice is the LOWEST-priority message in `feedbackPriority` and is purely
+      // informational, but it had no expiry of its own — it sat above the
+      // directive sheet and under the stamp until the player found its dismiss
+      // button. A slam is the player saying "I have read it and I am working", so
+      // it retires the notice. `FeedbackLayer` additionally expires it on a
+      // timer, for the player who never slams again.
+      lastCrisisOutcome: undefined,
     });
     return true;
   },

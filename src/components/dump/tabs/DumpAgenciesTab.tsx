@@ -115,40 +115,40 @@ export const DumpAgenciesTab: React.FC = () => {
     <div className="h-full min-h-0 flex flex-col gap-2 select-none">
       <div className="shrink-0">
         <DossierHeader
-          icon={<Scissors className="w-3.5 h-3.5 text-gold-500" />}
+          icon={<Scissors className="w-3.5 h-3.5 text-accent-ink" />}
           title="Federal Agency Guillotine"
           status="Hatchet Orders"
         />
 
         {(totalCashHarvested > 0 || activeHazardsCount > 0) && (
           <div className="mt-2 grid grid-cols-3 gap-1 t-micro font-mono text-center">
-            <div className="surface-sheet border border-newsprint-300 rounded px-1 py-0.5">
-              <span className="block text-newsprint-800 uppercase">Harvested</span>
-              <span className="text-emerald-700 font-bold">{formatCurrency(totalCashHarvested)}</span>
+            <div className="surface-sheet border border-line rounded px-1 py-0.5">
+              <span className="block text-ink-3 uppercase">Harvested</span>
+              <span className="text-live-ink font-bold">{formatCurrency(totalCashHarvested)}</span>
             </div>
-            <div className="surface-sheet border border-newsprint-300 rounded px-1 py-0.5">
-              <span className="block text-newsprint-800 uppercase">Hazards</span>
-              <span className="text-gold-700 font-bold">{activeHazardsCount}</span>
+            <div className="surface-sheet border border-line rounded px-1 py-0.5">
+              <span className="block text-ink-3 uppercase">Hazards</span>
+              <span className="text-accent-ink font-bold">{activeHazardsCount}</span>
             </div>
-            <div className="surface-sheet border border-newsprint-300 rounded px-1 py-0.5">
-              <span className="block text-newsprint-800 uppercase">Disaster Rev</span>
-              <span className="text-emerald-700 font-bold">{formatCurrency(disasterCapitalismRevenue)}</span>
+            <div className="surface-sheet border border-line rounded px-1 py-0.5">
+              <span className="block text-ink-3 uppercase">Disaster Rev</span>
+              <span className="text-live-ink font-bold">{formatCurrency(disasterCapitalismRevenue)}</span>
             </div>
           </div>
         )}
 
         {!hasCronyUnlocksAccess && (
-          <p className="mt-2 border-l-2 border-gold-600/70 bg-gold-500/15 px-2 py-1 t-micro text-newsprint-200">
+          <p className="mt-2 border-l-2 border-accent-ink/70 bg-accent/15 px-2 py-1 t-micro text-ink-1">
             First liquidation opens the Crony lobbying shop.
           </p>
         )}
         {hasCronyUnlocksAccess && !hasTariffAccess && (
-          <p className="mt-2 border-l-2 border-emerald-500/70 bg-emerald-500/15 px-2 py-1 t-micro text-newsprint-200">
+          <p className="mt-2 border-l-2 border-live-ink/70 bg-live-wash/15 px-2 py-1 t-micro text-ink-1">
             Buy your first upgrade to gain authority over bilateral tariffs.
           </p>
         )}
         {hasTariffAccess && !hasPrestigeAccess && (
-          <p className="mt-2 border-l-2 border-gold-600/70 bg-gold-500/15 px-2 py-1 t-micro text-newsprint-200">
+          <p className="mt-2 border-l-2 border-accent-ink/70 bg-accent/15 px-2 py-1 t-micro text-ink-1">
             Adjust a tariff dial to unlock the Cayman reorganization.
           </p>
         )}
@@ -174,32 +174,47 @@ export const DumpAgenciesTab: React.FC = () => {
             const hasCash = treasuryCash >= agency.minNetWorthRequired;
             const canAffordIt = hasFavor && hasCash;
 
+            /* ISSUE-014. Names the shortfall on the card, not only in the bubble.
+               Both branches are the SAME predicate `canAffordIt` tests, and each
+               figure comes from the same source the engine charges with — so this
+               is a readout, never a second opinion. A player who is short on both
+               sees both, because the cheapest-looking one to fix is not always the
+               one that is actually closest. */
+            const favorShort = Math.max(0, favorCost - Math.floor(cronyFavor));
+            const cashShort = Math.max(0, agency.minNetWorthRequired - treasuryCash);
+            const gateShortfall =
+              favorShort > 0 && cashShort > 0
+                ? `${favorShort}F + ${formatCurrency(cashShort)}`
+                : favorShort > 0
+                ? `NEED ${favorShort} FAVOR`
+                : `NEED ${formatCurrency(cashShort)}`;
+
             return (
               <div
                 key={agency.id}
                 className={`p-2 rounded-lg border transition-all ${
                   isScrapped
-                    ? 'bg-newsprint-200 border-newsprint-300 opacity-60'
+                    ? 'bg-card border-line opacity-60'
                     : isUnlocked
-                    ? 'surface-sheet border-newsprint-300 hover:border-gold-600/60'
-                    : 'bg-newsprint-200 border-newsprint-400 opacity-70'
+                    ? 'surface-sheet border-line hover:border-accent-ink/60'
+                    : 'bg-card border-line opacity-70'
                 }`}
               >
                 <div className="flex items-start justify-between gap-2">
                   <div>
                     <div className="flex items-center gap-1.5">
-                      <span className="font-mono font-bold text-newsprint-900 text-xs">{agency.acronym}</span>
-                      <span className="t-micro text-newsprint-800 font-mono">({agency.name})</span>
+                      <span className="font-mono font-bold text-ink-2 text-xs">{agency.acronym}</span>
+                      <span className="t-micro text-ink-3 font-mono">({agency.name})</span>
                     </div>
-                    <p className="t-caption text-emerald-700 font-mono mt-0.5">
+                    <p className="t-caption text-live-ink font-mono mt-0.5">
                       Perk: {agency.perkDescription}
                     </p>
-                    <p className="t-caption text-gold-700 font-mono flex items-center gap-1 mt-0.5">
+                    <p className="t-caption text-accent-ink font-mono flex items-center gap-1 mt-0.5">
                       <AlertTriangle className="w-2.5 h-2.5" />
                       <Handshake className="w-2.5 h-2.5" aria-hidden />
                       Cost: {favorCost} Favor
                       {favorCost < agency.cronyFavorCost && (
-                        <span className="text-emerald-700 line-through">{agency.cronyFavorCost}</span>
+                        <span className="text-live-ink line-through">{agency.cronyFavorCost}</span>
                       )}{' '}
                       // Req: {formatCurrency(agency.minNetWorthRequired)}
                     </p>
@@ -207,7 +222,7 @@ export const DumpAgenciesTab: React.FC = () => {
 
                   <div className="shrink-0 text-right">
                     {isScrapped ? (
-                      <span className="px-2 py-0.5 rounded bg-newsprint-300 text-newsprint-800 font-mono t-caption font-bold flex items-center gap-1">
+                      <span className="px-2 py-0.5 rounded bg-panel text-ink-3 font-mono t-caption font-bold flex items-center gap-1">
                         <CheckCircle className="w-2.5 h-2.5" />
                         SCRAPPED
                       </span>
@@ -234,15 +249,39 @@ export const DumpAgenciesTab: React.FC = () => {
                         )}
                         className={`px-2.5 py-1 rounded font-mono t-micro font-bold transition-all shadow ${
                           canAffordIt
-                            ? 'bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 text-newsprint-950 font-black active:scale-95 cursor-pointer'
-                            : 'bg-newsprint-300 text-newsprint-800 cursor-not-allowed'
+                            ? 'bg-gradient-to-r from-accent to-accent hover:from-accent text-ink-1 font-black active:scale-95 cursor-pointer'
+                            : 'bg-panel text-ink-3 cursor-not-allowed'
                         }`}
                       >
                         <Scissors className="w-3 h-3" aria-hidden />
-                        +{formatCurrency(agency.liquidationCashYield)}
+                        {canAffordIt ? (
+                          <>+{formatCurrency(agency.liquidationCashYield)}</>
+                        ) : (
+                          /* ISSUE-014 [A Gated Button Must Show Its Own Shortfall].
+                             The card printed `+$250K` — the yield, the only number
+                             the player GAINS — and left every number they must
+                             first PAY to the hover bubble. The two states differed
+                             only by a dimmer fill, which on a warm surface at 9.5px
+                             is a difference the player has to be told to see.
+
+                             So the closed state leads with the gate instead: a lock,
+                             and the amount actually missing. `gateShortfall` names
+                             BOTH binding gates, because a player short on favor
+                             and short on cash is short on both and telling them
+                             only about the one checked last is how you get a
+                             support ticket about an invisible requirement. It is
+                             derived from the same `agencyFavorCost` helper
+                             `liquidateAgency` charges with, and it only ever
+                             renders on the `!canAffordIt` branch — so the picture
+                             and the click test cannot disagree. */
+                          <>
+                            <Lock className="w-2.5 h-2.5" aria-hidden />
+                            {gateShortfall}
+                          </>
+                        )}
                       </button>
                     ) : (
-                      <span className="px-2 py-0.5 rounded bg-redaction-500 border border-redaction-700 text-newsprint-400 font-mono t-caption font-semibold flex items-center gap-1">
+                      <span className="px-2 py-0.5 rounded bg-well border border-term-line text-ink-3 font-mono t-caption font-semibold flex items-center gap-1">
                         <Lock className="w-2.5 h-2.5" />
                         Awaits {previousAgency?.acronym}
                       </span>
@@ -255,7 +294,7 @@ export const DumpAgenciesTab: React.FC = () => {
       </div>
 
       {alertMsg && (
-        <div className="shrink-0 p-1.5 rounded bg-gold-500/20 border border-gold-600/50 text-center font-mono t-micro font-bold text-gold-400 animate-pulse">
+        <div className="shrink-0 p-1.5 rounded bg-accent/20 border border-accent-ink/50 text-center font-mono t-micro font-bold text-accent-ink animate-pulse">
           {alertMsg}
         </div>
       )}

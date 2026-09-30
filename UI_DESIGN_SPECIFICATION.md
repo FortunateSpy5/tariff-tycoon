@@ -23,7 +23,44 @@ To achieve this:
 ## 2. Desktop Viewport Specifications & Responsive Scaling
 
 * **Primary Target Resolution:** 1920 × 1080 (16:9 Standard Desktop).
-* **High-DPI / Ultrawide Support:** 2560 × 1440 (1440p), 3840 × 2160 (4K), and 21:9 Ultrawide displays center the cockpit (`max-w-[1720px] aspect-[16/9] mx-auto`) framed by warm amber desk ambient glow.
+* **High-DPI / Ultrawide Support:** 2560 × 1440 (1440p), 3840 × 2160 (4K), and 21:9 Ultrawide displays center the cockpit (`max-w-[1720px] mx-auto` in `App.tsx`) framed by warm amber desk ambient glow. Verified at 2560px: the grid renders at exactly 1720 rather than 2540, so 820px of letterboxing is removed and the cockpit reads as a document on a desk rather than a letterboxed game. *(The `aspect-[16/9]` this line used to claim was never implemented and is not needed — the panes are height-filling, not aspect-locked.)*
+
+### [TUNGSTEN] The material system
+
+The three material layers (NEWSPRINT / CLASSIFIED / TERMINAL) gained a fourth
+property: **light**. It is 3am, there is one desk lamp, and the paper is the
+only bright thing in the room.
+
+* **Four paper stocks, with the value order inverted.** `card` is the *sheet*
+  (lightest), `panel` an aged document, `ground` the **blotter pad** — which
+  is the desk — and the pad is DARKER than the sheet resting on it. Paper
+  lighter than the pad it rests on is what makes a stack read as a stack. The
+  previous ramp had the desk and a sheet 4% apart, so nothing read as an object
+  and the centre column was one flat beige field. CORRECTED from
+  `newsprint-50/100/200/300`: that ramp was renamed `card` / `panel` / `ground` /
+  `line-soft` in [TUNGSTEN], and the ordering below is now exactly what
+  `@theme` defines. `surface-sheet` also casts a shadow, because a different colour
+  from the surface under it still reads as a flat panel until it casts one.
+* **The desk is lit, not filled.** A tight tungsten pool from the **upper left**
+  — matching where `StampIllustration` throws its cast shadow, since light and
+  shadow have to agree or the object floats — with an **opaque** falloff to a
+  dark rim. A broad soft pool over a large surface is indistinguishable from no
+  pool at all.
+* **The room is dark.** `.surround-room` is near-black with a fast-dying warm
+  spill.
+* **Each half owns its green.** `phosphor` is the CRT and is *material only* —
+  never a text colour on paper, where it measured 1.53:1. `money` is a deep
+  teal-green built for the paper half, with 600–800 for text on cream. On a
+  terminal well, money and terminal chrome previously sat 1.37:1 apart, both
+  green.
+* **Gold is fill, and gold is ink.** 300–600 are fills and take dark ink on top;
+  700–950 are text-safe on paper. `gold-600` on parchment is 2.82:1 and *every*
+  warm value clearing 4.5:1 on cream is a brown, so gold cannot be a text colour
+  on paper at caption size.
+* **The two wings stay two wings.** Green CRT left, cream paper right. That
+  separation is load-bearing — it is how a player knows which world they are in
+  without reading. Do not converge them, and specifically do not move the
+  terminal to amber: amber is the right wing's accent.
   * ⚠️ **NOT YET IMPLEMENTED (2026-09-29 audit).** `App.tsx` has no max-width — the grid stretches edge to edge, so at 2560px the centre desk becomes ~840px of empty parchment. Tracked as Phase 2.6 in `.agents/workflows/UX_EVALUATION_AND_REDESIGN_PLAN.md`. Treat this line as intent until the width clamp lands.
   * ⚠️ **NOT YET IMPLEMENTED (2026-09-29 audit).** `App.tsx` has no max-width — the grid stretches edge to edge, so at 2560px the centre desk becomes ~840px of empty parchment. Tracked as Phase 2.6 in `.agents/workflows/UX_EVALUATION_AND_REDESIGN_PLAN.md`. Treat this line as intent until the width clamp lands.
 * **Sub-1080p Safety Clamp (`useDesktopViewport`):** On budget laptops (1366 × 768, 1600 × 900) or displays with vertical height $<840\text{px}$, the UI applies a dynamic CSS scale clamp (`transform: scale(min(1, h / 860))`) with `transformOrigin: 'top center'`. All three wings, buttons, and meters remain 100% visible on screen without clipping.
@@ -71,14 +108,13 @@ truth and is enforced by `npm run theme:check` (budget 0, runs inside `npm run b
 
 | Region | Material | Why |
 |--------|----------|-----|
-| App root / surround | `newsprint-950` desk wood | The player is at a desk, not in a web app |
-| **Centre stage (the desk)** | `newsprint` **parchment** | The GDD already called it a "Parchment Directive" — it was rendering as a grey gradient |
-| Left wing frame | `classified` / `redaction` near-black | Recessed into the desk |
-| Right wing frame | `classified` / `redaction` near-black | Same recess, different content |
+| App root / surround | `surround-room` → `ground` warm desk field | The player is at a desk, not in a web app. CORRECTED from `newsprint-950` desk wood, which described the pre-[TUNGSTEN] dark desk; the room is warm now, and `.agents/rules/desktop-ui-and-layout-invariants.md` still named it `bg-stone-950` until ISSUE-012 |
+| **Centre stage (the desk)** | `surface-desk` — `panel` parchment under a tungsten pool | The GDD already called it a "Parchment Directive" — it was rendering as a grey gradient. One value step above the surround, per [The Panes Are The Same Colour At Different Values] |
+| Left wing frame | `surface-terminal` phosphor + scanlines | Recessed into the desk. BagHolder Pro is a CRT, and a CRT *is* correct here |
+| Right wing frame | `surface-sheet` / `panel` paper | Same recess as the desk, one value step — three different colours across three wings is Imhof's fourth rule broken |
 | Cards resting on the desk | `surface-sheet` (paper) | Stacked paperwork |
-| Left wing *interiors* | `surface-terminal` phosphor + scanlines | BagHolder Pro is a CRT. A CRT *is* correct here |
-| Inset wells inside the terminal | `surface-terminal-well` (`phosphor-900`) | Never neutral grey — grey is the smell this system exists to remove |
-| Top status rail | `newsprint` aged paper + double rule | The most screenshot-visible surface in the app |
+| Inset wells inside the terminal | `surface-terminal-well` (`well-2`) | Never neutral grey — grey is the smell this system exists to remove. The screen ladder stops at two steps; see the note in `index.css` |
+| Top status rail | `surface-newsprint` aged paper + double rule | The most screenshot-visible surface in the app |
 | Tab-strip headers | `DossierHeader` — redaction bar + wax-red title | One shared component replaced four hand-written copies |
 
 `<Card>`'s **default material is `sheet`**, not grey. This is load-bearing: a primitive
@@ -98,10 +134,19 @@ by an `accent` prop (`phosphor` vs `gold`). Fork that markup and the two drift.
 * **The Parchment Directive & Core Stamp Button:**
   - Dynamic procedural directive text (`"EXECUTIVE ORDER #8412 // 3:00 AM DIRECTIVE"`).
   - Central kinetic clicker: Phase 1 starts with the Blue Rubber Stamp (`CONFISCATE`); the 24k Golden Sherpie appears at the $1\text{M}$ Oval Office transition.
+  - **The stamp is a layered SVG object, not a coloured circle** *(Phase 2.3)*. Barrel, grip rings, shoulder and a permanently ink-stained rubber face, with the lettering laid over the rubber as real HTML — on a real stamp the type is printed *on* the face, and SVG `<text>` could neither be read by a screen reader nor pick up the type scale. Two palettes (blue customs / gold Sherpie), each with its own frenzy variant rather than a red filter over gold.
+  - **The stamp SIZES ITSELF to the desk's leftover height**, capped at 320px. It used to be a fixed `w-44 sm:w-52 md:w-60` circle inside a `flex-1 min-h-0` column on a desk with `overflow-hidden`, so it had 134px of room in steady state and **69px while a crisis was ringing** — a 95px overflow that painted the stamp over the directive sheet, at the exact moment the player most needs to read the desk. That case predated Phase 2. Its lettering is sized in `cqw` against the button's own container, and below 170px the face sheds the two qualifier lines and grows the verb.
+    - **Two traps here, both of which look like "the element is tiny".** `container-type: size` on a `fit-content` flex item resolves to **zero** (the width depends on the `cqw` text, which depends on the width), so the container must be an ancestor definite on both axes. And `scrollHeight` vs `getBoundingClientRect()` measures nothing once the root is `transform: scale()`d for sub-1080p — use `clientHeight`/`offsetHeight`, which are layout pixels.
   - **Ink-splatter particles and a one-shot slam.** The hero object used to be inert; `AGENTS.md` mandates "screen recoil, ink splatter, procedural squeaks" and the stamp was emitting none of it.
   - **Motion damping is mandatory, not optional.** Recoil fired on *two* elements at once (±3px each) and `stamp-slam` travelled 14px / scaled 1.16. Fine for one click; during CAPS LOCK FRENZY the player clicks 5–10x/sec and the impacts overlap into a permanent judder. Current values: recoil ±1.5px, `stamp-slam-calm` (6px, scale 1.06) swapped in above 85% Tantrum, and `calm-glow` (3.4s) instead of `animate-pulse` on the frenzy ring. **Damp the feedback; do not delete it** — it is load-bearing game feel.
   - A single `FeedbackLayer` owns the centre stage with explicit priority (`raid > walkBack > yap > print > crisis`). Four competing `absolute inset-0` overlays previously fought for the same z-index and could stack invisibly.
   - Floating cash yield particles, stamina ink meter, and tantrum fire meter.
+* **The Cockpit Readout** *(Phase 2.5 — answers Finding D: income was invisible, and the two most consequential timers rendered as 10px captions in corners of a pane)*:
+  - A prominent `$X/s` headline, the sum of **all three** income sources, with the breakdown as inline chips. **Every source renders even at `$0.00`**, carrying the reason it is dormant — a row that only appears once it pays teaches the player nothing about the lever they are meant to pull, and a bare `0.00` reads as a bug rather than a decision.
+  - **The autopen row is deliberately flat.** `tickPassiveEconomy` pays `base × 5 × Δt` and ignores the Tungsten Nib and the Sovereign Immunity Slips. A readout that multiplied it by the click yield would overstate the upgrade by up to 20× for a late-game player. Its constants live in `engine/systems/passiveRates.ts` so the readout and the tick import one value.
+  - **CAPS LOCK FRENZY and the walk-back window are dials**: a `conic-gradient` sweep whose proportion *is* the remaining fraction, so the visual and the number cannot disagree, with the seconds as a number at the centre. Both stay mounted when inert so nothing below them shifts. `aria-live="off"` is deliberate — they update 4×/sec during a frenzy, and a polite live region on a 4Hz counter is an unusable stream of speech.
+  - **This panel is on a zero-scroll desk, so its height is a budget.** Its first draft was 125px and came straight out of the stamp's height without erroring. It is 67px, and the visible breakdown was kept as chips rather than pushed into hover text — hiding the three rates in tooltips would have satisfied the letter of the item while restoring the exact defect it was filed against.
+* **The panic scale is a warning channel, not a second palette** *(Phase 2.1)*: four saturated reds that fire on a crisis ringing, the walk-back window open, or S.L.O.P. heat at `SLOP_CRITICAL_THRESHOLD` — frenzy gets the soft wash. Sub-critical heat gets nothing, because at 60% nothing is happening yet and dyeing the cockpit red for it would make the real 100% meaningless. The wash is a static `box-shadow`, so `prefers-reduced-motion` cannot erase the one thing the player needs to see. The surround is `.surround-room` on the app root, deliberately not a `surface-*` token: parchment belongs to the desk, and a token components can reach for would eventually creep onto a card.
 * **The Dual Command Triggers:**
   - **`[LAUNCH 3:00 AM LETHAL YAP] (Y)`**: Unlocks with BagHolder Pro **on the first slam** (previously $10\text{k}), generates an unhinged decree, and crashes the selected stock.
   - **`[WALK-BACK CLARIFICATION] (W)`**: During the 8-second window, activates only after a matching CALL is armed. It pumps the market $+35\%$ and settles that CALL; missing the window returns combo collateral and never reverses settled PUT proceeds.

@@ -82,9 +82,9 @@ export const PrestigeProgressCard: React.FC = () => {
     <Card material="paper" className="shrink-0">
       <CardHeader
         title="Filing Progress"
-        icon={<TrendingUp className="w-3.5 h-3.5 text-gold-600" />}
+        icon={<TrendingUp className="w-3.5 h-3.5 text-accent-ink" />}
         right={
-          <span className="t-caption font-mono font-black text-gold-700 shrink-0">
+          <span className="t-caption font-mono font-black text-accent-ink shrink-0">
             {ready ? 'GATE OPEN' : `${pct}%`}
           </span>
         }
@@ -105,16 +105,16 @@ export const PrestigeProgressCard: React.FC = () => {
         )}
       >
         <div className="flex items-baseline justify-between gap-2">
-          <span className="t-caption font-mono font-black text-newsprint-900">
+          <span className="t-caption font-mono font-black text-ink-2">
             {ready ? 'READY TO FILE' : `${formatCurrency(p.shortfall)} SHORT`}
           </span>
-          <span className="t-caption font-mono text-newsprint-800">
+          <span className="t-caption font-mono text-ink-3">
             {formatCurrency(p.countedLifetimeCash)} / {formatCurrency(PRESTIGE_CASH_DIVISOR)}
           </span>
         </div>
 
         <div
-          className="mt-1 h-1.5 bg-newsprint-300/60 rounded-full overflow-hidden"
+          className="mt-1 h-1.5 bg-panel/60 rounded-full overflow-hidden"
           role="progressbar"
           aria-label="Progress toward the Chapter 11 filing gate"
           aria-valuemin={0}
@@ -122,12 +122,12 @@ export const PrestigeProgressCard: React.FC = () => {
           aria-valuenow={pct}
         >
           <div
-            className="h-full bg-gradient-to-r from-gold-600 to-gold-400 transition-all duration-500 rounded-full"
+            className="h-full bg-gradient-to-r from-accent to-accent transition-all duration-500 rounded-full"
             style={{ width: `${Math.max(1, pct)}%` }}
           />
         </div>
 
-        <p className="t-caption font-mono text-newsprint-800/90 leading-snug mt-1">
+        <p className="t-caption font-mono text-ink-3/90 leading-snug mt-1">
           {verdict || `Not yet a whole Slip. ${nextLine}`}
           {ready ? ` ${nextLine}` : ''}
         </p>

@@ -1,6 +1,6 @@
 /**
  * Desk & Clicker Domain Types
- * Defines states for Phase 1 (Airport Rubber Stamp) and Phase 2+ (Oval Office Golden Sharpie).
+ * Defines states for Phase 1 (Airport Rubber Stamp) and Phase 2+ (Oval Office Golden Sherpie).
  */
 
 export type GamePhase = 1 | 2 | 3 | 4;

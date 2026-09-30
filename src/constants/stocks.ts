@@ -10,6 +10,27 @@ import type { StockDefinition, StockSymbol } from '../types/market';
  * frozen for the whole session. `0` instead guarantees the seed's bucket is
  * always older than the first real print, so the opening tick opens a fresh
  * bucket whose `open` is the seed's close — one gap-free transition.
+ *
+ * INVARIANT: [Not Every Ticker Opens Green] [ISSUE-008]
+ * Every stock used to open at exactly `basePrice`, and the ticker ladder reads
+ * `delta >= 0` as up, so a fresh save painted all nine rows as a green ▲ with
+ * `0.0` beside it — on a news marquee that opens with "THE S&PAIN 500 INCHES
+ * TOWARD RECORD DISASTER // BUY PUTS". The chart said risk-on and the ticker
+ * said a run was about to happen, on the same frame, and the player had to pick
+ * which one to disbelieve.
+ *
+ * It also meant the ▲ was carrying no information at all: a signed zero is not a
+ * direction, and eight identical glyphs teach a new player that the colour means
+ * nothing. Two tickers now open ON A GAP — one down on a bad sector print, one
+ * down on a crowded trade — which is the normal state of a real premarket and,
+ * more usefully, means a YAP crash and a YAP rally are now visually DISTINGUISHABLE
+ * on the very first frame.
+ *
+ * The seed candle stays at `basePrice`: that is the OPENING print, and the gap is
+ * what happened after the bell. `priceHistory` ends on `currentPrice` so the
+ * chart's drawn line and the ticker's ▲ agree, and `marketEngine.tickMarkets`
+ * walks forward from `currentPrice` and mean-reverts toward `basePrice`, so the
+ * gap decays rather than compounding.
  */
 export const INITIAL_STOCKS: Record<StockSymbol, StockDefinition> = {
   FRUT: {
@@ -41,8 +62,11 @@ export const INITIAL_STOCKS: Record<StockSymbol, StockDefinition> = {
     sector: 'Commercial Aerospace & Structural Tape',
     description: 'Commercial Jets Held Together by Blue Tape & Prayer',
     basePrice: 145,
-    currentPrice: 145,
-    priceHistory: [145, 142, 147, 141, 145],
+    // Opened 145, sold off on the structural-tape inspection. The worst opening
+    // in the book, on the highest-volatility name but one — so a targeted YAP at
+    // DOOR is visibly shorting something already bleeding.
+    currentPrice: 138.4,
+    priceHistory: [145, 142.5, 143.1, 139.2, 138.4],
     volatilityMultiplier: 1.8,
   },
   MICR: {
@@ -74,8 +98,11 @@ export const INITIAL_STOCKS: Record<StockSymbol, StockDefinition> = {
     sector: 'Liquid-Cooled GPU Clusters & Ray-Tracing Hype',
     description: 'Leather-Jacket Larry GPU Clusters & Pure Liquid AI Hype',
     basePrice: 125,
-    currentPrice: 125,
-    priceHistory: [125, 128, 122, 127, 125],
+    // Opened 125, gave back the AI premium. The most volatile ticker in the book
+    // (2.5x) opening red, which is what makes it the one a shotgun YAP actually
+    // wants to land on.
+    currentPrice: 117.9,
+    priceHistory: [125, 128, 122, 119.4, 117.9],
     volatilityMultiplier: 2.5,
   },
   LMBR: {
@@ -107,8 +134,10 @@ export const INITIAL_STOCKS: Record<StockSymbol, StockDefinition> = {
     sector: 'Macroeconomic Agony Benchmark',
     description: 'The Agony Benchmark of Western Capitalist Nihilism',
     basePrice: 5200,
-    currentPrice: 5200,
-    priceHistory: [5200, 5210, 5195, 5205, 5200],
+    // The benchmark is red at the open, which is the only reading consistent
+    // with a ticker that spends its life on a marquee reading "BUY PUTS".
+    currentPrice: 5136.5,
+    priceHistory: [5200, 5210, 5195, 5150, 5136.5],
     volatilityMultiplier: 1.0,
   },
 };

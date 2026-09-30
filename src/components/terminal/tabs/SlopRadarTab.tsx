@@ -8,7 +8,12 @@ import { ShieldAlert, Award, FileX2 } from 'lucide-react';
 import { useGameStore } from '../../../store/useGameStore';
 import { Card } from '../../ui/Card';
 import { hint } from '../../ui/hint';
-import { RAID_BRIBE_COST, SLOP_DECAY_PER_SECOND } from '../../../engine/systems/slopEngine';
+import {
+  RAID_BRIBE_COST,
+  SLOP_CRITICAL_THRESHOLD,
+  SLOP_DECAY_PER_SECOND,
+  SLOP_ELEVATED_THRESHOLD,
+} from '../../../engine/systems/slopEngine';
 import { hasPerk } from '../../../engine/systems/perkEngine';
 import { CRONY_FAVOR_PASSIVE_PER_SECOND, CRONY_FAVOR_PER_YAP } from '../../../constants/balance';
 
@@ -39,8 +44,8 @@ export const SlopRadarTab: React.FC = () => {
   const shredSubpoenas = useGameStore((s) => s.shredSubpoenas);
   const pardoned = useGameStore((s) => hasPerk(s.unlockedPerks, 'pardon_assembly_line'));
 
-  const isCritical = slopSuspicion >= 75;
-  const isDangerous = slopSuspicion >= 50;
+  const isCritical = slopSuspicion >= SLOP_CRITICAL_THRESHOLD;
+  const isDangerous = slopSuspicion >= SLOP_ELEVATED_THRESHOLD;
 
   // INVARIANT: [The Radar's Two Defenses Must Both Tell You Why They Are Closed]
   // `shredSubpoenas` returns false on a phase, cooldown, or favor gate and the
@@ -110,8 +115,8 @@ export const SlopRadarTab: React.FC = () => {
     <div className="h-full min-h-0 flex flex-col gap-2.5 select-none">
       <div className="shrink-0">
         {/* Header */}
-        <div className="flex items-center justify-between t-micro font-mono text-stone-500 border-b border-stone-800 pb-1.5">
-          <div className="flex items-center gap-1.5 text-red-400 font-bold">
+        <div className="flex items-center justify-between t-micro font-mono text-term-ink-3 border-b border-term-line pb-1.5">
+          <div className="flex items-center gap-1.5 text-dead-soft font-bold">
             <ShieldAlert className="w-3.5 h-3.5" />
             <span>S.L.O.P. INQUEST RADAR</span>
           </div>
@@ -122,27 +127,27 @@ export const SlopRadarTab: React.FC = () => {
       {/* Suspicion Heat Gauge — the hero element, expands to fill spare height */}
       <Card material="term" density="tight" className="flex-1 min-h-0 flex flex-col justify-center gap-3">
         <div className="flex justify-between items-baseline text-xs font-mono">
-          <span className="text-phosphor-600">Grand Jury Heat</span>
+          <span className="text-term-ink-3">Grand Jury Heat</span>
           <span
             className={`text-2xl font-black tabular-nums tracking-tight ${
-              isCritical ? 'text-red-400 animate-pulse' : isDangerous ? 'text-amber-400' : 'text-emerald-400'
+              isCritical ? 'text-dead-soft animate-pulse' : isDangerous ? 'text-accent-soft' : 'text-term-ink-2'
             }`}
           >
             {slopSuspicion.toFixed(1)}
-            <span className="text-sm text-phosphor-600">%</span>
+            <span className="text-sm text-term-ink-3">%</span>
           </span>
         </div>
         <div className="w-full flex-1 min-h-[56px] surface-terminal-well rounded-lg overflow-hidden">
           <div
             className={`h-full transition-all duration-300 ${
               isCritical
-                ? 'bg-gradient-to-r from-amber-500 via-red-500 to-red-600 animate-pulse'
-                : 'bg-gradient-to-r from-emerald-500 to-amber-500'
+                ? 'bg-gradient-to-r from-accent via-dead to-dead animate-pulse'
+                : 'bg-gradient-to-r from-term-ink-3 to-accent'
             }`}
             style={{ width: `${Math.min(100, Math.max(0, slopSuspicion))}%` }}
           />
         </div>
-        <span className="t-micro text-phosphor-600 font-mono block leading-snug">
+        <span className="t-micro text-term-ink-3 font-mono block leading-snug">
           Accumulates on 1,000x trades and state secret sales; decays -0.2%/sec passively.
         </span>
       </Card>
@@ -150,8 +155,8 @@ export const SlopRadarTab: React.FC = () => {
       <div className="shrink-0 space-y-2.5">
         {/* VEX Volatility Metric */}
         <Card material="term" density="tight" className="flex justify-between items-center font-mono t-micro">
-          <span className="text-phosphor-600">VEX Volatility Index:</span>
-          <span className="text-amber-400 font-bold">{vexVolatility.toFixed(1)} pts</span>
+          <span className="text-term-ink-3">VEX Volatility Index:</span>
+          <span className="text-accent-soft font-bold">{vexVolatility.toFixed(1)} pts</span>
         </Card>
 
         {/* Tactical Defense Tools */}
@@ -172,8 +177,8 @@ export const SlopRadarTab: React.FC = () => {
             )}
             className={`w-full py-2 rounded-lg font-mono t-micro font-bold flex items-center justify-center gap-1.5 transition-all ${
               cronyFavor >= BRIBE_FAVOR_COST
-                ? 'bg-gold-500 hover:bg-gold-400 text-redaction-700 shadow-md active:scale-95 cursor-pointer'
-                : 'bg-phosphor-900 text-phosphor-600 cursor-not-allowed'
+                ? 'bg-accent hover:bg-accent text-term-ink-1 shadow-md active:scale-95 cursor-pointer'
+                : 'bg-well text-term-ink-3 cursor-not-allowed'
             }`}
           >
             <Award className="w-3.5 h-3.5" />
@@ -198,8 +203,8 @@ export const SlopRadarTab: React.FC = () => {
             )}
             className={`w-full py-2 rounded-lg font-mono t-micro font-bold flex items-center justify-center gap-1.5 transition-all ${
               shredGate === null
-                ? 'surface-terminal-well hover:border-emerald-600/80 text-phosphor-400 active:scale-95 cursor-pointer'
-                : 'surface-terminal-well text-phosphor-600 cursor-not-allowed opacity-70'
+                ? 'surface-terminal-well hover:border-term-line-strong/80 text-term-ink-2 active:scale-95 cursor-pointer'
+                : 'surface-terminal-well text-term-ink-3 cursor-not-allowed opacity-70'
             }`}
           >
             <FileX2 className="w-3.5 h-3.5" />
@@ -215,7 +220,7 @@ export const SlopRadarTab: React.FC = () => {
           <div
             role="status"
             aria-live="polite"
-            className="p-1.5 rounded bg-amber-500/15 border border-amber-600/40 t-micro font-mono font-bold text-amber-300"
+            className="p-1.5 rounded bg-accent/15 border border-accent-ink/40 t-micro font-mono font-bold text-accent-soft"
           >
             {feedback}
           </div>
@@ -228,7 +233,7 @@ export const SlopRadarTab: React.FC = () => {
             holding it the strip became a flat lie at the exact moment they were
             deciding whether to spend 50 favor on a bribe. A decorative quote is
             still a claim, and this repo treats an inaccurate one as a defect. */}
-        <div className="p-2 surface-terminal-well rounded t-micro text-phosphor-600 italic">
+        <div className="p-2 surface-terminal-well rounded t-micro text-term-ink-3 italic">
           {pardoned
             ? 'The Pardon Assembly Line is in force. Heat still accrues and still decays, and the meter is still the readout you manage — but at 100% nothing comes through the door, so there is no bribe to consider.'
             : 'Special Counsel audits trigger full asset freezes at 100% heat unless averted via bribes or document shredding.'}

@@ -126,10 +126,10 @@ export const StocksOptionsTab: React.FC = () => {
   return (
     <div className="h-full min-h-0 flex flex-col gap-2 select-none">
       <div className="shrink-0 space-y-2">
-        <div className="border-l-2 border-gold-500 bg-gold-500/15 px-2 py-1.5">
-          <span className="block t-caption font-mono font-black uppercase text-gold-400">First Trade</span>
-          <span className="block t-micro leading-snug text-phosphor-300">{tradeGuide}</span>
-          {nextUnlockHint && <span className="mt-1 block t-caption font-mono text-gold-400/90">{nextUnlockHint}</span>}
+        <div className="border-l-2 border-accent-ink bg-accent/15 px-2 py-1.5">
+          <span className="block t-caption font-mono font-black uppercase text-accent-ink">First Trade</span>
+          <span className="block t-micro leading-snug text-term-ink-1">{tradeGuide}</span>
+          {nextUnlockHint && <span className="mt-1 block t-caption font-mono text-accent-ink/90">{nextUnlockHint}</span>}
         </div>
 
         {/* Phase 1.1: the tape. This REPLACES the old mark-only block, which could
@@ -152,7 +152,7 @@ export const StocksOptionsTab: React.FC = () => {
             activeStock ? sectorLinkageHint(selectedStock, activeStock) : 'No mark loaded for this ticker.',
           )}
         >
-          <span className="t-micro font-mono text-phosphor-600 truncate min-w-0">
+          <span className="t-micro font-mono text-term-ink-3 truncate min-w-0">
             {activeStock?.name} · {activeStock?.sector}
           </span>
           <span className="flex items-center gap-1.5 shrink-0">
@@ -163,12 +163,26 @@ export const StocksOptionsTab: React.FC = () => {
                 {...hint(
                   `FLASH DIP — ${Math.ceil(flashDipSecondsRemaining)}s of ${FLASH_DIP_VALUATION_MULTIPLIER}x options valuation. Every P&L on this tab and the settlement that follows it are computed at this multiplier, and it is applied to the SIGNED return, so a position that is down is marked down ${FLASH_DIP_VALUATION_MULTIPLIER}x as fast.`
                 )}
-                className="t-micro font-mono font-black text-wax-400 animate-calm-glow"
+                /* INVARIANT: [An Alarm Has To Look Like One] — measured.
+                   `text-dead-soft` was a DEAD token (no such step in `@theme`), so
+                   this span emitted no colour at all and inherited `wax-600`
+                   `#881337` from the well. On the terminal ground that is
+                   **1.56:1** — the single worst text pair in the app, on the
+                   one state the file's own comment calls out as needing to be
+                   visible: "the dip is priced into every P&L on this screen, so
+                   it has to be priced on the screen."
+
+                   `panic-300` is **7.85:1** here, and it is the step `@theme`
+                   documents as "the first hint of heat — text on dark", which is
+                   exactly this case. So the fix is not a new colour: it is the
+                   panic scale being used for the one job it was written for,
+                   instead of a wax family reaching for a step it never had. */
+                className="t-micro font-mono font-black text-dead-soft animate-calm-glow"
               >
                 DIP {Math.ceil(flashDipSecondsRemaining)}s ×{FLASH_DIP_VALUATION_MULTIPLIER}
               </span>
             )}
-            <span className="t-micro font-mono text-phosphor-600">$VEX {vexVolatility.toFixed(0)}%</span>
+            <span className="t-micro font-mono text-term-ink-3">$VEX {vexVolatility.toFixed(0)}%</span>
           </span>
         </div>
       </div>
@@ -186,8 +200,8 @@ export const StocksOptionsTab: React.FC = () => {
 
       {/* Active Open Option Trades & Early Settlement */}
       {activeTrades.length > 0 && (
-        <div className="shrink-0 rounded border border-emerald-700/50 surface-terminal-well p-1.5">
-          <span className="t-caption font-mono font-bold text-emerald-400 uppercase flex items-center gap-1">
+        <div className="shrink-0 rounded border border-term-line-strong/50 surface-terminal-well p-1.5">
+          <span className="t-caption font-mono font-bold text-term-ink-2 uppercase flex items-center gap-1">
             <Clock className="w-2.5 h-2.5 animate-spin" />
             Active 0DTE Positions ({activeTrades.length})
           </span>
@@ -213,20 +227,20 @@ export const StocksOptionsTab: React.FC = () => {
                   className="flex items-center justify-between gap-2 surface-terminal-well p-1 rounded t-caption font-mono"
                 >
                   <span className="min-w-0">
-                    <span className={`block truncate ${t.type === 'PUT' ? 'text-red-400 font-bold' : 'text-emerald-400 font-bold'}`}>
+                    <span className={`block truncate ${t.type === 'PUT' ? 'text-dead-soft font-bold' : 'text-term-ink-2 font-bold'}`}>
                       ${t.symbol} {t.leverage}x {t.type}{t.isWalkBackCombo ? ' · SQUEEZE CALL' : ''} ({t.contractsCount} contracts · {formatCurrency(t.collateralLocked)} risk)
                     </span>
-                    <span className={currentPnl >= 0 ? 'text-emerald-400' : 'text-red-400'}>
+                    <span className={currentPnl >= 0 ? 'text-term-ink-2' : 'text-dead-soft'}>
                       P&amp;L {pnlLabel} · {secondsLeft}s left
                     </span>
-                    <span className="block text-phosphor-600">
+                    <span className="block text-term-ink-3">
                       Strike ${t.strikePrice.toFixed(2)} · Target ${t.targetPrice.toFixed(2)}
                     </span>
                   </span>
                   <button
                     onClick={() => settleOptionTrade(t.id)}
                     {...hint(settleHint(t))}
-                    className="shrink-0 px-2 py-0.5 bg-emerald-600 hover:bg-emerald-500 text-redaction-700 font-black rounded font-mono uppercase t-caption cursor-pointer flex items-center gap-0.5 active:scale-95 transition-all"
+                    className="shrink-0 px-2 py-0.5 bg-well hover:bg-well-2 text-term-ink-1 font-black rounded font-mono uppercase t-caption cursor-pointer flex items-center gap-0.5 active:scale-95 transition-all"
                   >
                     <CheckCircle className="w-2.5 h-2.5" />
                     <span>SETTLE</span>
@@ -241,7 +255,7 @@ export const StocksOptionsTab: React.FC = () => {
       {/* 0DTE Options Order Slip */}
       <Card material="term" density="tight" className="shrink-0 space-y-2">
         <div className="flex justify-between items-center t-micro font-mono">
-          <span className="text-phosphor-600">Leverage:</span>
+          <span className="text-term-ink-3">Leverage:</span>
           <div className="flex gap-1">
             {LEVERAGE_CHIPS.map((lvl) => (
               <button
@@ -250,7 +264,7 @@ export const StocksOptionsTab: React.FC = () => {
                 aria-pressed={leverage === lvl}
                 {...hint(leverageHint(lvl, collateralAmount), `${lvl}× leverage`)}
                 className={`px-1.5 py-0.5 rounded t-caption font-bold font-mono transition-colors cursor-pointer ${
-                  leverage === lvl ? 'bg-gold-500 text-redaction-700 font-black' : 'bg-phosphor-900 text-phosphor-600 hover:text-phosphor-300'
+                  leverage === lvl ? 'bg-accent text-term-ink-1 font-black' : 'bg-well text-term-ink-3 hover:text-term-ink-1'
                 }`}
               >
                 {lvl}x
@@ -261,7 +275,7 @@ export const StocksOptionsTab: React.FC = () => {
 
         {/* Collateral Selector */}
         <div className="flex justify-between items-center t-micro font-mono">
-          <span className="text-phosphor-600">Collateral:</span>
+          <span className="text-term-ink-3">Collateral:</span>
           <div className="flex gap-1">
             {COLLATERAL_CHIPS.map((amt) => (
               <button
@@ -271,8 +285,14 @@ export const StocksOptionsTab: React.FC = () => {
                 {...hint(collateralHint(amt), `${collateralLabel(amt)} collateral`)}
                 className={`px-1.5 py-0.5 rounded t-caption font-bold font-mono transition-colors cursor-pointer ${
                   collateralAmount === amt
-                    ? 'bg-emerald-500 text-stone-950 font-black'
-                    : 'bg-phosphor-900 text-phosphor-600 hover:text-phosphor-300'
+                    /* ISSUE-010. Was `bg-well-2 text-stone-950`: a selected chip
+                       that differed from its unselected siblings by one step of a
+                       dark ramp, and carried stock-black text on it. `accent` is
+                       a legal FILL anywhere the ink on top clears, and `ink-1` on
+                       `accent` is the palette's own documented 8.2:1 — so the
+                       selection now reads as a selection on the first look. */
+                    ? 'bg-accent text-ink-1 font-black'
+                    : 'bg-well text-term-ink-3 hover:text-term-ink-1'
                 }`}
               >
                 {collateralLabel(amt)}
@@ -300,8 +320,8 @@ export const StocksOptionsTab: React.FC = () => {
             )}
             className={`py-1.5 rounded font-mono uppercase tracking-wider t-micro active:scale-95 transition-all flex items-center justify-center gap-1 ${
               tooBroke
-                ? 'bg-newsprint-300 text-newsprint-800 cursor-not-allowed'
-                : 'bg-gradient-to-r from-red-600 to-red-500 hover:from-red-500 text-stone-950 font-black cursor-pointer'
+                ? 'bg-panel text-term-ink-3 cursor-not-allowed'
+                : 'bg-gradient-to-r from-dead to-dead hover:from-dead text-on-fill font-black cursor-pointer'
             }`}
           >
             <TrendingDown className="w-3 h-3" />
@@ -324,12 +344,19 @@ export const StocksOptionsTab: React.FC = () => {
                     secondsRemaining: walkBackSecondsRemaining,
                   })
             )}
-            className={`py-1.5 text-stone-950 font-black rounded font-mono uppercase tracking-wider t-micro active:scale-95 transition-all flex items-center justify-center gap-1 ${
+            /* ISSUE-010. `text-stone-950` again — here it had to become `ink-1` rather
+               than `on-fill`, because the two live branches are GRADIENTS that
+               cross the palette: `accent -> term-ink-2` on the walk-back chip and
+               `term-ink-3 -> term-ink-3` otherwise. No single light step survives
+               both ends of that range, and `ink-1` does: 8.2:1 on the gold end
+               and about 7:1 on the grey one. A stock colour here would have been
+               a third value pretending to be a token. */
+            className={`py-1.5 text-ink-1 font-black rounded font-mono uppercase tracking-wider t-micro active:scale-95 transition-all flex items-center justify-center gap-1 ${
               tooBroke
-                ? 'bg-newsprint-300 text-newsprint-800 cursor-not-allowed'
+                ? 'bg-panel text-term-ink-3 cursor-not-allowed'
                 : walkBackEligible
-                ? 'bg-gradient-to-r from-amber-400 to-emerald-400 ring-2 ring-amber-300 cursor-pointer'
-                : 'bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 cursor-pointer'
+                ? 'bg-gradient-to-r from-accent to-term-ink-2 ring-2 ring-accent-ink cursor-pointer'
+                : 'bg-gradient-to-r from-term-ink-3 to-term-ink-3 hover:from-term-ink-3 cursor-pointer'
             }`}
           >
             <TrendingUp className="w-3 h-3" />
@@ -343,7 +370,7 @@ export const StocksOptionsTab: React.FC = () => {
           <div
             role="status"
             aria-live="polite"
-            className="t-caption text-center font-mono font-bold text-amber-400 animate-pulse"
+            className="t-caption text-center font-mono font-bold text-accent-ink animate-pulse"
           >
             {tradeStatus}
           </div>

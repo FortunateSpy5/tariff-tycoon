@@ -23,15 +23,15 @@ export const DossierHeader: React.FC<{
   /** Right-hand status tag, e.g. "PERMANENT SOVEREIGNTY". */
   status?: string;
 }> = ({ icon, title, status }) => (
-  <div className="surface-classified flex items-center justify-between gap-2 rounded-sm px-2 py-1.5 border border-redaction-700">
+  <div className="surface-classified flex items-center justify-between gap-2 rounded-sm px-2 py-1.5 border border-term-line">
     <div className="flex min-w-0 items-center gap-1.5">
       {icon}
-      <span className="t-micro font-black tracking-widest text-newsprint-100 uppercase truncate">
+      <span className="t-micro font-black tracking-widest text-term-ink-1 uppercase truncate">
         {title}
       </span>
     </div>
     {status && (
-      <span className="t-caption font-mono font-bold text-wax-500 uppercase shrink-0">
+      <span className="t-caption font-mono font-bold text-dead-ink uppercase shrink-0">
         {status}
       </span>
     )}

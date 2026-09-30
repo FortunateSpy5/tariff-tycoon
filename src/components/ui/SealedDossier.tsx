@@ -42,8 +42,8 @@ export const SealedDossier: React.FC<{
     ? Math.min(100, Math.max(0, (reading.current / reading.target) * 100))
     : null;
 
-  const sealText = accent === 'gold' ? 'text-gold-500' : 'text-phosphor-400';
-  const barFill = accent === 'gold' ? 'bg-gold-500' : 'bg-phosphor-500';
+  const sealText = accent === 'gold' ? 'text-accent-ink' : 'text-term-ink-2';
+  const barFill = accent === 'gold' ? 'bg-accent' : 'bg-well-2';
 
   return (
     <div className="flex-1 min-h-0 flex flex-col gap-2 overflow-y-auto custom-scrollbar">
@@ -51,7 +51,7 @@ export const SealedDossier: React.FC<{
         <div className="flex items-center gap-2">
           <div
             className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full border ${
-              accent === 'gold' ? 'border-gold-600/50 bg-gold-900/40' : 'border-phosphor-600/50 bg-phosphor-900/40'
+              accent === 'gold' ? 'border-accent-ink/50 bg-accent/40' : 'border-term-line-strong/50 bg-well/40'
             }`}
           >
             <Lock className={`h-4 w-4 ${sealText}`} />
@@ -60,7 +60,7 @@ export const SealedDossier: React.FC<{
             <div className={`t-micro font-black tracking-widest uppercase ${sealText}`}>
               Channel Sealed
             </div>
-            <div className="t-caption font-bold uppercase truncate text-newsprint-200">
+            <div className="t-caption font-bold uppercase truncate text-term-ink-1">
               {demand.title}
             </div>
           </div>
@@ -69,23 +69,23 @@ export const SealedDossier: React.FC<{
 
       {/* The demand — the one action that opens this channel. */}
       <Card material="panel" className="shrink-0">
-        <div className="t-micro font-bold tracking-widest uppercase text-newsprint-400 mb-1">
+        <div className="t-micro font-bold tracking-widest uppercase text-term-ink-3 mb-1">
           To Open
         </div>
-        <p className="t-body text-gold-300 leading-snug flex items-start gap-1.5">
+        <p className="t-body text-accent-ink leading-snug flex items-start gap-1.5">
           <ChevronRight className="h-3.5 w-3.5 shrink-0 mt-0.5" />
           <span>{demand.requirement}</span>
         </p>
 
         {reading && pct !== null && (
           <>
-            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-newsprint-800">
+            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-ground">
               <div
                 className={`h-full rounded-full transition-[width] duration-500 ${barFill}`}
                 style={{ width: `${pct}%` }}
               />
             </div>
-            <div className="mt-1 flex justify-between t-micro font-mono text-newsprint-400">
+            <div className="mt-1 flex justify-between t-micro font-mono text-term-ink-3">
               <span>{formatCurrency(reading.current)}</span>
               <span>{formatCurrency(reading.target)}</span>
             </div>
@@ -95,10 +95,10 @@ export const SealedDossier: React.FC<{
 
       {/* The teaser — what is behind the door. This is the retention hook. */}
       <Card material="panel" className="shrink-0">
-        <div className="t-micro font-bold tracking-widest uppercase text-newsprint-400 mb-1">
+        <div className="t-micro font-bold tracking-widest uppercase text-term-ink-3 mb-1">
           Inside
         </div>
-        <p className="t-caption text-newsprint-300 leading-relaxed">{demand.teaser}</p>
+        <p className="t-caption text-term-ink-2 leading-relaxed">{demand.teaser}</p>
       </Card>
     </div>
   );

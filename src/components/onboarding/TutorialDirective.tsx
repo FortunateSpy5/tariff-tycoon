@@ -34,34 +34,34 @@ export const TutorialDirective: React.FC = () => {
   return (
     <Card material="paper" className="relative overflow-hidden">
       {/* Classified stamp, rotated into the corner of the document */}
-      <div className="absolute -top-1 right-2 rotate-6 border-2 border-wax-500/70 px-1.5 py-0.5">
-        <span className="t-caption font-black tracking-widest text-wax-500 uppercase">
+      <div className="absolute -top-1 right-2 rotate-6 border-2 border-dead-ink/70 px-1.5 py-0.5">
+        <span className="t-caption font-black tracking-widest text-dead-ink uppercase">
           Directive
         </span>
       </div>
 
       <div className="flex items-start gap-2 pr-16">
-        <GraduationCap className="w-4 h-4 mt-0.5 shrink-0 text-newsprint-800" />
+        <GraduationCap className="w-4 h-4 mt-0.5 shrink-0 text-ink-3" />
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
-            <span className="t-micro font-black tracking-widest text-wax-500 uppercase">
+            <span className="t-micro font-black tracking-widest text-dead-ink uppercase">
               Step {tutorialStepIndex + 1}/{TUTORIAL_CHAIN.length}
             </span>
-            <span className="t-micro text-newsprint-300" aria-hidden>//</span>
-            <span className="t-micro font-black tracking-widest text-newsprint-800 uppercase">
+            <span className="t-micro text-ink-2" aria-hidden>//</span>
+            <span className="t-micro font-black tracking-widest text-ink-3 uppercase">
               {step.title}
             </span>
           </div>
-          <p className="t-caption text-newsprint-800 mt-1 leading-relaxed font-medium">
+          <p className="t-caption text-ink-3 mt-1 leading-relaxed font-medium">
             {step.body}
           </p>
 
           <div className="flex items-center gap-1.5 mt-2">
-            <span className="t-caption font-bold text-newsprint-900 uppercase">
+            <span className="t-caption font-bold text-ink-2 uppercase">
               Focus: {step.focus === 'desk' ? 'Center Desk' : step.focus === 'left' ? 'Left Terminal' : 'Right Deck'}
             </span>
             {step.hotkey && (
-              <kbd className="t-caption font-mono font-black bg-newsprint-900 text-newsprint-50 px-1 rounded">
+              <kbd className="t-caption font-mono font-black bg-well text-ink-1 px-1 rounded">
                 {step.hotkey}
               </kbd>
             )}
@@ -77,7 +77,7 @@ export const TutorialDirective: React.FC = () => {
                   'Burn the rest of the directive. Sets the tutorial index to the end of the chain, so onboarding never replays — including after a Flight to the Caymans. You keep the market, the paper trades, and everything you have already earned. You lose only the coaching; the Career Objectives panel takes over.',
                   'Skip onboarding'
                 )}
-                className="t-caption font-mono px-1.5 py-0.5 rounded text-newsprint-800 hover:bg-newsprint-300/40 transition-colors"
+                className="t-caption font-mono px-1.5 py-0.5 rounded text-ink-3 hover:bg-panel/40 transition-colors"
               >
                 <X className="w-3 h-3 inline" />
               </button>
@@ -94,7 +94,7 @@ export const TutorialDirective: React.FC = () => {
                       : 'Mark this step done and move the directive to the next one. It costs nothing.',
                     isFinal ? 'Seal onboarding and continue' : 'Advance to the next directive step'
                   )}
-                  className="t-caption font-mono font-black uppercase px-1.5 py-0.5 rounded bg-newsprint-900 text-newsprint-50 hover:bg-wax-500 flex items-center gap-0.5 transition-colors"
+                  className="t-caption font-mono font-black uppercase px-1.5 py-0.5 rounded bg-well text-ink-1 hover:bg-dead flex items-center gap-0.5 transition-colors"
                 >
                   {isFinal ? 'Seal It' : 'Next'}
                   <ChevronRight className="w-3 h-3" />
@@ -106,9 +106,9 @@ export const TutorialDirective: React.FC = () => {
       </div>
 
       {/* Progress rule along the bottom edge of the document */}
-      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-newsprint-300/50">
+      <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-panel/50">
         <div
-          className="h-full bg-wax-500 transition-all duration-500"
+          className="h-full bg-dead transition-all duration-500"
           style={{ width: `${((tutorialStepIndex + 1) / TUTORIAL_CHAIN.length) * 100}%` }}
         />
       </div>

@@ -1,7 +1,7 @@
 # UX Evaluation & Redesign Plan — 3:00 AM Terminal Panic
 
 **Target:** *EXECUTIVE DEGEN: SHORT THE WORLD* (*The Art of the 3:00 AM Tariff*)
-**Status:** 🟢 **P0s SHIPPED** · 🟢 **Phase 0 SHIPPED** · 🟢 **Phase 1 SHIPPED** · Phases 2–4 proposed
+**Status:** 🟢 **P0s SHIPPED** · 🟢 **Phase 0 SHIPPED** · 🟢 **Phase 1 SHIPPED** · 🟢 **Phase 2 SHIPPED** · Phases 3–4 proposed
 **Date:** 2026-09-29
 **Supersedes:** nothing. `UI_REDESIGN_PLAN.md` remains the historical record of the
 newsprint/classified pass and is still the source for the region→material table.
@@ -751,21 +751,84 @@ on the first screen is to point at the shortest path.
 
 ---
 
-## Phase 2 — Go loud *(chosen direction: 3 AM terminal-panic)*
+## Phase 2 — Go loud *(chosen direction: 3 AM terminal-panic)* — ✅ SHIPPED
 
 - **2.1 Palette.** Darken the surround; keep parchment as the **desk only**; push
   wax-red / gold saturation; add a `panic` scale that fires on frenzy / crisis / raid.
+  ✅ **SHIPPED.** `.surround-room` on the app root (warm walnut `rgb(23,18,12)` with
+  two corner shadows, deliberately *not* a `surface-*` token so it cannot leak onto a
+  card), `.surface-desk` reworked as an object (2.2), and a four-step `--color-panic-*`
+  scale consumed by `.panic-wash` / `.panic-wash-strong`.
+  The scale is a **warning channel, not a second palette**, so it fires on three
+  states only: a crisis ringing, the walk-back window open, and S.L.O.P. heat at
+  `SLOP_CRITICAL_THRESHOLD`. Frenzy gets the soft wash. Sub-critical heat gets
+  nothing — at 60% nothing is happening yet, and dyeing the cockpit red for it would
+  make the real 100% meaningless. The wash is a static `box-shadow`, not an
+  animation, so `prefers-reduced-motion` cannot erase the one thing the player needs
+  to see. `SLOP_CRITICAL_THRESHOLD` / `SLOP_ELEVATED_THRESHOLD` were lifted out of
+  `SlopRadarTab` so the radar's status word and the cockpit's alarm cannot disagree.
 - **2.2 The desk becomes an object.** Wood/leather surround, blotter under the
   stamp, props as *objects resting on paper* (drop-shadow + slight rotation) rather
   than cards. GDD's "parchment directive" and "physical props" stop competing.
+  ✅ **SHIPPED**, with one item deliberately not done — see below.
+  `.surface-desk` gains a leather pad, a hard edge, a cast shadow onto the wood, and
+  a wood grain masked to the margins. `.prop-object` gives the props a real shadow
+  plus a per-prop sub-degree rotation (−0.3° / +0.4° / −0.5°).
+  **The blotter under the stamp was cut.** The desk's leftover strip turned out to
+  be 134–369px depending on state, and the stamp now *fills* it (2.3). A blotter
+  sized to a strip whose height moves by 235px between a ringing crisis and a quiet
+  desk would have to be re-derived on every state change, and it would have taken
+  the space the stamp needs. The pad edge and grain carry the "object on a surface"
+  read on their own. Roadmap.
 - **2.3 The clicker gets weight.** Replace the plain circle with a layered-SVG
-  **Rubber Stamp / Golden Sharpie** (handle, barrel, nib, ink staining). Fills 204 px
+  **Rubber Stamp / Golden Sherpie** (handle, barrel, nib, ink staining). Fills 204 px
   of dead space with something worth screenshotting.
+  ✅ **SHIPPED, and it was not a cosmetic change.** `StampIllustration` (layered
+  SVG: barrel, grip rings, shoulder, ink-stained rubber, cast shadow) plus
+  `StampFaceLabel` (the lettering as real HTML, never SVG `<text>`).
+  The reason this item was load-bearing: **the centre desk was already over-subscribed
+  and the stamp was silently painting over the directive sheet.** The button was a
+  hard-coded `w-44 sm:w-52 md:w-60` (176/208/240px) inside a `flex-1 min-h-0` column
+  on a desk with `overflow-hidden`, so it had 134px of space in steady state and
+  **69px while a crisis was ringing** — a 95px overflow at its worst, and a crash
+  for screen size. `my-auto` compounded it by pushing the overflow out of *both* ends
+  of the column. The stamp now takes exactly the space it is given, capped at 320px.
+  Its lettering is sized in `cqw` against the button's own container
+  (`t-stamp-plate/verb/sub/tag` in the type scale), and below 170px the face sheds
+  the two qualifier lines and grows the verb — a container query, not a media query,
+  because the breakpoint has to follow the space the stamp actually got.
 - **2.4 Crisis layout.** The banner's content overflows its own box (`MAX` wraps to a
   second line). Rebuild as a proper alarm strip with a real countdown.
+  ⚠️ **PARTLY STALE, partly shipped.** The overflow claim no longer holds — measured
+  at 1920×1080, 1366×768 and 1280×720 the crisis card does not clip
+  (`scrollHeight === clientHeight` at every size), presumably fixed when the card was
+  last rewritten. **The substance did hold:** at max tier the strip read a bare `MAX`
+  with no time on it, so the player could not tell whether answering now or in four
+  seconds was a different decision — which is the entire decision the card exists to
+  pose. It now reads `MAX · Ns LEFT`, with `N` derived from `CRISIS_WINDOW_SECONDS`
+  so retuning the window moves the countdown with it. Below max tier the original
+  `+2.5x in 3s` escalation copy is unchanged and still correct.
 - **2.5 Make it a cockpit.** Prominent `$X/s` with a source breakdown; the frenzy
   **20-second countdown** as a large number; the walk-back window as a shrinking ring.
+  ✅ **SHIPPED** as `IncomeReadout` + `incomeBreakdown` (headless).
+  The headline is the sum of all three sources, and every source renders **even at
+  `$0.00`** with the reason it is dormant — a row that only appears once it pays
+  teaches the player nothing about the lever they are meant to pull. Both dials are
+  `conic-gradient` sweeps whose proportion *is* the remaining fraction, so the visual
+  and the number cannot disagree; both stay mounted when inert so nothing below them
+  shifts.
+  **The autopen row is deliberately flat.** `tickPassiveEconomy` pays
+  `base × 5 × Δt`, ignoring the Tungsten Nib and the Sovereign Immunity Slips. A
+  readout that multiplied it by the click yield would overstate the upgrade by up to
+  20× for a late-game player — the most expensive direction to be wrong in. Its
+  constants were extracted to `engine/systems/passiveRates.ts` so the readout and the
+  tick import one value rather than two copies of a rate.
+  `aria-live="off"` on both dials is deliberate: they update 4×/second during a
+  frenzy, and a polite live region on a 4Hz counter is an unusable stream of speech.
 - **2.6 Ultrawide.** Implement the `max-w-[1720px]` the spec already claims.
+  ✅ **SHIPPED.** Verified at 2560px: the grid renders at exactly 1720 instead of
+  2540, so 820px of letterboxing is gone and the cockpit reads as a document on a
+  desk rather than a letterboxed game.
 
 ---
 
@@ -805,9 +868,17 @@ Cheap, and it stops the exact failure mode AGENTS.md warns about.
 **Phase 0 → 1.1 (chart) → 2.3 + 2.5 (focal moment + cockpit readouts) →
 2.1 + 2.2 (palette + desk) → Phase 3 → Phase 4.**
 
-Phase 0 is done. It was cheap, it made everything after it legible, and it is what
-was asked for. `npm run hover:check` now runs inside `npm run build` at budget 0,
-so "no element on screen is unhoverable" is a number rather than an intention.
+Phases 0, 1 and 2 are done. Phase 0 was cheap, it made everything after it legible,
+and it is what was asked for. `npm run hover:check` now runs inside `npm run build` at
+budget 0, so "no element on screen is unhoverable" is a number rather than an
+intention.
+
+The recommended order for Phase 2 turned out to be load-bearing rather than
+cosmetic, though not for the reason given. 2.3 was sequenced first as "the focal
+moment", and it could not be done as a coat of paint: the desk had no room for it.
+Fixing that meant measuring the desk's vertical budget, which is also what made 2.5's
+readout affordable and 2.4's real finding visible. The palette and desk work (2.1,
+2.2) went last so the stamp would be drawn against the final materials.
 
 ---
 
@@ -826,7 +897,9 @@ so "no element on screen is unhoverable" is a number rather than an intention.
       — *`PriceChart` ships a real OHLC candlestick tape; the impact marker and
       flash are stamped by the engines that cause the move, and both directions
       (YAP crash, walk-back clarification) render correctly*
-- [ ] The 20-second frenzy countdown is unmissable
+- [ ] The 20-second frenzy countdown is unmissable — ✅ *Phase 2.5: a 40px
+      `conic-gradient` dial with the seconds as a 14px number at the top of the
+      desk, sweeping exactly the remaining fraction*
 - [ ] The certificate is one click from anywhere in the game
 - [ ] Zero doc ↔ code drift, enforced by a build gate
 - [x] `npm run build` clean · `oxlint` clean · no file over 400 lines
@@ -1032,6 +1105,343 @@ live game all nine tickers now show 16.8–27.3px of clearance.
 
 Measuring beat guessing here, and twice: the assumed character width, and the
 assumed sign width, were both wrong in ways only a real measurement exposed.
+
+---
+
+## Phase 2 review round
+
+Phase 2 was specified as a visual pass, and the first real finding is that it was not.
+The layout work underneath 2.3 turned out to be a **latent crash** that predated the
+phase, and the phase's own first draft made it much worse before the fix.
+
+### The stamp was painting over the directive sheet
+
+The centre desk is a zero-scroll flex column with `overflow-hidden`. The stamp was a
+fixed `w-44 sm:w-52 md:w-60` circle inside a `flex-1 min-h-0` wrapper, so the button's
+height and the space it had were decided by two unrelated numbers. Measured at
+1920×1080, in **layout** pixels:
+
+| desk state | space for the stamp | button | spill |
+|---|---|---|---|
+| steady | 134px | 240px | −106px |
+| crisis ringing | 69px | 240px | −171px |
+| crisis ringing + money printer | 31px | 240px | −209px |
+
+`my-auto` on the wrapper made it worse in a way that is worth recording: an auto
+margin in an overflowing flex column centres the item and pushes it out of **both**
+ends, so the stamp escaped 95px *above* its own wrapper and landed on the directive
+sheet rather than below the gauges where a naive overflow would have put it.
+
+**This was already broken before Phase 2.** Removing the Phase 2.5 readout still leaves
+the ringing-crisis case 46px over budget. The crisis ringing is the exact moment the
+player most needs to read the desk, and it was the worst case for the hero control.
+
+Fixed by making the stamp take the space it is given (`min(100cqh, 320px)` off a
+wrapper that is definite on both axes), which also removed the need for `my-auto`.
+Zero spill verified at 1920×1080, 1366×768 and 1280×720.
+
+### Two circular-sizing traps, both of which looked like "the element is tiny"
+
+Worth writing down because both produced a collapsed control rather than an error,
+and both would be easy to reintroduce.
+
+- **`container-type: size` on a `fit-content` flex item resolves to zero.** The
+  lettering is sized in `cqw` so it can scale with the stamp, which makes the button a
+  container — but as a centred flex item its *width* was fit-content, i.e. the width
+  of its own `cqw` lettering. The browser broke the cycle at 0 and the stamp became a
+  4px sliver. The container has to be an **ancestor** whose size does not depend on
+  the button at all.
+- **Comparing `scrollHeight` to `getBoundingClientRect()` measures nothing useful
+  once the root is `transform: scale()`d.** The app scales the whole cockpit below
+  840px, so a transformed rect against an untransformed `scrollHeight` reported a
+  phantom 79px overflow at 1366×768. `clientHeight`/`offsetHeight` are layout pixels
+  and are not affected by the transform. Two "overflow" findings in this phase were
+  this measurement error; both were near-misses that cost real time, and the second
+  one nearly caused me to "fix" a layout that was already correct.
+
+### Copy and palette defects
+
+- **`1.35` was typed into the walk-back hint.** The 35% recovery rally is
+  `WALK_BACK_PUMP_MULTIPLIER`, and a figure in copy is a figure that rots. Now imported.
+- **The Phase 2+ stamp face went dark-on-dark.** Its lettering was `text-newsprint-900`,
+  which was correct while the button was a gold gradient and became near-invisible the
+  moment the rubber went dark. The type is now light on *both* faces; the two are told
+  apart by the object's metal and a tint on the plate line, not by inverting contrast.
+  Frenzy deliberately does **not** recolour the type red — the rubber behind it is
+  already red.
+- **The readout cost the hero object 60% of its height, silently.** The first version
+  was three stacked rows under a 22px headline at 125px. On a desk with no scrollbar
+  that came straight out of the stamp, and nothing errored. It is now 67px with the
+  breakdown as inline chips — the *visible* breakdown the item was filed for, rather
+  than the three rates being pushed into hover text, which would have satisfied the
+  letter of 2.5 while restoring the exact defect Finding D describes.
+- **At 720p the stamp's qualifier lines were a 7px smudge.** The stamp's size is a
+  consequence of the desk budget (300px at 1080p, 152px at 768p, 132px at 720p), so the
+  fix is a **container query on the stamp itself**: below 170px the face sheds the two
+  qualifier lines and grows the verb. A viewport media query would be wrong in both
+  directions — too small on a roomy 1080p desk, too large on a 720p one.
+- **`to-red-707`** — a typo in a Tailwind gradient stop, which silently renders as no
+  stop at all rather than as an error.
+
+### One plan finding retired
+
+- **2.4's overflow claim is stale.** The crisis card does not clip at any of the three
+  required sizes. The countdown half of 2.4 was real and shipped; the overflow half was
+  already fixed by an earlier rewrite of the card.
+
+---
+
+## The theme overhaul that was not an overhaul
+
+The standing complaint was *"the UI theme feels disjointed and random."* Four
+directions were researched and put to three adversarial reviewers with
+non-overlapping briefs (legibility/contrast, satirical identity, engineering
+feasibility). **All three independently rejected the aesthetic options and
+converged on the same answer, which is not one of the four.**
+
+### What was actually wrong
+
+Not the hues. Five measurable defects, in descending order of consequence:
+
+1. **Three sub-4.5:1 text pairs shipped through four green builds.** All at
+   `t-caption` (9.5px), where WCAG 2.1 SC 1.4.3 grants no large-text exemption:
+   the ink **Refill** button at **2.82:1** (the most-tapped spend control in the
+   loop), the terminal **FLASH DIP** at **1.56:1**, and the `IncomeReadout`
+   dormant-rate chips at **2.19:1** — the last of which was introduced by
+   *Phase 2.5 of this plan*, and the exact row a player must read to learn which
+   of their three faucets is dry. **All three now pass** (5.31 / 7.85 / 7.91) and
+   are locked by a gate.
+2. **30 references to colour tokens that do not exist.** Tailwind v4 emits no
+   rule at all for a class whose token is undefined, so the property silently
+   *inherits* — which is the literal mechanical cause of "random". Spread across
+   17 files. Not one of the four existing gates could see it.
+3. **The ramps are too sparse to index.** Every dead reference is a missing
+   *mid-step* of a scale that exists: `gold` jumps 600→900, `newsprint` 400→800,
+   `wax` is 500/600 only. An author writing `text-gold-700` is **correctly
+   indexing** a scale defined with six steps instead of twelve. So a sed fix
+   changes 29 sites and prevents nothing.
+4. **The paper half has no dark-enough green, so it stole the CRT's.** Measured:
+   `emerald-400` on parchment is **1.69:1**, `phosphor-400` is **1.53:1** — and
+   `CertificateExporter.tsx` renders `phosphor-400` with a `text-glow-phosphor`
+   bloom on a parchment card. That glow is not juice; it is a contrast failure
+   with a bloom on top.
+5. **Two private palettes outside the token system.** `decreeCard.ts` — the
+   shareable PNG — carries 28 hardcoded hexes, and `PriceChart.tsx` another 11.
+
+### The finding that inverted the plan
+
+**Gold cannot be a text colour on parchment.** `gold-600` on `newsprint-50` is
+**2.82:1**, and sweeping the warm ramp showed that *every* value clearing 4.5:1
+on cream is a **brown** — `#94601a` is the first, and it reads as tobacco. So the
+"gold is the accent" premise is structurally unshippable at caption size. Gold can
+be a **fill**; the text on it has to be dark. That single constraint decided the
+Refill fix and constrains every future palette decision.
+
+### What shipped
+
+- **`scripts/check-token-integrity.mjs`** — fails on any reference to an
+  undefined project colour token. Ratcheted to the current **30 sites** so the
+  budget is a true baseline. The family alternation is built *from the token
+  names in `@theme`*, not `[a-z]+`, so `border-l-2` and `border-x-4` cannot
+  false-positive — verified. Comments are blanked to spaces rather than removed
+  so reported line numbers stay true, which matters because this repo documents
+  its own dead tokens at length.
+- **`scripts/probe-contrast.mts`** — a **declared** contrast census, not a scan.
+  17 named pairs with their surfaces, alpha composited in token space, at
+  budget 0. It runs on plain `node` (types stripped natively) so it needs no
+  runner and no new devDependency, and it lives in `npm run build`. Its declared
+  pairs include the three defects above with their previous values in the note,
+  so a regression names its own history.
+- **The amber fold** — 28 references across 10 files, `amber-*` → `gold-*`,
+  **zero visual change** and proven rather than asserted: `gold-300/400/500/600`
+  are byte-identical to their stock `amber` twins. Only those four steps were
+  folded. `amber-100/200/700/950` were deliberately left, because no `gold` step
+  exists for them and **`gold-700` is itself a dead reference at 11 sites** —
+  folding `amber-700` into it would have silently activated all eleven.
+- **The three contrast fixes**, described above.
+
+### The trap this work walked into, and did not take
+
+Adding the missing scale steps is the obvious way to make the dead-token count
+go to zero, and it is **wrong**. At least four of those sites currently inherit
+at 8:1 or better; defining the step they name drops them to **3.96–4.36:1**.
+`SituationRoom.tsx` would become green-on-cream at 3.96:1 — trading one
+legibility bug for a different one while the count went to zero.
+**A count reaching zero is not the goal; contrast going up is.** `token:check`
+proves the first, and only `probe-contrast` proves the second, which is why both
+were needed.
+
+### Rejected, with reasons
+
+- **Monochrome + one alarm (amber terminal).** Contradicts `GDD:24` ("neon-green
+  candles") and `UI_DESIGN_SPECIFICATION.md:79-80` ("BagHolder Pro is a CRT. A
+  CRT **is** correct here"). More damningly, it reserves the one loud channel for
+  *"states where the player is losing something"* — and the plan's own designated
+  clip (3.3 fat-finger autocorrect, `+10 000%` pump) is neither. Today that pump
+  is a violent green candle on a green CRT: it reads as *the machine
+  malfunctioning*, which is the joke. Option 2 makes the funniest 45 seconds
+  tasteful. It also collapses the left/right wing distinction, since amber ≡ the
+  right wing's gold.
+- **One material (kill the CRT).** It found a real defect — `SealedDossier`
+  renders a *redacted paper* dossier inside a `surface-terminal` pane, so the
+  game says "locked terminal" and "redacted file" for the same object in the same
+  pixels. But it is a component rewrite, not a palette change, and it is only
+  worth doing if the replacement is a **named object with its own physics**
+  (perforation, tear-off stub, thermal fade, a printer feed slot). Deleting a CRT
+  is not the same as designing a receipt printer. Roadmap.
+
+### Still open
+
+- **30 dead references** remain, deliberately. They now need per-site decisions
+  about which *existing* step is contrast-correct for each surface — not a sed.
+- **The terminal text scale.** 15 sites override the inherited `phosphor-300`
+  (10.62:1) down to `phosphor-600` (4.52:1, and APCA-weak at ~Lc 39) for axis
+  labels at 9.5px. Re-stepping it is a palette decision.
+- **The paper's missing green.** Root cause of defect 4 and the one thing that
+  would most change how the app reads. It wants its own dark `--color-money-*`
+  ramp; `phosphor` should be *material only*, never a text colour on paper.
+- **`decreeCard.ts`.** Its 28 hexes are already *exactly* the current tokens, so
+  it is a correct frozen snapshot rather than a drifted one. The risk is silent
+  divergence the moment any palette change lands, on the one surface that is
+  publicly visible. It should read tokens via `getComputedStyle` — but not before
+  someone fixes the stale "uses OffscreenCanvas" comment in its header, which
+  would make that approach impossible.
+- **`index.css` is ungated.** 696 lines, and `size:check` only walks `.ts`/`.tsx`.
+  A palette can grow there with nothing complaining, which is *how* the ramps got
+  sparse.
+- **`theme:check` is theatre.** Zero findings, zero real exemptions, a basename
+  exemption, an escape hatch defeated by any string, and its one `theme-allow`
+  in the tree marks a class its regex cannot even match.
+
+---
+
+## [TUNGSTEN] — the theme overhaul
+
+Shipped after the review round above. The review's finding was that the app did
+not need *different hues*, it needed **light, stocks, and an owner for its own
+green**. All three were done.
+
+### The paper has real stocks now
+
+The old ramp had `newsprint-50` and `newsprint-100` **4% apart** — and they were
+the desk and a sheet resting on it. A sheet that does not separate from the
+surface under it does not read as an object, so the entire centre column was one
+flat beige field. That, more than any hue, is what "disjointed and random" was
+pointing at.
+
+There are now four stocks and **the value order is inverted**:
+
+| step | stock | role |
+|---|---|---|
+| 50 | sheet | the paper — lightest |
+| 100 | aged document | official paperwork |
+| 200 | **blotter pad** | the desk itself, mid, so paper sits ON it |
+| 300 | onion skin | cooler, thinner, carbon copies |
+
+Paper lighter than the pad. That inversion is what makes a stack read as a
+stack, and `surface-sheet` now also casts a shadow, because a sheet that is a
+different colour from the surface under it still reads as a flat panel until it
+casts one.
+
+### The desk is lit, not filled
+
+A tight tungsten pool from the **upper left** — which is where
+`StampIllustration` throws its cast shadow, because light and shadow have to
+agree or the object floats — with an **opaque** falloff to a dark rim. The old
+"lighting" was a near-white radial at 50% 0% over a cream fill, which is not a
+light source; it is a slightly paler version of the same colour. A broad soft
+pool over a large surface is indistinguishable from no pool at all, so the
+falloff had to be hard to make the pool exist at all.
+
+`.surround-room` dropped to near-black with a fast-dying warm spill. It is 3am,
+there is one lamp, and the paper is the only bright thing in the room.
+
+### The paper got its own green
+
+`--color-money-*`, a deep teal-green. Before this the desk and the D.U.M.P. had
+no green of their own and reached into the terminal's: `emerald-400` measured
+**1.69:1** on parchment, and `CertificateExporter` shipped `phosphor-400` at
+**1.53:1** rescued by a `text-glow-phosphor` bloom — a contrast failure with a
+bloom on top. **61 references migrated**: 21 in the terminal to `phosphor` (the
+CRT keeps its own green, step for step) and 40 on paper to `money`.
+
+It is deliberately deep, because 600–800 are the only steps that can carry text
+on cream, and because it must be separable from `phosphor` by hue and not only
+by luminance — on a terminal well, money and terminal chrome previously sat
+**1.37:1** apart, both green.
+
+### Gold split into fill and ink
+
+The constraint that decided the palette: `gold-600` on parchment was **2.82:1**,
+and every warm value clearing 4.5:1 on cream is a **brown**. So gold cannot be a
+text colour on paper. 300–600 are now **fill** and take dark ink; 700–950 are
+**ink**. `gold-700` was a dead reference at eleven sites and is now `#8a5200` at
+**5.66:1** — chosen over the interpolated `#a35c05` (4.05:1) specifically so that
+completing the ramp made those eleven legible rather than merely defined.
+
+### Ramp completion, not a sed
+
+**30 dead references → 0**, and not one of them was edited to achieve that.
+Every dead reference was a missing *mid-step* of a scale that existed — `gold`
+jumped 600→900, `newsprint` 400→800, `wax` was 500/600 only — so an author
+writing `text-gold-700` was **correctly indexing a scale defined too sparsely**.
+Defining the steps resolved all thirty at once, which is the strongest possible
+evidence that the cause was the ramp and not the discipline.
+
+**The trap, walked into and then caught.** Defining the steps is also the naive
+migration, and the review warned it would make four sites *worse* by dropping
+them from 8:1 to 3.96–4.36:1. The new values were chosen contrast-first for
+exactly that reason, and `probe-contrast` then found the three that still
+failed — including `phosphor-700` on cream at **4.30:1**, which is green text
+borrowed from a CRT and printed on paper: the precise defect the overhaul
+exists to kill. It is now `money-700` at 7.46:1.
+
+### The two zero-visual-change consolidations
+
+- **28 `amber-*` → `gold-*`** across 10 files. `gold-300/400/500/600` are
+  byte-identical to their stock twins. `amber-100/200/700/950` were left: no
+  `gold` step existed, and **`gold-700` was itself dead at eleven sites**, so
+  folding `amber-700` into it would have silently activated all of them.
+- **47 `red-*` → `panic-*`** across 12 files. `panic-300/400/500/600/700/950`
+  are byte-identical to `red-300/400/500/600/700/950`. `red-100/200/900` have no
+  panic equivalent and remain, deliberately, as a five-reference worklist.
+
+Both were verified as byte-identical rather than asserted, and both are what
+makes the `panic` scale stop being decorative: before this, 49 raw `red`
+references were spending the alarm colour on ordinary UI, which is exactly the
+failure the scale's own comment warns about.
+
+### Also
+
+- `.surface-terminal` (`#04140a`) and `.surround-room` (`#17120c`) promoted from
+  hardcoded hexes to `phosphor-950` and `room-950`, so the CSS no longer
+  bypasses the token file that a script reads.
+- `phosphor-600` moved `#16a34a` → `#22c55e`, lifting the fifteen terminal
+  axis-label sites from **4.52:1 to 6.54:1**.
+- The Red Phone's icon chip was rendering **cream**: both its
+  `bg-newsprint-800` and its `text-wax-400` were dead tokens. The single most
+  thematically load-bearing dead reference in the repo was making the red phone
+  beige. It is now a wax fill with a lit edge.
+
+### What was deliberately not done
+
+- **The terminal stays green.** An amber CRT scores *better* on contrast
+  (13.88:1 vs 13.48:1) and better for dichromats, and it is the period-accurate
+  choice. It is still wrong here: amber is the right wing's accent, so it would
+  collapse the wing separation, and it would leave the plan's own designated
+  clip — 3.3 fat-finger autocorrect, a **+10 000% pump** — with no loud channel
+  available, since `panic` is reserved for states where the player is losing
+  something. `GDD:24` and `UI_DESIGN_SPECIFICATION.md:79` both argue the CRT.
+- **The CRT was not retired.** `SealedDossier` rendering a *redacted paper*
+  dossier inside a `surface-terminal` pane is a real metaphor defect, but fixing
+  it is a component rewrite and is only worth doing if the replacement is a named
+  object with its own physics — perforation, tear-off stub, thermal fade, a
+  printer feed slot. Deleting a CRT is not designing a receipt printer.
+- **`index.css` is still ungated** at 750-odd lines, and `size:check` still only
+  walks `.ts`/`.tsx`. That is *how* the ramps got sparse and it is the next thing
+  to fix.
+- **`theme:check` is still theatre** — zero findings, zero real exemptions, and
+  its one `theme-allow` in the tree marks a class its regex cannot match.
 
 ---
 

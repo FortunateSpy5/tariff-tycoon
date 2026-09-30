@@ -29,7 +29,7 @@ import { formatCurrency } from '../../engine/math/bigNumber';
 import { Card, CardHeader } from '../ui/Card';
 import { hint } from '../ui/hint';
 import { objectiveHint } from './objectiveHint';
-import { TutorialDirective } from '../onboarding';
+import { TutorialDirective } from '../onboarding/TutorialDirective';
 import { CertificateExporter } from '../share/CertificateExporter';
 
 export const SituationRoom: React.FC = () => {
@@ -87,9 +87,9 @@ export const SituationRoom: React.FC = () => {
       <Card material="paper">
         <CardHeader
           title="Career Objectives"
-          icon={<Target className="w-3.5 h-3.5 text-wax-500" />}
+          icon={<Target className="w-3.5 h-3.5 text-dead-ink" />}
           right={
-            <span className="t-caption font-mono font-black text-phosphor-600 shrink-0">
+            <span className="t-caption font-mono font-black text-ink-3 shrink-0">
               {done.length}/{rows.length} DONE
             </span>
           }
@@ -122,7 +122,7 @@ export const SituationRoom: React.FC = () => {
                 // `role="progressbar"` below carries the accessible description.
                 {...hint(objectiveHint(obj, current, isDone, isNext))}
                 className={`rule-print pb-1.5 last:border-0 last:pb-0 ${
-                  isNext ? 'border-l-2 border-wax-500 pl-1.5' : ''
+                  isNext ? 'border-l-2 border-dead-ink pl-1.5' : ''
                 }`}
               >
                 <div className="flex items-center justify-between gap-2">
@@ -130,24 +130,24 @@ export const SituationRoom: React.FC = () => {
                     <span
                       className={`rounded-full shrink-0 ${
                         isNext
-                          ? 'w-3.5 h-3.5 border-2 border-wax-500 animate-calm-glow'
-                          : 'w-3 h-3 border-2 border-wax-500/50'
+                          ? 'w-3.5 h-3.5 border-2 border-dead-ink animate-calm-glow'
+                          : 'w-3 h-3 border-2 border-dead-ink/50'
                       }`}
                       aria-hidden
                     />
                     <span
                       className={`font-black uppercase truncate ${
                         isNext
-                          ? 'text-sm text-newsprint-900'
-                          : 't-caption text-newsprint-900'
+                          ? 'text-sm text-ink-2'
+                          : 't-caption text-ink-2'
                       }`}
                     >
-                      {isNext ? <span className="text-wax-500 mr-1">NEXT //</span> : null}
+                      {isNext ? <span className="text-dead-ink mr-1">NEXT //</span> : null}
                       {obj.label}
                     </span>
                   </div>
                   <span
-                    className={`font-mono font-black text-newsprint-800 shrink-0 ${
+                    className={`font-mono font-black text-ink-3 shrink-0 ${
                       isNext ? 'text-sm' : 't-caption'
                     }`}
                   >
@@ -157,36 +157,58 @@ export const SituationRoom: React.FC = () => {
 
                 {!isDone && (
                   <>
-                    <div
-                      className={`mt-1 bg-newsprint-300/60 rounded-full overflow-hidden ${
-                        isNext ? 'h-2' : 'h-1'
-                      }`}
-                      role="progressbar"
-                      aria-label={obj.label}
-                      aria-valuemin={0}
-                      aria-valuemax={obj.target}
-                      aria-valuenow={Math.floor(current)}
-                    >
+                    {/* INVARIANT: [The Bar Goes Where The Counter Is Not]
+                        The counter and the bar encoded the same number twice on
+                        every row — four channels for one fact, on a panel that
+                        stacks four of these. The promoted row keeps both: it is
+                        the one being acted on, and there the repetition reads as
+                        a progress bar rather than a footnote. The rows below
+                        carry the number alone, which is all a list of things you
+                        are NOT doing yet needs. */}
+                    {isNext && (
                       <div
-                        className="h-full bg-wax-500 transition-all duration-500 rounded-full"
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                    <p
-                      className={`text-newsprint-800/80 mt-0.5 leading-snug ${
-                        isNext ? 't-caption' : 't-caption opacity-80'
-                      }`}
-                    >
-                      {obj.detail}
-                    </p>
+                        className="mt-1 bg-panel/60 rounded-full overflow-hidden h-2"
+                        role="progressbar"
+                        aria-label={obj.label}
+                        aria-valuemin={0}
+                        aria-valuemax={obj.target}
+                        aria-valuenow={Math.floor(current)}
+                      >
+                        <div
+                          className="h-full bg-dead transition-all duration-500 rounded-full"
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    )}
+
+                    {/* INVARIANT: [Only The Next Objective Explains Itself]
+                        Every row rendered `obj.detail` — a full sentence. Four
+                        sentences of coaching for four things the player is not
+                        doing yet, on the first screen they ever see. The
+                        description belongs to the one being asked for. The
+                        others stay silent until promoted, and `objectiveHint`
+                        still carries the full text on hover. */}
+                    {isNext && <p className="text-ink-3 mt-0.5 leading-snug t-caption">{obj.detail}</p>}
                   </>
                 )}
               </div>
             );
           })}
 
+          {/* `phosphor-700` is a TERMINAL step and this is a paper surface:
+              measured on `newsprint-100` it is 4.30:1 at `t-caption`, which is
+              both a WCAG failure and the exact defect this palette overhaul
+              exists to kill — green text borrowed from a CRT, printed on cream.
+              `money-700` is the paper half's own green and measures 7.46:1 on a
+              sheet.
+
+              This line has now been wrong in the same direction twice. It was a
+              dead token, so it silently inherited body ink; defining
+              `phosphor-700` to complete the ramp turned it into borrowed-green
+              on paper. The ramp was the right fix for 30 references and wrong
+              for this one, which is why the contrast probe exists. */}
           {done.length > 0 && (
-            <p className="t-caption font-mono text-phosphor-700 leading-snug">
+            <p className="t-caption font-mono text-live-ink leading-snug">
               Certified: {done.map((d) => d.obj.label).join(' · ')}
             </p>
           )}
@@ -198,14 +220,14 @@ export const SituationRoom: React.FC = () => {
           bureaucratic form rather than the thing the player actually wants,
           which is to post the damage. It is now named for the action. */}
       <CertificateExporter>
-        <Card material="paper" className="hover:border-gold-500/60 transition-colors cursor-pointer">
+        <Card material="paper" className="hover:border-accent-ink/60 transition-colors cursor-pointer">
           <div className="flex items-center gap-2">
-            <FileBadge className="w-5 h-5 text-gold-600 shrink-0" />
+            <FileBadge className="w-5 h-5 text-accent-ink shrink-0" />
             <div className="min-w-0 flex-1">
-              <div className="t-micro font-black tracking-widest text-newsprint-900 uppercase">
+              <div className="t-micro font-black tracking-widest text-ink-2 uppercase">
                 [ Share The Damage ]
               </div>
-              <div className="t-caption text-newsprint-800/80 leading-snug">
+              <div className="t-caption text-ink-3/80 leading-snug">
                 Exports a 1080×1920 PNG of your latest decree.
               </div>
             </div>

@@ -34,6 +34,32 @@ import { hint } from '../ui/hint';
 /** The first refill, quoted by the [R] key hint. */
 const INK_REFILL_BASE = 25;
 
+/**
+ * ISSUE-006 [Why The Word Is "Sherpie" And Not "Sharpie"].
+ *
+ * This is not a typo and must never be "corrected". AGENTS.md forbids trademarked
+ * corporate brands outright, and Sharpie is a registered trademark of a real
+ * manufacturer — a parody that keeps the actual product name is the one form of
+ * parody that carries no protection at all, because it is also the form that
+ * looks most like passing off. "Sherpie" is a one-letter move: unmistakably the
+ * same word, unmistakably not that word.
+ *
+ * So the ruling is: `Golden Sherpie` is the canonical in-game name and every doc
+ * follows the game, not the other way round. The docs used to say "Sharpie"
+ * because they were written before the name was made safe, which is the exact
+ * drift AGENTS.md calls a stale doc — a claim that has not been true since the
+ * first commit.
+ *
+ * It is spelled out HERE, in the one place in the game that functions as the
+ * manual, because a new player's first encounter with the word is a caption on
+ * the hero object and a label on the ink gauge, neither of which has room for a
+ * footnote. One sentence of gag in the dock buys the word its second reading —
+ * the audit's actual complaint was not the name, it was that the name looked
+ * like a spelling mistake.
+ */
+const SHERPIE_NOTE =
+  '"Sherpie" is not a typo. The real marker is trademarked; this is a 24k of the same idea, bought through a procurement loophole.';
+
 interface KeyHint {
   key: string;
   label: string;
@@ -92,17 +118,26 @@ const CHANNEL = {
  */
 function useKeyHints(): KeyHint[] {
   const hasMarketAccess = useGameStore((s) => s.hasMarketAccess);
-  const hasRadarAccess = useGameStore((s) => s.hasRadarAccess);
-  const hasPolyGriftAccess = useGameStore((s) => s.hasPolyGriftAccess);
-  const phase = useGameStore((s) => s.phase);
-  const hasCronyUnlocksAccess = useGameStore((s) => s.hasCronyUnlocksAccess);
-  const hasTariffAccess = useGameStore((s) => s.hasTariffAccess);
-  const hasPrestigeAccess = useGameStore((s) => s.hasPrestigeAccess);
   const isWalkBackWindowActive = useGameStore((s) => s.isWalkBackWindowActive);
   // Only surface the Vent key once it is actually actionable, so the dock does
   // not teach a key that silently does nothing.
   const canVent = useGameStore((s) => !s.isCapsFrenzy && s.frenzyCooldownSecondsRemaining <= 0 && s.tantrumMeter >= 10);
 
+  /* INVARIANT: [This Bar Owns The Verbs. The Tabs Own The Channels.]
+     The eight channel keys — 1/2/3/B/D/U/T/C — used to be printed here AND as
+     `[N]` badges in both tab strips. That is a third shortcut surface for nine
+     keys, and it was the busiest strip on screen: 14 pairs, 30 text runs and 17
+     bordered `<kbd>` chips in 32px, which is more bordered boxes than the entire
+     right management pane.
+
+     Worse, the copy was strictly worse in one place. `PaneShell`'s
+     `CHANNEL_PURPOSE` explains what each channel IS; this bar repeated the tab's
+     own label. So the duplicates are gone: the tab strips are where a channel
+     shortcut belongs, next to the tab it switches to.
+
+     What stays is what appears nowhere else — the four VERBS (slam, ink, and
+     the two diagnostic toggles) plus the conditional YAP / Vent / Walk-Back
+     actions, which have no tab to live in. */
   const hints: KeyHint[] = [
     {
       key: 'SPACE',
@@ -114,35 +149,20 @@ function useKeyHints(): KeyHint[] {
       key: 'R',
       label: 'Ink',
       detail:
-        `Refill the Golden Sharpie. Price starts at $${INK_REFILL_BASE} and compounds ${INK_REFILL_COST_GROWTH}x per refill, capped at $${INK_REFILL_COST_CAP.toLocaleString('en-US')}, plus 2% of the treasury. Ink is a cost center, not a convenience.`,
+        `Refill the Golden Sherpie. Price starts at $${INK_REFILL_BASE} and compounds ${INK_REFILL_COST_GROWTH}x per refill, capped at $${INK_REFILL_COST_CAP.toLocaleString('en-US')}, plus 2% of the treasury. Ink is a cost center, not a convenience. ${SHERPIE_NOTE}`,
     },
     { key: 'Z', label: 'Shake', detail: 'Screen recoil on every slam. Pure juice, zero economy. Nothing else changes.' },
-    { key: 'M', label: 'Mute', detail: 'Silence every squeak, thud, and cha-ching. The economy does not notice.' },
-    { key: 'F', label: 'Full', detail: 'Go fullscreen so the cockpit fills the monitor. Layout only — no numbers move.' },
+    {
+      key: 'M',
+      label: 'Mute',
+      detail: 'Silence every squeak, thud, and cha-ching. The economy does not notice.',
+    },
   ];
 
-  const channel = (key: string, label: string, unlocked: boolean, detail: string): KeyHint => ({
-    key,
-    label,
-    detail,
-    sealed: !unlocked,
-  });
-
-  hints.push(channel('1', 'Stocks', hasMarketAccess, CHANNEL.stocks));
-  // [Y] fires a real YAP, which is a genuine gated ACTION — unlike channel
-  // selection, peeking at the market must not be possible from the keyboard.
+  // [Y] fires a real YAP, which is a genuine gated ACTION with no tab of its own.
   if (hasMarketAccess) {
     hints.push({ key: 'Y', label: 'YAP', detail: CHANNEL.yap });
   }
-
-  hints.push(channel('2', 'Radar', hasRadarAccess, CHANNEL.radar));
-  hints.push(channel('3', 'PolyGrift', hasPolyGriftAccess, CHANNEL.polygrift));
-  // [B] is the always-open Situation Room, so it is never sealed.
-  hints.push({ key: 'B', label: 'Brief', detail: CHANNEL.brief });
-  hints.push(channel('D', 'D.U.M.P.', phase >= 2, CHANNEL.dump));
-  hints.push(channel('U', 'Upgrades', hasCronyUnlocksAccess, CHANNEL.unlocks));
-  hints.push(channel('T', 'Tariffs', hasTariffAccess, CHANNEL.tariffs));
-  hints.push(channel('C', 'Caymans', hasPrestigeAccess, CHANNEL.caymans));
 
   if (canVent) hints.push({ key: 'V', label: 'Vent', detail: CHANNEL.vent });
   if (isWalkBackWindowActive) hints.push({ key: 'W', label: 'Walk-Back', detail: CHANNEL.walkBack });
@@ -167,10 +187,10 @@ export const HotkeyFooterHUD: React.FC = () => {
     }
   };
 
-  const iconBtn = 'p-1 rounded transition-colors cursor-pointer shrink-0 hover:bg-redaction-500';
+  const iconBtn = 'p-1 rounded transition-colors cursor-pointer shrink-0 hover:bg-well';
 
   return (
-    <footer className="h-8 w-full bg-redaction-700 border-t border-redaction-500 px-2 flex items-center justify-between gap-2 font-mono t-caption text-newsprint-400 select-none shrink-0 z-30">
+    <footer className="h-8 w-full bg-well-2 border-t border-term-line-strong px-2 flex items-center justify-between gap-2 font-mono t-caption text-term-ink-3 select-none shrink-0 z-30">
       {/* Key list: scrolls rather than truncating. See the invariant above. */}
       <nav
         aria-label="Keyboard shortcuts"
@@ -182,7 +202,7 @@ export const HotkeyFooterHUD: React.FC = () => {
             className={`flex items-center gap-1 shrink-0 ${sealed ? 'opacity-45' : ''}`}
             {...hint(sealed ? `${detail}${SEALED_SUFFIX}` : detail)}
           >
-            <kbd className="px-1 py-px rounded bg-redaction-500 border border-redaction-500 text-newsprint-200 font-bold">
+            <kbd className="px-1 py-px rounded bg-well border border-term-line-strong text-term-ink-1 font-bold">
               {key}
             </kbd>
             <span>{label}</span>
@@ -191,7 +211,7 @@ export const HotkeyFooterHUD: React.FC = () => {
       </nav>
 
       {/* Icon-only controls with explicit pressed state for screen readers. */}
-      <div className="flex items-center gap-0.5 shrink-0 border-l border-redaction-500 pl-2">
+      <div className="flex items-center gap-0.5 shrink-0 border-l border-term-line-strong pl-2">
         <button
           onClick={toggleScreenShake}
           {...hint(
@@ -201,7 +221,7 @@ export const HotkeyFooterHUD: React.FC = () => {
             'Toggle screen shake'
           )}
           aria-pressed={screenShakeEnabled}
-          className={`${iconBtn} ${screenShakeEnabled ? 'text-gold-400' : 'text-newsprint-600'}`}
+          className={`${iconBtn} ${screenShakeEnabled ? 'text-accent-ink' : 'text-term-ink-3'}`}
         >
           <Vibrate className="w-3.5 h-3.5" />
         </button>
@@ -210,12 +230,12 @@ export const HotkeyFooterHUD: React.FC = () => {
           onClick={toggleMute}
           {...hint(
             isMuted
-              ? 'Audio is muted. Sharpie squeaks, paper blotter thuds, and the cha-ching on a settled contract are all switched off. [M]'
+              ? 'Audio is muted. Sherpie squeaks, paper blotter thuds, and the cha-ching on a settled contract are all switched off. [M]'
               : 'Audio is live. Every stamp squeaks and every settlement rings the treasury. Mute it if the 3:00 AM desk is keeping you awake. [M]',
             'Toggle sound'
           )}
           aria-pressed={!isMuted}
-          className={`${iconBtn} ${isMuted ? 'text-wax-400' : 'text-newsprint-400 hover:text-newsprint-100'}`}
+          className={`${iconBtn} ${isMuted ? 'text-dead-soft' : 'text-term-ink-3 hover:text-term-ink-1'}`}
         >
           {isMuted ? <VolumeX className="w-3.5 h-3.5" /> : <Volume2 className="w-3.5 h-3.5" />}
         </button>
@@ -239,7 +259,7 @@ export const HotkeyFooterHUD: React.FC = () => {
             'Toggle hover hint bubbles'
           )}
           aria-pressed={hintsEnabled}
-          className={`${iconBtn} ${hintsEnabled ? 'text-gold-400' : 'text-newsprint-600'}`}
+          className={`${iconBtn} ${hintsEnabled ? 'text-accent-ink' : 'text-term-ink-3'}`}
         >
           <Lightbulb className="w-3.5 h-3.5" />
         </button>
@@ -250,7 +270,7 @@ export const HotkeyFooterHUD: React.FC = () => {
             'Go fullscreen so the cockpit fills the monitor instead of the browser chrome. Layout only — no number on the desk moves, and offline earnings still collect on the same 48-hour clock. [F]',
             'Toggle fullscreen'
           )}
-          className={`${iconBtn} text-newsprint-400 hover:text-newsprint-100`}
+          className={`${iconBtn} text-term-ink-3 hover:text-term-ink-1`}
         >
           <Maximize2 className="w-3.5 h-3.5" />
         </button>

@@ -74,13 +74,13 @@ export const SubpoenaShredderProp: React.FC = () => {
           )} away.`,
           'Subpoena Shredder — sealed'
         )}
-        className="p-2 rounded-lg border border-dashed border-newsprint-400 bg-newsprint-200/50 text-newsprint-800 flex items-center gap-2 text-left select-none"
+        className="p-2 rounded-lg border border-dashed border-line bg-card/50 text-ink-3 flex items-center gap-2 text-left select-none"
       >
-        <div className="p-1.5 rounded-md bg-newsprint-300/60 text-newsprint-700 shrink-0">
+        <div className="p-1.5 rounded-md bg-panel/60 text-ink-3 shrink-0">
           <Lock className="w-4 h-4" aria-hidden />
         </div>
         <div>
-          <span className="font-mono font-bold t-micro block text-newsprint-700">SHREDDER</span>
+          <span className="font-mono font-bold t-micro block text-ink-3">SHREDDER</span>
           <span className="t-caption font-mono block">Sealed — Oval Office instrument</span>
         </div>
       </div>
@@ -130,16 +130,16 @@ export const SubpoenaShredderProp: React.FC = () => {
       )}
       className={`p-2 rounded-lg border transition-all flex items-center gap-2 text-left select-none group relative overflow-hidden active:scale-95 ${
         !isLive
-          ? 'opacity-60 cursor-not-allowed bg-newsprint-300 border-newsprint-400 text-newsprint-800'
+          ? 'opacity-60 cursor-not-allowed bg-panel border-line text-ink-3'
           : 'cursor-pointer ' +
             (isHighHeat
-              ? 'bg-amber-950/80 border-amber-500/80 text-amber-200 shadow-md shadow-amber-950/40'
-              : 'bg-newsprint-900 border-newsprint-800 text-newsprint-300 hover:border-emerald-600/60')
+              ? 'bg-accent/25 border-accent-ink text-ink-1 shadow-md shadow-accent/30'
+              : 'bg-well border-line-strong text-ink-2 hover:border-live-ink/60')
       }`}
     >
       <div
         className={`p-1.5 rounded-md shrink-0 ${
-          isHighHeat ? 'bg-gold-500 text-newsprint-950 animate-calm-glow' : 'bg-newsprint-800 text-emerald-500'
+          isHighHeat ? 'bg-accent text-ink-1 animate-calm-glow' : 'bg-ground text-live-ink'
         }`}
       >
         {isHighHeat ? (
@@ -151,12 +151,12 @@ export const SubpoenaShredderProp: React.FC = () => {
       <div>
         <span
           className={`font-mono font-bold t-micro block ${
-            isHighHeat ? 'text-amber-400' : 'text-emerald-400'
+            isHighHeat ? 'text-accent-ink' : 'text-live-ink'
           }`}
         >
           SHREDDER
         </span>
-        <span className="t-caption text-stone-500 font-mono block">
+        <span className="t-caption text-term-ink-3 font-mono block">
           {!hasEnoughFavor
             ? `Need ${FAVOR_COST} Favor [S]`
             : onCooldown
@@ -168,7 +168,7 @@ export const SubpoenaShredderProp: React.FC = () => {
       </div>
 
       {feedback && (
-        <div className="absolute inset-0 bg-newsprint-950 flex items-center justify-center t-micro font-mono font-bold text-emerald-400 px-1 text-center">
+        <div className="absolute inset-0 bg-ink-1 flex items-center justify-center t-micro font-mono font-bold text-live-soft px-1 text-center">
           {feedback}
         </div>
       )}

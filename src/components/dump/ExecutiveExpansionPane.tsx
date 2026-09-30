@@ -29,12 +29,24 @@ import { CaymansPrestigeTab } from './tabs/CaymansPrestigeTab';
 import { SituationRoom } from './SituationRoom';
 import { readPhaseProgress } from './readPhaseProgress';
 
-const TABS: { id: RightChannelTab; label: string; shortcut: string }[] = [
-  { id: 'brief', label: 'BRIEF', shortcut: 'B' },
-  { id: 'dump', label: 'D.U.M.P.', shortcut: 'D' },
-  { id: 'unlocks', label: 'UNLOCKS', shortcut: 'U' },
-  { id: 'tariffs', label: 'TARIFFS', shortcut: 'T' },
-  { id: 'caymans', label: 'CAYMANS', shortcut: 'C' },
+/* `short` is what each tab falls back to when the strip is too narrow for the
+   full label. The right deck is 3/12 of a 1720px cockpit and packs five channels,
+   so four of these five genuinely run short at 1080p. See [A Truncated Tab Name
+   Is A Feature Nobody Asked For] in `PaneShell` for how the thresholds were
+   measured.
+
+   Every short form is bounded by the widest `short` in the strip, which is
+   `TARIFF` at 53 layout px — `CAYMN` is 43, so it fits the band with slack, while
+   `CAYMANS` at 61 would not have and would have clipped in exactly the narrow
+   band it exists to serve. A prestige channel called `CAYMNS` also stops being
+   the word the run summary and the reset modal both use for it; `CAYMN` is the
+   abbreviation the player's own keyboard shortcuts already teach. */
+const TABS: { id: RightChannelTab; label: string; short: string; shortcut: string }[] = [
+  { id: 'brief', label: 'BRIEF', short: 'BRIEF', shortcut: 'B' },
+  { id: 'dump', label: 'D.U.M.P.', short: 'DUMP', shortcut: 'D' },
+  { id: 'unlocks', label: 'UNLOCKS', short: 'CRONY', shortcut: 'U' },
+  { id: 'tariffs', label: 'TARIFFS', short: 'TARIFF', shortcut: 'T' },
+  { id: 'caymans', label: 'CAYMANS', short: 'CAYMN', shortcut: 'C' },
 ];
 
 export const ExecutiveExpansionPane: React.FC = () => {
@@ -89,12 +101,12 @@ export const ExecutiveExpansionPane: React.FC = () => {
            one number that is never visible anywhere else and always matters:
            how far the treasury is from the next rung. See `readPhaseProgress`. */
         <StatusStrip
-          icon={<Briefcase className="w-3 h-3 text-gold-400" aria-hidden />}
+          icon={<Briefcase className="w-3 h-3 text-accent-ink" aria-hidden />}
           label="CABINET"
           right={
             <>
-              <Zap className="w-3 h-3 text-phosphor-400" aria-hidden />
-              <span className="text-gold-400 font-bold">{readPhaseProgress(phase, treasuryCash)}</span>
+              <Zap className="w-3 h-3 text-ink-2" aria-hidden />
+              <span className="text-accent-ink font-bold">{readPhaseProgress(phase, treasuryCash)}</span>
             </>
           }
         />

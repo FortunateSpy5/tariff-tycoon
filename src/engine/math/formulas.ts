@@ -84,7 +84,7 @@ export function calculateClickValue(
 }
 
 /**
- * Computes the cost to refill Golden Sharpie ink.
+ * Computes the cost to refill Golden Sherpie ink.
  * KaTeX: C(n) = \min(25 \times 1.35^n, 25000)
  *
  * INVARIANT: the exponent is 1.35, NOT the GDD's original 1.15. `balance.ts`

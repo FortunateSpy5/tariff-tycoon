@@ -12,7 +12,7 @@ These rules govern the mathematical balance, progression architecture, and playe
     2. Zero margin calls or Special Counsel raids can execute while offline. Open 0DTE contracts have their expiry **pushed forward** by the offline duration (`extendTradesForOffline`) — a 0DTE position silently expiring in the player's absence is the one genuinely hostile offline behaviour in the game.
     3. Passive Treasury Cash and Crony Favor accrue cleanly at 100% efficiency (up to a 48-hour cap, `MAX_OFFLINE_SECONDS`).
     4. Offline earnings can cross a **phase threshold while the tab is shut**, so every cash-gain path — not just clicks — must be able to complete onboarding and promote the phase (`onboardingEngine.resolveMarketAccess`).
-  - *Comedic Lore:* *"While the President is golfing at Palm-a-Grifto Resort & Spa, the federal government is paralyzed by executive indecision. Bureaucrats refuse to process riots or print money without a signed Sharpie directive. The economy enters a blissful coma until your return."*
+  - *Comedic Lore:* *"While the President is golfing at Palm-a-Grifto Resort & Spa, the federal government is paralyzed by executive indecision. Bureaucrats refuse to process riots or print money without a signed Sherpie directive. The economy enters a blissful coma until your return."*
 
 ---
 
