@@ -6,18 +6,15 @@
 import type { StateCreator } from 'zustand';
 import type { DeskSliceContract } from '../../types/store';
 import type { GameStore } from '../useGameStore';
-import {
-  calculateClickValue,
-  calculateInkRefillTotal,
-  calculateOfflineEarnings,
-} from '../../engine/math/formulas';
-import { INITIAL_CRONY_UPGRADES } from '../../constants/unlocks';
+import { calculateOfflineEarnings } from '../../engine/math/formulas';
 import { tickCrisis } from '../../engine/systems/crisisEngine';
 import { clickInkFrenzy, tickInkFrenzy } from '../../engine/systems/inkFrenzyEngine';
 import { tickTariffRevenue } from '../../engine/systems/tariffEngine';
 import { isPhasePromotion, nextPhaseFor } from '../../engine/systems/phaseEngine';
 import { tickPassiveEconomy } from '../../engine/systems/passiveEngine';
 import { clampCronyFavor } from '../../engine/systems/slopEngine';
+import { resolveClickPayout } from '../../engine/systems/clickPayout';
+import { clickFlashDip, hasPerk, tickFlashDip } from '../../engine/systems/perkEngine';
 import {
   advanceTutorialIndex,
   completedTutorialIndex,
@@ -25,10 +22,7 @@ import {
   resolveTutorialIndex,
   resolvePassiveTutorialIndex,
 } from '../../engine/systems/onboardingEngine';
-import {
-  canBuyUpgrades,
-  canSetTariff,
-} from '../../engine/systems/unlockEngine';
+import { canSetTariff } from '../../engine/systems/unlockEngine';
 import {
   INK_PER_CLICK,
   INK_REGEN_PER_SECOND,
@@ -40,10 +34,6 @@ import {
   FRENZY_COOLDOWN_TANTRUM_DECAY_PER_SECOND,
   DRY_CLICK_JAM_THRESHOLD,
   CRONY_FAVOR_PASSIVE_PER_SECOND,
-  TANTRUM_VENT_CONSUME_RATIO,
-  TANTRUM_VENT_VEX_RELIEF,
-  TANTRUM_VENT_MIN_TANTRUM,
-  VEX_BASELINE,
 } from '../../constants/balance';
 import { sound } from '../../audio/soundEngine';
 
@@ -115,57 +105,10 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
 
   skipTutorial: () => set({ tutorialStepIndex: completedTutorialIndex() }),
 
-  buyUpgrade: (upgradeId: string) => {
-    const state = get();
-    if (!canBuyUpgrades(state)) return false;
-    if (state.activeUpgrades.includes(upgradeId)) return false;
-
-    const def = INITIAL_CRONY_UPGRADES.find((u) => u.id === upgradeId);
-    if (!def || state.treasuryCash < def.cost) return false;
-
-    sound.playChaChing();
-    set({
-      treasuryCash: state.treasuryCash - def.cost,
-      activeUpgrades: [...state.activeUpgrades, upgradeId],
-      hasTariffAccess: true,
-    });
-    return true;
-  },
-
   // ===================================================================
-  // THE DESK PROPS live in `deskPropsSlice`.
+  // THE SPEND VERBS — `buyUpgrade`, `refillInk`, `ventTantrum` — live in
+  // `deskEconomySlice`. The desk keeps the slam and the tick.
   // ===================================================================
-
-  /**
-   * VENT THE TANTRUM.
-   *
-   * INVARIANT: [Venting Must Never Be Optimal]
-   * Burns the entire meter — including any overflow past 100% that a FRENZY
-   * would have consumed for free — and buys VEX relief that is clamped to the
-   * VEX baseline. Taking a frenzy to 100% is therefore always worth more than
-   * venting at 99%, so this is a deliberate trade, not an upgrade path.
-   * Blocked during FRENZY and during the post-frenzy cooldown, so it cannot be
-   * used to dodge the Cooling-Off Protocol.
-   */
-  ventTantrum: () => {
-    const state = get();
-    if (state.isCapsFrenzy) return false;
-    if (state.frenzyCooldownSecondsRemaining > 0) return false;
-    if (state.tantrumMeter < TANTRUM_VENT_MIN_TANTRUM) return false;
-
-    const burned = state.tantrumMeter * TANTRUM_VENT_CONSUME_RATIO;
-    // Relieve VEX proportionally to how much pressure was released, capped so
-    // it can never push volatility below the market's natural floor.
-    const relief = Math.min(TANTRUM_VENT_VEX_RELIEF * (burned / 100), VEX_BASELINE);
-
-    sound.playDeskThud();
-    set({
-      tantrumMeter: Math.max(0, state.tantrumMeter - burned),
-      vexVolatility: Math.max(VEX_BASELINE, state.vexVolatility - relief),
-      lastCrisisOutcome: `VENTED // Tantrum purged. VEX cooled by ${relief.toFixed(1)} points.`,
-    });
-    return true;
-  },
 
   clickDesk: () => {
     const state = get();
@@ -196,7 +139,6 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
       frenzyDurationSeconds: FRENZY_DURATION_SECONDS,
       hasDietSodaDrip: state.activeUpgrades.includes('diet_soda_drip'),
     });
-    const { isJammed } = ink;
 
     // Sound feedback
     if (state.phase === 1) {
@@ -207,20 +149,36 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
       sound.playSharpieSqueak();
     }
 
-    // Cash calculation with dry clicks penalty
-    let earnedCash = calculateClickValue(
-      state.phase,
-      5.0,
-      state.isCapsFrenzy ? 100 : state.inkLevel,
-      state.isCapsFrenzy,
-      state.sovereignImmunitySlips || 0,
-      isJammed
-    );
+    // INVARIANT: [The Quoted Yield Is The Charged Yield]
+    // The stamp face prints `+X / tap` from the SAME function. This used to be
+    // `calculateClickValue` plus a separate `*= 2` for the Tungsten Nib, while
+    // the face skipped the doubling entirely — so the hero number in the game
+    // was wrong by 100% for anyone who bought the cheapest upgrade in the shop.
+    // See `engine/systems/clickPayout.ts`.
+    const payout = resolveClickPayout({
+      phase: state.phase,
+      baseValue: 5.0,
+      inkLevel: state.inkLevel,
+      isCapsFrenzy: state.isCapsFrenzy,
+      sisCount: state.sovereignImmunitySlips || 0,
+      dryClicksCount: state.dryClicksCount || 0,
+      hasTungstenNib: state.activeUpgrades.includes('heavy_tungsten_nib'),
+      perks: state.unlockedPerks,
+      treasuryCash: state.treasuryCash,
+    });
+    const earnedCash = payout.earnedCash;
 
-    // Apply Heavy Tungsten Nib multiplier (+100%)
-    if (state.activeUpgrades.includes('heavy_tungsten_nib')) {
-      earnedCash *= 2;
-    }
+    // 280-Character Macro Wreck: a 4% roll on every slam, fired here rather
+    // than anywhere that could fire it without a slam.
+    const flashDip = clickFlashDip(
+      {
+        enabled: hasPerk(state.unlockedPerks, 'macro_wreck_280'),
+        isActive: state.flashDipSecondsRemaining > 0,
+        secondsRemaining: state.flashDipSecondsRemaining,
+        totalTriggered: state.totalFlashDipsTriggered,
+      },
+      Math.random
+    );
 
     const nextCash = state.treasuryCash + earnedCash;
     // INVARIANT: [One Definition Of The Phase Ladder] — see `phaseEngine`.
@@ -253,31 +211,9 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
       capsFrenzySecondsRemaining: ink.capsFrenzySecondsRemaining,
       totalFrenziesTriggered: ink.totalFrenziesTriggered,
       frenzyCooldownSecondsRemaining: ink.frenzyCooldownSecondsRemaining,
+      flashDipSecondsRemaining: flashDip.secondsRemaining,
+      totalFlashDipsTriggered: flashDip.totalTriggered,
       lastClickTimestamp: now,
-    });
-    return true;
-  },
-
-  refillInk: () => {
-    const state = get();
-    // INVARIANT: [The Quoted Price Must Be The Charged Price]
-    // The cost comes from the shared `calculateInkRefillTotal`, which the ink
-    // gauge ALSO renders. It used to be inlined here while the UI showed the
-    // base curve only — so a rich player was quoted $25 and charged $100, and
-    // the hint's "2% of your treasury on top" described a term the 4× cap
-    // deletes outright. One function, one number, one place to be wrong.
-    const cost = calculateInkRefillTotal(state.inkRefillCount, state.treasuryCash);
-
-    if (state.treasuryCash < cost) {
-      return false;
-    }
-
-    sound.playChaChing();
-    set({
-      treasuryCash: state.treasuryCash - cost,
-      inkLevel: state.maxInk,
-      dryClicksCount: 0,
-      inkRefillCount: state.inkRefillCount + 1,
     });
     return true;
   },
@@ -363,6 +299,9 @@ export const createDeskSlice: StateCreator<GameStore, [], [], DeskSlice> = (set,
       cronyFavorRemainder: passive.favorRemainder,
       isCapsFrenzy: frenzy.isCapsFrenzy,
       capsFrenzySecondsRemaining: Math.max(0, frenzy.capsFrenzySecondsRemaining),
+      // The Flash Dip is a clock like the frenzy, so it ticks here rather than
+      // inside the market slice that prices with it.
+      flashDipSecondsRemaining: tickFlashDip(state.flashDipSecondsRemaining, deltaSeconds),
       frenzyCooldownSecondsRemaining: Math.max(0, frenzy.frenzyCooldownSecondsRemaining),
       tantrumMeter: Math.max(0, Math.min(100, frenzy.tantrumMeter)),
       activeCrisis: crisis.activeCrisis,

@@ -34,6 +34,7 @@ import { hint } from '../../ui/hint';
 // which is a lie waiting for a balance pass — see deskPropsSlice.
 import {
   BROKE_THRESHOLD,
+  isBrokeNotInDebt,
   SECRET_SALE_COOLDOWN_SECONDS as COOLDOWN_SECONDS,
   SECRET_SALE_HEAT as HEAT,
   SECRET_SALE_PAYOUT as PAYOUT,
@@ -43,6 +44,7 @@ export const GoldBoxProp: React.FC = () => {
   const sellClassifiedSecrets = useGameStore((s) => s.sellClassifiedSecrets);
   const lastSecretSaleTimestamp = useGameStore((s) => s.lastSecretSaleTimestamp);
   const treasuryCash = useGameStore((s) => s.treasuryCash);
+  const unlockedPerks = useGameStore((s) => s.unlockedPerks);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [remaining, setRemaining] = useState(0);
 
@@ -64,7 +66,12 @@ export const GoldBoxProp: React.FC = () => {
   // meant a broke player read "Restocking (5s)", was marked `aria-disabled`,
   // was told by the tooltip they could not sell — and then was paid anyway.
   // That is a smaller cousin of the bug this prop was rewritten to kill.
-  const isBroke = treasuryCash < BROKE_THRESHOLD;
+  // INVARIANT: [The Label Matches The Rule That Applies To YOU]
+  // This must be `isBrokeNotInDebt`, the same predicate `sellClassifiedSecrets`
+  // enforces — not a local `treasuryCash < BROKE_THRESHOLD`. A player in QE As A
+  // Service debt is below that threshold but is NOT on the cooldown waiver, so
+  // the local test showed "Restocking for you" on a button that was refusing.
+  const isBroke = isBrokeNotInDebt(treasuryCash, unlockedPerks, BROKE_THRESHOLD);
   const isRestocking = remaining > 0 && !isBroke;
 
   const handleClick = () => {

@@ -16,6 +16,7 @@ import { INITIAL_CRONY_UPGRADES } from '../../../constants/unlocks';
 import { formatCurrency } from '../../../engine/math/bigNumber';
 import { DossierHeader } from '../DossierHeader';
 import { hint } from '../../ui/hint';
+import { canAfford } from '../../../engine/systems/perkEngine';
 
 /**
  * Hover text for one upgrade.
@@ -42,10 +43,15 @@ export const CronyUnlocksTab: React.FC = () => {
   const activeUpgrades = useGameStore((s) => s.activeUpgrades);
   const hasTariffAccess = useGameStore((s) => s.hasTariffAccess);
   const buyUpgrade = useGameStore((s) => s.buyUpgrade);
+  const unlockedPerks = useGameStore((s) => s.unlockedPerks);
   const [feedback, setFeedback] = useState<string | null>(null);
 
+  // INVARIANT: [One Affordability Test] — `canAfford` is the same predicate
+  // `buyUpgrade` charges with, and the only one that knows about the QE As A
+  // Service negative buffer. A local `treasuryCash >= upg.cost` here would grey
+  // out a purchase the store would happily accept, and no test would catch it.
   const handleBuy = (upgradeId: string, name: string, cost: number) => {
-    if (treasuryCash < cost) {
+    if (!canAfford(treasuryCash, cost, unlockedPerks)) {
       setFeedback(`Need ${formatCurrency(cost)} to unlock ${name}!`);
       setTimeout(() => setFeedback(null), 2000);
       return;
@@ -78,7 +84,7 @@ export const CronyUnlocksTab: React.FC = () => {
       <div className="flex-1 min-h-0 space-y-2 overflow-y-auto custom-scrollbar pr-0.5">
         {INITIAL_CRONY_UPGRADES.map((upg) => {
             const isOwned = activeUpgrades.includes(upg.id);
-            const canAfford = treasuryCash >= upg.cost;
+            const canAffordIt = canAfford(treasuryCash, upg.cost, unlockedPerks);
 
             return (
               <div
@@ -113,14 +119,13 @@ export const CronyUnlocksTab: React.FC = () => {
                         // A native `disabled` swallows pointer events and would
                         // hide the hover text explaining the shortfall. The guard
                         // in `handleBuy` does the enforcing. See `HintTooltip`.
-                        aria-disabled={!canAfford}
+                        aria-disabled={!canAffordIt}
                         {...hint(
                           `${upg.name} — ${UPGRADE_HINTS[upg.id] ?? upg.description} Costs ${formatCurrency(upg.cost)} up front and nothing after; the multiplier is permanent for the run.`,
                           `Buy the ${upg.name} for ${formatCurrency(upg.cost)}`
                         )}
                         className={`px-2.5 py-1 rounded font-mono t-micro font-bold transition-all ${
-                          canAfford
-                            ? 'bg-emerald-600 hover:bg-emerald-500 text-newsprint-50 active:scale-95 shadow cursor-pointer font-black'
+                          canAffordIt ? 'bg-emerald-600 hover:bg-emerald-500 text-newsprint-50 active:scale-95 shadow cursor-pointer font-black'
                             : 'bg-newsprint-300 text-newsprint-800 cursor-not-allowed'
                         }`}
                       >
@@ -142,3 +147,4 @@ export const CronyUnlocksTab: React.FC = () => {
     </div>
   );
 };
+

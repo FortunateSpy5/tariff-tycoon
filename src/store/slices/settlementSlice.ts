@@ -21,6 +21,7 @@
 import type { StateCreator } from 'zustand';
 import type { GameStore } from '../useGameStore';
 import { isYapFrontRun, settleExpiredTrades } from '../../engine/systems/settlementEngine';
+import { flashDipValuationMultiplier } from '../../engine/systems/perkEngine';
 import { PAPER_TRADE_WIN_TANTRUM } from '../../constants/onboarding';
 import { sound } from '../../audio/soundEngine';
 
@@ -44,6 +45,9 @@ export const createSettlementSlice: StateCreator<GameStore, [], [], SettlementSl
       prices: state.stocks,
       vexVolatility: state.vexVolatility,
       hasDarkPoolFiber: state.activeUpgrades.includes('darkpool_fiber'),
+      // The same live valuation the auto-settle uses, so a manual close during a
+      // Flash Dip prices identically. See [One Pricing Path] above.
+      valuationMultiplier: flashDipValuationMultiplier(state.flashDipSecondsRemaining),
       // A manual settle is not an expiry, so the walk-back unwinding branch must
       // not fire here — a combo CALL is closed by `executeWalkBack`, not by hand.
       walkBackWindowExpired: false,

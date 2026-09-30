@@ -14,10 +14,15 @@
  * slowly. So the player is always trading profit against exposure, and the raid
  * is the enforcement that makes the exposure real rather than cosmetic.
  *
- * INVARIANT: [A Raid Always Leaves You Solvent]
- * The seizure floors the treasury at $10 so a raid can never push a player into
- * a state where the bankruptcy floor is unreachable. Being raided is meant to
- * be humiliating, not a soft-lock.
+ * INVARIANT: [A Raid Always Leaves You Able To Click]
+ * The seizure holds a SOLVENT player at $10 rather than taking the last of their
+ * money, so a raid is humiliating rather than terminal. It is deliberately NOT
+ * applied to a player already under $10 — see the note on the seizure below —
+ * because lifting a negative balance to $10 would be a money printer once QE As A
+ * Service exists. A player under $10 is caught by the Red Phone bailout, which is
+ * gated at `< $10` for exactly this case, and by the clicker's own bankruptcy
+ * floor either way. That is where the anti-soft-lock guarantee actually lives;
+ * this line only ever hardened it.
  */
 
 import { CRONY_FAVOR_MAX } from '../../constants/balance';
@@ -25,8 +30,15 @@ import { CRONY_FAVOR_MAX } from '../../constants/balance';
 /** Heat bleeds off passively at this rate per second. */
 export const SLOP_DECAY_PER_SECOND = 0.2;
 
-/** Minimum gap between raids, so one bad trade cannot chain-seize repeatedly. */
+/**
+ * Minimum gap between raids, so one bad trade cannot chain-seize repeatedly.
+ *
+ * Exported in SECONDS as well, because the S.L.O.P. radar and the perk copy
+ * quote the gap in seconds and the slice keeps milliseconds — the same split
+ * `deskPropsSlice` makes for its shredder cooldown.
+ */
 const RAID_COOLDOWN_MS = 15000;
+export const RAID_COOLDOWN_SECONDS = RAID_COOLDOWN_MS / 1000;
 
 /**
  * Crony Favor needed to bribe the raid away.
@@ -44,7 +56,7 @@ const BRIBE_HEAT_RESET = 25;
 /** Heat restored after a plea agreement. */
 const SEIZED_HEAT_RESET = 20;
 
-/** Floor on the post-seizure treasury. INVARIANT: never a soft-lock. */
+/** Floor on the post-seizure treasury of a SOLVENT player. See `tickSlop`. */
 const SEIZED_TREASURY_FLOOR = 10;
 
 /** Minimum fine, so a poor player is not fined nothing. */
@@ -60,6 +72,15 @@ export interface SlopInput {
   lastRaidTimestamp: number;
   deltaSeconds: number;
   now: number;
+  /**
+   * The Pardon Assembly Line perk (GDD §5 perk 5) abolishes raids outright.
+   *
+   * INVARIANT: heat still accrues and still decays — the meter is a readout the
+   * player manages, and deleting the consequences without deleting the resource
+   * would leave the whole S.L.O.P. channel as decoration. Only the ENFORCEMENT
+   * is pardoned, which is exactly what the perk's name claims.
+   */
+  raidsAbolished: boolean;
 }
 
 export interface SlopResult {
@@ -105,7 +126,10 @@ export function tickSlop(
     fineAmount: 0,
   };
 
-  const raidReady = input.slopSuspicion >= 100 && input.now - (input.lastRaidTimestamp || 0) > RAID_COOLDOWN_MS;
+  const raidReady =
+    !input.raidsAbolished &&
+    input.slopSuspicion >= 100 &&
+    input.now - (input.lastRaidTimestamp || 0) > RAID_COOLDOWN_MS;
   if (!raidReady) return base;
 
   if (input.cronyFavor >= RAID_BRIBE_COST) {
@@ -121,10 +145,25 @@ export function tickSlop(
   }
 
   const fineAmount = Math.max(MIN_FINE, Math.round(input.treasuryCash * FINE_FRACTION));
+  // INVARIANT: [The Raid Floor Must Never LIFT A Negative Treasury]
+  // `Math.max(10, cash - fine)` protects a solvent player from a destructive
+  // fine — but it also SILENTLY LIFTS a negative treasury to $10, and QE As A
+  // Service makes a negative treasury reachable on purpose. That turns "spend to
+  // -$50B" into a money printer: go deep, get raided, wake up at $10.
+  //
+  // So the floor applies only to a player who HAD at least $10 to lose. Below
+  // that the fine is charged in full — and the bankruptcy floor in
+  // `calculateClickValue`, plus the Red Phone bailout's own `< $10` gate, are
+  // what actually guarantee the raid cannot soft-lock anybody. The old docstring
+  // credited this line with that job; it never did.
+  const seized = input.treasuryCash - fineAmount;
+  const treasuryCash =
+    input.treasuryCash >= SEIZED_TREASURY_FLOOR
+      ? Math.max(SEIZED_TREASURY_FLOOR, seized)
+      : seized;
   return {
     ...base,
-    // INVARIANT: never below the floor — a raid must not soft-lock the player.
-    treasuryCash: Math.max(SEIZED_TREASURY_FLOOR, input.treasuryCash - fineAmount),
+    treasuryCash,
     slopSuspicion: SEIZED_HEAT_RESET,
     lastRaidTimestamp: input.now,
     lastRaidMessage: `DOJ RAID! Asset seizure executed: -$${fineAmount.toLocaleString()} (35% Treasury) confiscated!`,

@@ -24,6 +24,9 @@ export function useGameLoop() {
       const store = useGameStore.getState();
       store.tickDesk(deltaSeconds);
       store.tickMarket(deltaSeconds);
+      // AFTER `tickMarket`, so the 401(k) match values the book the settlement
+      // just left standing rather than one that is mid-expiry.
+      store.tickPerks();
 
       saveCounterRef.current += deltaSeconds;
       if (saveCounterRef.current >= 5) {

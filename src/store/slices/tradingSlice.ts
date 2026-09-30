@@ -24,22 +24,22 @@ import {
   YAP_HEAT_SHOTGUN,
   WALK_BACK_WINDOW_SECONDS,
   WALK_BACK_PUMP_MULTIPLIER,
-  TRADE_DURATION_MS,
-  COLLATERAL_PER_CONTRACT,
-  HEAT_LEVERAGE_HIGH,
-  HEAT_LEVERAGE_LOW,
 } from '../../constants/balance';
 import { tickMarketPrices } from '../../engine/systems/marketEngine';
 import { directionOf, moveMagnitude, stampPlayerMove } from '../../engine/systems/playerMoveCandles';
 import {
-  createOptionTrade,
   extendTradesForOffline,
   resolveWalkBack,
   settleExpiredTrades,
 } from '../../engine/systems/settlementEngine';
 import { clampCronyFavor, tickSlop } from '../../engine/systems/slopEngine';
 import { gateYap, pickShotgunTarget, resolveYapShock } from '../../engine/systems/yapShockEngine';
+import {
+  flashDipValuationMultiplier,
+  raidsAbolished,
+} from '../../engine/systems/perkEngine';
 import { PAPER_TRADE_ALLOWANCE } from '../../constants/onboarding';
+import { openTrade } from './orderPlacement';
 import { sound } from '../../audio/soundEngine';
 
 export interface TradingSlice extends TradingSliceContract {}
@@ -71,49 +71,9 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
   setSelectedStock: (symbol) => set({ selectedStock: symbol }),
   dismissRaidAlert: () => set({ lastRaidMessage: undefined }),
 
-  openOptionTrade: (symbol, type, leverage, collateral) => {
-    const state = get();
-    const stock = state.stocks[symbol];
-    if (!state.hasMarketAccess || !stock || collateral <= 0 || state.treasuryCash < collateral) return false;
-
-    // INVARIANT: [Safe Practice Stakes] a CALL opened during a walk-back window
-    // on the crashed symbol is stamped as a combo here, and only a stamped CALL
-    // can be settled by `executeWalkBack`. See `createOptionTrade`.
-    const isWalkBackCombo =
-      state.isWalkBackWindowActive && type === 'CALL' && symbol === state.lastTargetStockSymbol;
-    const isPaperTrade = state.paperTradesRemaining > 0;
-
-    const now = Date.now();
-    const newTrade = createOptionTrade({
-      symbol,
-      type,
-      leverage,
-      collateral,
-      currentPrice: stock.currentPrice,
-      isWalkBackCombo,
-      isPaperTrade,
-      openedAtTimestamp: now,
-      durationMs: TRADE_DURATION_MS,
-      collateralPerContract: COLLATERAL_PER_CONTRACT,
-      idSuffix: Math.random().toString(36).substring(2, 6),
-    });
-
-    sound.playChaChing();
-
-    set({
-      treasuryCash: state.treasuryCash - collateral,
-      activeTrades: [...state.activeTrades, newTrade],
-      slopSuspicion: Math.min(
-        100,
-        state.slopSuspicion + (leverage > 100 ? HEAT_LEVERAGE_HIGH : HEAT_LEVERAGE_LOW)
-      ),
-      paperTradesRemaining: isPaperTrade ? state.paperTradesRemaining - 1 : state.paperTradesRemaining,
-      // Tutorial: opening the first contract completes "Open A Paper Put" and
-      // points the player at the YAP button.
-      tutorialStepIndex: state.tutorialStepIndex === 1 ? 2 : state.tutorialStepIndex,
-    });
-    return true;
-  },
+  // The order body lives in `orderPlacement.ts` — see the note there on why.
+  openOptionTrade: (symbol, type, leverage, collateral) =>
+    openTrade(get(), set, symbol, type, leverage, collateral),
 
   // Manual settlement lives in `settlementSlice` alongside the auto-settle it
   // must agree with. See `settlementEngine` for the pricing rules.
@@ -237,6 +197,7 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
       comboCalls,
       vexVolatility: state.vexVolatility,
       hasDarkPoolFiber: state.activeUpgrades.includes('darkpool_fiber'),
+      valuationMultiplier: flashDipValuationMultiplier(state.flashDipSecondsRemaining),
       pumpMultiplier: WALK_BACK_PUMP_MULTIPLIER,
     });
     if (!squeeze.matched) return false;
@@ -317,6 +278,10 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
       prices: updatedStocks,
       vexVolatility: state.vexVolatility,
       hasDarkPoolFiber: state.activeUpgrades.includes('darkpool_fiber'),
+      // One live valuation for every path: a position that expires mid-Flash-Dip
+      // settles at the dip, and the live P&L readout in the order slip prices
+      // the same way, so the two cannot disagree about what a slam is worth.
+      valuationMultiplier: flashDipValuationMultiplier(state.flashDipSecondsRemaining),
       walkBackWindowExpired,
       lastTargetStockSymbol: state.lastTargetStockSymbol,
       now,
@@ -339,6 +304,7 @@ export const createTradingSlice: StateCreator<GameStore, [], [], TradingSlice> =
         lastRaidTimestamp: state.lastRaidTimestamp,
         deltaSeconds,
         now,
+        raidsAbolished: raidsAbolished(state.unlockedPerks),
       },
       state.lastRaidMessage
     );

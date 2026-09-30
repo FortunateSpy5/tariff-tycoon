@@ -1,7 +1,7 @@
 # UX Evaluation & Redesign Plan — 3:00 AM Terminal Panic
 
 **Target:** *EXECUTIVE DEGEN: SHORT THE WORLD* (*The Art of the 3:00 AM Tariff*)
-**Status:** 🟢 **P0s SHIPPED** · 🟢 **Phase 0 SHIPPED** · Phases 1–4 proposed
+**Status:** 🟢 **P0s SHIPPED** · 🟢 **Phase 0 SHIPPED** · 🟢 **Phase 1 SHIPPED** · Phases 2–4 proposed
 **Date:** 2026-09-29
 **Supersedes:** nothing. `UI_REDESIGN_PLAN.md` remains the historical record of the
 newsprint/classified pass and is still the source for the region→material table.
@@ -535,10 +535,166 @@ near-miss is safe; a verbatim is not.*
   (`$1982822` → `$1.98M` above $1M; exact figures stay in the header and hover
   copy, so the abbreviation is never the only source).
 
-- **1.2 Right wing.** Give Caymans and Unlocks real content — the **6 SIS perks
-  from GDD §5 are entirely unimplemented** and the perk tree currently renders
-  nothing. Add a prestige-progress projection so a sub-$10 B player can see the climb.
-- **1.3 Career Objectives.** Collapse completed rows; promote next-up objective to 2× size.
+## Phase 1.2 — the perk constellation, and four bugs it surfaced
+
+`unlockedPerks` was a `Record<string, boolean>` and `unlockPerk` was **called from
+no component**. The most expensive channel in the game had a prestige button and
+~640px of nothing. All six GDD §5 perks now do what their names say, and the
+`$1M → $10B` stretch where the channel is open but the gate is shut has a readout
+on it.
+
+**Shipped.** `constants/perks.ts` (costs + every effect constant) ·
+`engine/systems/perkEngine.ts` (the six rules, pure) · `store/slices/perkSlice.ts`
+(the one perk with a clock) · `PerkConstellation` + `PrestigeProgressCard` ·
+`prestigeProjection.ts` (headless, so the card and its hover cannot disagree).
+
+| Perk | Cost | What it does |
+|---|---|---|
+| Shell Company Inception | 1 | ×2 base tap, compounding with the Tungsten Nib |
+| 280-Character Macro Wreck | 2 | 4%/slam Flash Dip: ×6 options valuation for 8s |
+| QE As A Service | 3 | Spend to **−$50B** |
+| Insider Exemption 401(k) | 5 | 1.5% of the open book's **peak** every 60s |
+| The Pardon Assembly Line | 8 | −65% liquidation prices, raids abolished |
+| Golden Parachute Super-PAC | 13 | 15% of passive income survives the filing |
+
+### Three rulings, taken rather than guessed
+
+- **Perk 1 is half of what GDD says.** `executeFlightToCaymans` has *always*
+  granted `$1M × SIS^1.2` seed cash, and the Caymans hover copy promises it. It
+  is the floor that stops a returning player starting soft-locked, so the
+  purchasable half is the **+100% tap**. GDD §5 now records the split rather
+  than quietly disagreeing with the store.
+- **Perk 4's auto-order-placement half is not implemented, and is labelled
+  roadmap.** `calculateOptionReturn` is linear in the signed move, so a long
+  straddle is *structurally* unprofitable — every state where only one leg pays
+  needs a move bigger than 1/leverage and the flat side pays nothing. Shipping it
+  would charge a player permanent currency for a guaranteed loss. The **yield**
+  clause, which is the half with a number in it, is implemented literally: 1.5%
+  of the open book's peak value every 60s, paid only for holding leveraged risk.
+- **The projection leads with the shortfall**, then states the curve honestly:
+  the exponent is 0.32, so doubling lifetime earnings multiplies the cash term
+  by **1.25**, not 2. `nextSlipCash` names the next whole Slip's actual price
+  and `lifetimeCashForSlips` inverts the real constants rather than restating the
+  formula in a component.
+
+### Four defects the build surfaced, all fixed
+
+1. **The stamp's `+X / tap` tag was understated by 100%.** `ClickerButton` called
+   `calculateClickValue` and `clickDesk` then applied the Tungsten Nib's
+   doubling *at the call site* — so the hero number in the game was wrong for
+   anyone who owned the cheapest upgrade in the shop. It is the
+   `calculateInkRefillTotal` bug again: two code paths, one number, no gate.
+   `engine/systems/clickPayout.ts` is now the single source, and the Shell
+   Company multiplier lands in the same product. Verified live at four
+   multiplier states — printed tag and charged cash agree exactly.
+2. **A tax on a negative balance is a rebate.** The ink refill carried `2% ×
+   treasury`, and QE As A Service makes −$50B reachable on purpose, so `2% ×
+   −$50B` made the next refill **negative** — a player at exactly −$50B bought a
+   $25 refill and was paid $999,999,966. Found by driving the live store, not by
+   reading the code. `calculateInkRefillTotal` now clamps the taxable base at 0.
+3. **A raid was a money printer for the perk that enables it.**
+   `Math.max(10, cash - fine)` — the anti-soft-lock floor — also *lifted* a
+   negative treasury to $10. Spend to −$50B, get raided, wake up at $10. The
+   floor now applies only to a player who had at least $10 to lose; the
+   Red Phone's own `< $10` gate and the click floor are what actually prevent a
+   soft-lock, and the docstring that credited this line with the job was wrong.
+4. **The loan repaid 63% of itself and the tooltip said 100%.** The debt floor
+   was proportional to the deficit, so it paid a shrinking amount into a
+   shrinking balance — measured at 63% repaid after a full window, because
+   compounding never quite arrives. It is now `min(deficit, $50B/1200)`: a
+   constant rate that is *exactly* self-liquidating in 1200 slams, landing on
+   zero and never a surplus, and unchanged by a dry or jammed nib.
+
+### Five defects the QA and review round found, all fixed
+
+The first pass shipped three bugs; this one found five more, four of them in the
+new code and all of them in the same family: **a rule that was self-limiting by
+accident rather than by construction.**
+
+1. **The Red Phone bailout was an unlimited faucet** — the worst of them.
+   `triggerRedPhoneBailout` has **no cooldown and never had one**. The only thing
+   stopping a spam was that its $25,000 payout lifted the treasury back over the
+   `$10` broke threshold, which re-armed the gate on the next frame. QE As A
+   Service removes the lift entirely, so a player at −$50B is below that threshold
+   *permanently*. Measured: **200 bailouts in 200 clicks, $5,000,000 gained**, and
+   the counter never stopped. The tooltip had been calling it "the bankruptcy
+   floor, not a faucet" the whole time.
+2. **The Gold Box emergency sale was the same bug at a third the size.** Its
+   cooldown is waived below $50 for the same reason and the same reason failed:
+   **300 sales in 300 clicks, $150,000.** Its `isBroke` face was also a local
+   `treasuryCash < 50`, so the label would have shown "restocking waived" on a
+   button that was refusing.
+   Both are fixed by one shared predicate, `isBrokeNotInDebt` — a rescue is for a
+   player who is **low**, never one who is **in debt**, because a debt is repaid
+   by the click floor and does not need rescuing. Verified: both fire **0/200** in
+   debt and still fire exactly **once** for a genuinely broke player.
+3. **The 401(k) paid a peak belonging to a settled position.** The peak is state
+   that *outlives* the positions that produced it, so an emptied book still
+   carried a claim: **$1,500 paid for a book that no longer existed.** The first
+   version of the engine read "an empty book peaks at zero" — true of a book that
+   was always empty, false of one that emptied. The probe that "proved" the
+   invariant started the peak at 0 and could not reach the case; **a test that
+   cannot fail is not a test**, and the new one constructs the stale peak directly.
+4. **Reloading the page paid an instant 401(k) match, repeatably.**
+   `lastAutoMatchTimestamp` is deliberately not persisted (it is run state), so a
+   save rehydrated it as `0` — and `now − 0` is about 56 years, so the first tick
+   after every reload found the window long overdue. A clock that starts at zero
+   now opens its window **now**. The fix was initially only half-placed: the
+   engine returned the new timestamp and `perkSlice` committed only
+   `peakBookValue`, so the clock never armed and every reload re-armed it for
+   free. Caught only by re-measuring in the browser after the engine looked fixed.
+5. **The projection overstated its own reward.** `nextSlipGain` was a difference
+   of whole *rungs*, as though the SIS formula added integers. It floors a **sum
+   of two fractional terms**, so the real gain is a difference of two *floors* —
+   at $10¹⁰ the card read "worth **2** more Slips" when filing there pays exactly
+   **1**. Swept across 28 cash/profit combinations, it disagreed at most of them
+   and always in the player's disfavour. Both sides now come from
+   `calculatePrestigeSIS` itself, and the probe asserts the equality directly.
+
+### Two honest behaviours worth knowing
+
+- **The Flash Dip accelerates losses.** It multiplies the *signed* return, like
+  the VEX vega multiplier, so a CALL held through one is marked down 6× as fast
+  as a PUT pays. Every surface that prices options now takes the multiplier as
+  an argument and says so out loud — the plan records the VEX tooltip that failed
+  to as the most expensive line ever shipped here.
+- **A spent Slip is not a click multiplier.** The balance card's
+  `+N% Click Yield Multiplier` sat directly under a balance the player can now
+  spend down, so six Slips and five perks bought read `+60%` on a balance worth
+  one. Only unspent Slips yield, and the line beneath says what the spent ones
+  became.
+
+**Verified:** `npm run build` clean · `oxlint` clean · no file over 400 lines ·
+**73 assertions** in `scripts/probe-perks.mts` green, plus a live-store pass that
+bought all six perks (14 → 3 Slips, Pardon and Parachute correctly refused at
+3 with nothing charged, double-buys and unknown ids refused and free), measured
+the stamp at four multiplier states, drove the treasury to −$50B and confirmed
+the refill rebate, the raid lift, the bailout faucet and the Gold Box faucet are
+all closed, watched a settle pay $301,000 under a dip against $51,000 without,
+reloaded ten times to confirm no free match, and filed twice to confirm the
+parachute carries $150 of a $1,000 rate and run-state clears while lifetime
+counters survive. A **pre-change save** rehydrates with its 12 Slips, its
+upgrades and its phase intact, grants nothing for an unknown legacy perk key,
+and leaves every new field at a safe zero.
+
+### What this cost in structure
+
+`deskSlice` and `tradingSlice` were both at the 400-line ceiling. Two slices
+were extracted rather than prose deleted: `deskEconomySlice` (the three *spend*
+verbs — `buyUpgrade`, `refillInk`, `ventTantrum`, split by direction of cash
+flow) and `perkSlice` (the one perk that pays on a clock). `openOptionTrade`'s
+body moved to `orderPlacement.ts`. **Invariant prose was not cut to make room** —
+the plan notes that a comment-only change fails `size:check` too.
+
+### 1.3 — the collapse that did not collapse
+
+The comment claimed finished rows "collapse into a single struck-through summary
+line", and the code rendered every finished row *and* the summary. Completed
+objectives now render **zero** rows and exist only in `Certified:` (verified
+live), and the nearest unfinished objective is genuinely promoted — `text-sm`
+with a gold left rule and a taller bar, against `t-caption` for the rest. A
+`NEXT //` prefix in the same type size is a whisper, and this panel's whole job
+on the first screen is to point at the shortest path.
 
 ---
 
@@ -611,6 +767,8 @@ so "no element on screen is unhoverable" is a number rather than an intention.
       to pay on a rejected sale; the prestige label no longer hides that locked
       collateral counts*
 - [ ] Every panel earns its pixels — no surface is empty while an adjacent one scrolls
+      — *the Caymans channel went from ~640px of dead space to a full pane that
+      overflows by 94px; every other measured dead region is still open*
 - [x] A YAP visibly crashes a chart, in the same millisecond, on the same screen
       — *`PriceChart` ships a real OHLC candlestick tape; the impact marker and
       flash are stamped by the engines that cause the move, and both directions

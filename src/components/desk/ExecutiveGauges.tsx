@@ -41,6 +41,7 @@ import {
 } from '../../constants/balance';
 import { Card } from '../ui/Card';
 import { hint } from '../ui/hint';
+import { canAfford } from '../../engine/systems/perkEngine';
 import {
   calculateInkRefillCost,
   calculateInkRefillTotal,
@@ -80,10 +81,21 @@ export const ExecutiveGauges: React.FC = () => {
   // Charged Price] in `formulas.ts`. `atRefillCap` is true once the 2% treasury
   // tax has been clamped away by the 4× ceiling, which is the case the copy has
   // to get right rather than describe as "on top".
+  const dryClicksCount = useGameStore((s) => s.dryClicksCount || 0);
+  const unlockedPerks = useGameStore((s) => s.unlockedPerks);
+  const jamYield = dryClicksCount >= DRY_CLICK_JAM_THRESHOLD
+    ? DRY_CLICK_JAM_YIELD_MULTIPLIER
+    : DRY_CLICK_YIELD_MULTIPLIER;
+
   const refillBase = calculateInkRefillCost(inkRefillCount);
   const refillCost = calculateInkRefillTotal(inkRefillCount, treasuryCash);
   const atRefillCap = refillCost >= refillBase * INK_REFILL_HARD_CAP_MULTIPLE;
-  const canAfford = treasuryCash >= refillCost;
+  // INVARIANT: [One Affordability Test] — `canAfford` is the same predicate
+  // `refillInk` charges with, and the only one that knows about the QE As A
+  // Service negative buffer. A local `treasuryCash >= refillCost` here would
+  // leave this button refusing a purchase the store would happily accept.
+  const canAffordRefill = canAfford(treasuryCash, refillCost, unlockedPerks);
+  const shortfall = Math.max(0, refillCost - treasuryCash);
   const isDry = inkLevel <= 0 && !isCapsFrenzy;
   const inkPercent = Math.round((inkLevel / maxInk) * 100);
   const inkLabel = phase === 1 ? 'Customs Stamp Ink' : 'Golden Sherpie Ink';
@@ -94,14 +106,12 @@ export const ExecutiveGauges: React.FC = () => {
   // meter is too small to be worth purging.
   const canVent =
     !isCapsFrenzy && !isCoolingOff && tantrumMeter >= TANTRUM_VENT_MIN_TANTRUM;
-  const canRefill = canAfford && inkPercent < 100;
+  const canRefill = canAffordRefill && inkPercent < 100;
   // The dry yield is 10% — until 30 consecutive dry clicks JAM the nib and it
   // collapses to 2%. The gauge used to hardcode "−90%", which is wrong in
   // exactly the state the player is stuck in long enough to read it.
-  const dryClicksCount = useGameStore((s) => s.dryClicksCount || 0);
-  const jamYield = dryClicksCount >= DRY_CLICK_JAM_THRESHOLD
-    ? DRY_CLICK_JAM_YIELD_MULTIPLIER
-    : DRY_CLICK_YIELD_MULTIPLIER;
+  // (The jam reading itself is computed in `resolveClickPayout`; the label needs
+  // the same number, so it is derived from the same two store fields.)
 
   return (
     <div className="grid grid-cols-1 gap-1.5 shrink-0">
@@ -122,7 +132,7 @@ export const ExecutiveGauges: React.FC = () => {
                   sayNo(
                     inkPercent >= 100
                       ? 'TANK FULL. The nib is wet; slam before you refill.'
-                      : `SHORT ${formatCurrency(refillCost - treasuryCash)}. You hold ${formatCurrency(
+                      : `SHORT ${formatCurrency(shortfall)}. You hold ${formatCurrency(
                           treasuryCash
                         )}. Sell a blueprint from the GOLD BOX, or bank a settled position.`
                   );
@@ -137,8 +147,7 @@ export const ExecutiveGauges: React.FC = () => {
                   : !canAfford
                   ? `Refill the tank for ${formatCurrency(refillCost)}. You hold ${formatCurrency(
                       treasuryCash
-                    )} — the price climbs ${INK_REFILL_COST_GROWTH}× per purchase AND carries a 2% tax on your treasury, so refills are a real running cost, not a rounding error.`
-                  : `Refill the tank for ${formatCurrency(refillCost)}. That is the base curve (climbing ${INK_REFILL_COST_GROWTH}× per refill) plus 2% of your treasury${
+                    )} — the price climbs ${INK_REFILL_COST_GROWTH}× per purchase AND carries a 2% tax on your treasury, so refills are a real running cost, not a rounding error.`                  : `Refill the tank for ${formatCurrency(refillCost)}. That is the base curve (climbing ${INK_REFILL_COST_GROWTH}× per refill) plus 2% of your treasury${
                       atRefillCap
                         ? ` — except the ${INK_REFILL_HARD_CAP_MULTIPLE}× ceiling has now swallowed that 2% entirely, so ${formatCurrency(
                             refillCost

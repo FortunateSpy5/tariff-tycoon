@@ -82,16 +82,18 @@ src/
 │   └── onboarding.ts   # Tutorial directive chain + career objectives
 │   ├── tabDemands.ts   # Per-channel demand copy for sealed channels (open-this +
 │   │                   # teaser). The copy behind [The Seal Is a Promise, Not a Wall]
+│   ├── perks.ts        # The six GDD §5 SIS perks: costs + every effect constant
 │   └── unlocks.ts      # Permanent crony upgrade definitions
 ├── engine/             # Headless mathematical & causal engines (100% testable without DOM)
 │   ├── math/           # Pure formulas with KaTeX annotations (break_infinity, leverage, SIS)
 │   └── systems/        # One concern per file, each pure + independently testable:
 │                       #   marketEngine, settlementEngine, yapShockEngine, slopEngine,
 │                       #   crisisEngine, inkFrenzyEngine, passiveEngine, phaseEngine,
-│                       #   tariffEngine, unlockEngine, onboardingEngine
+│                       #   tariffEngine, unlockEngine, onboardingEngine, perkEngine,
+│                       #   clickPayout, candleEngine
 ├── store/              # Zustand state divided into slice architecture
-│   ├── slices/         # 10 slices: desk, channel, trading, settlement, prediction,
-│   │                   #   crisis, deskProps, dump, prestige, settings
+│   ├── slices/         # 12 slices: desk, deskEconomy, channel, trading, settlement,
+│   │                   #   prediction, crisis, deskProps, dump, prestige, perk, settings
 │   └── useGameStore.ts # Root unified store with persistent localStorage
 ├── audio/              # Procedural Web Audio API sound synthesis (zero audio asset bloat)
 │   ├── soundEngine.ts  # Master AudioContext & gain buses

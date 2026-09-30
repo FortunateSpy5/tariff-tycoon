@@ -17,6 +17,9 @@ import { formatCurrency } from '../../../engine/math/bigNumber';
 import { CRONY_FAVOR_LIQUIDATION_KICKBACK_RATIO } from '../../../constants/balance';
 import { DossierHeader } from '../DossierHeader';
 import { hint } from '../../ui/hint';
+import { agencyFavorCost } from '../../../store/slices/dumpSlice';
+import { canAfford } from '../../../engine/systems/perkEngine';
+import { PARDON_COST_REDUCTION } from '../../../constants/perks';
 import type { AgencyLiquidation } from '../../../types/dump';
 
 export const DumpAgenciesTab: React.FC = () => {
@@ -27,6 +30,7 @@ export const DumpAgenciesTab: React.FC = () => {
   const hasTariffAccess = useGameStore((s) => s.hasTariffAccess);
   const hasPrestigeAccess = useGameStore((s) => s.hasPrestigeAccess);
   const liquidateAgency = useGameStore((s) => s.liquidateAgency);
+  const unlockedPerks = useGameStore((s) => s.unlockedPerks);
   const totalCashHarvested = useGameStore((s) => s.totalCashHarvested);
   const activeHazardsCount = useGameStore((s) => s.activeHazardsCount);
   const disasterCapitalismRevenue = useGameStore((s) => s.disasterCapitalismRevenue);
@@ -83,18 +87,26 @@ export const DumpAgenciesTab: React.FC = () => {
    * gate, the cash yield, the heat, and the sequential prerequisite — because
    * the button itself only ever showed a bare `+$cash`, which is the number the
    * player is about to gain and none of the numbers they must first pay.
+   * The favor cost comes from `agencyFavorCost` — the SAME helper
+   * `liquidateAgency` charges with. Printing `agency.cronyFavorCost` would quote
+   * the undiscounted price to a player holding the Pardon Assembly Line.
    */
   const scrapHint = (agency: AgencyLiquidation, index: number, prev: AgencyLiquidation | null) => {
     const gate =
       index === 0
         ? 'It is first in the book, so nothing stands in front of it.'
         : `Locked until ${prev?.acronym ?? 'the previous agency'} is scrapped — the guillotine runs one letter at a time.`;
+    const favorCost = agencyFavorCost(agency, unlockedPerks);
     return (
       `Scrap the ${agency.acronym} (${agency.name}). Pays ${formatCurrency(agency.liquidationCashYield)} ` +
       `into the Treasury and scales passive income by ${agency.passivePerkMultiplier}x for the rest of the run. ` +
-      `Costs ${agency.cronyFavorCost} Crony Favor — the committee kickbacks ` +
+      `Costs ${favorCost} Crony Favor${
+        favorCost < agency.cronyFavorCost
+          ? ` — the Pardon Assembly Line takes ${PARDON_COST_REDUCTION * 100}% off the usual ${agency.cronyFavorCost}`
+          : ''
+      } — the committee kickbacks ` +
       `${Math.round(CRONY_FAVOR_LIQUIDATION_KICKBACK_RATIO * 100)}%, so the true cost is ` +
-      `${netFavorCost(agency.cronyFavorCost)} — plus +15% S.L.O.P. heat, and a new standing hazard. Requires ` +
+      `${netFavorCost(favorCost)} — plus +15% S.L.O.P. heat, and a new standing hazard. Requires ` +
       `${formatCurrency(agency.minNetWorthRequired)} in the bank. ${gate} ` +
       `Perk: ${agency.perkDescription}. Hazard: ${agency.hazardDescription}.`
     );
@@ -149,9 +161,14 @@ export const DumpAgenciesTab: React.FC = () => {
             const isScrapped = agency.isLiquidated;
             const isUnlocked = index === 0 || agencies[index - 1].isLiquidated;
             const previousAgency = index > 0 ? agencies[index - 1] : null;
-            const hasFavor = cronyFavor >= agency.cronyFavorCost;
-            const hasCash = treasuryCash >= agency.minNetWorthRequired;
-            const canAfford = hasFavor && hasCash;
+            // INVARIANT: [The Quoted Price Is The Charged Price] — the card, the
+            // hover and `liquidateAgency` all read this one helper, so the
+            // Pardon Assembly Line's discount cannot appear in one and not the
+            // others.
+            const favorCost = agencyFavorCost(agency, unlockedPerks);
+            const hasFavor = cronyFavor >= favorCost;
+            const hasCash = canAfford(treasuryCash, agency.minNetWorthRequired, unlockedPerks);
+            const canAffordIt = hasFavor && hasCash;
 
             return (
               <div
@@ -176,7 +193,11 @@ export const DumpAgenciesTab: React.FC = () => {
                     <p className="t-caption text-gold-700 font-mono flex items-center gap-1 mt-0.5">
                       <AlertTriangle className="w-2.5 h-2.5" />
                       <Handshake className="w-2.5 h-2.5" aria-hidden />
-                      Cost: {agency.cronyFavorCost} Favor // Req: {formatCurrency(agency.minNetWorthRequired)}
+                      Cost: {favorCost} Favor
+                      {favorCost < agency.cronyFavorCost && (
+                        <span className="text-emerald-700 line-through">{agency.cronyFavorCost}</span>
+                      )}{' '}
+                      // Req: {formatCurrency(agency.minNetWorthRequired)}
                     </p>
                   </div>
 
@@ -188,19 +209,27 @@ export const DumpAgenciesTab: React.FC = () => {
                       </span>
                     ) : isUnlocked ? (
                       <button
-                        onClick={() => handleLiquidate(agency.id, agency.acronym, agency.liquidationCashYield, agency.cronyFavorCost, agency.minNetWorthRequired)}
+                        onClick={() =>
+                          handleLiquidate(
+                            agency.id,
+                            agency.acronym,
+                            agency.liquidationCashYield,
+                            favorCost,
+                            agency.minNetWorthRequired
+                          )
+                        }
                         // INVARIANT: [Gated Controls Use aria-Disabled, Not disabled]
                         // A native `disabled` swallows pointer events, which would
                         // delete the hover text naming the very gate that closed
                         // this button. The guard in `handleLiquidate` is the real
                         // enforcement. See `HintTooltip`.
-                        aria-disabled={!canAfford}
+                        aria-disabled={!canAffordIt}
                         {...hint(
                           scrapHint(agency, index, previousAgency),
                           `Scrap the ${agency.acronym} for ${formatCurrency(agency.liquidationCashYield)}`
                         )}
                         className={`px-2.5 py-1 rounded font-mono t-micro font-bold transition-all shadow ${
-                          canAfford
+                          canAffordIt
                             ? 'bg-gradient-to-r from-gold-500 to-gold-600 hover:from-gold-400 text-newsprint-950 font-black active:scale-95 cursor-pointer'
                             : 'bg-newsprint-300 text-newsprint-800 cursor-not-allowed'
                         }`}

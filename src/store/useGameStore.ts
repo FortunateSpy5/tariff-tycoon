@@ -9,6 +9,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { createDeskSlice, type DeskSlice } from './slices/deskSlice';
+import { createDeskEconomySlice, type DeskEconomySlice } from './slices/deskEconomySlice';
 import { createChannelSlice, type ChannelSlice } from './slices/channelSlice';
 import { createDeskPropsSlice, type DeskPropsSlice } from './slices/deskPropsSlice';
 import { createCrisisSlice, type CrisisSlice } from './slices/crisisSlice';
@@ -17,11 +18,13 @@ import { createPredictionSlice, type PredictionSlice } from './slices/prediction
 import { createSettlementSlice, type SettlementSlice } from './slices/settlementSlice';
 import { createDumpSlice, type DumpSlice } from './slices/dumpSlice';
 import { createPrestigeSlice, type PrestigeSlice } from './slices/prestigeSlice';
+import { createPerkSlice, type PerkSlice } from './slices/perkSlice';
 import { createSettingsSlice, type SettingsSlice } from './slices/settingsSlice';
 import { calculateOfflineEarnings } from '../engine/math/formulas';
 import type { LeftChannelTab, RightChannelTab } from '../types/unlocks';
 
 export type GameStore = DeskSlice &
+  DeskEconomySlice &
   ChannelSlice &
   DeskPropsSlice &
   CrisisSlice &
@@ -30,12 +33,14 @@ export type GameStore = DeskSlice &
   SettlementSlice &
   DumpSlice &
   PrestigeSlice &
+  PerkSlice &
   SettingsSlice;
 
 export const useGameStore = create<GameStore>()(
   persist(
     (...a) => ({
       ...createDeskSlice(...a),
+      ...createDeskEconomySlice(...a),
       ...createChannelSlice(...a),
       ...createDeskPropsSlice(...a),
       ...createCrisisSlice(...a),
@@ -44,6 +49,7 @@ export const useGameStore = create<GameStore>()(
       ...createSettlementSlice(...a),
       ...createDumpSlice(...a),
       ...createPrestigeSlice(...a),
+      ...createPerkSlice(...a),
       ...createSettingsSlice(...a),
     }),
     {
@@ -78,7 +84,15 @@ export const useGameStore = create<GameStore>()(
         sovereignImmunitySlips: state.sovereignImmunitySlips,
         totalSISLifetime: state.totalSISLifetime,
         flightToCaymansCount: state.flightToCaymansCount,
+        // INVARIANT: [Perks Are Permanent, Timers Are Not]
+        // `unlockedPerks` and the two lifetime counters persist; the Flash Dip
+        // timer, the 401(k) peak and its clock are run state and are rebuilt
+        // from zero on a reload. Persisting a countdown would hand a returning
+        // player free options valuation, and persisting the peak would let a
+        // match be claimed against positions that no longer exist.
         unlockedPerks: state.unlockedPerks,
+        totalFlashDipsTriggered: state.totalFlashDipsTriggered,
+        totalAutoMatchPaid: state.totalAutoMatchPaid,
         executiveDecrees: state.executiveDecrees,
         americaLLCIncorporated: state.americaLLCIncorporated,
         cronyFavor: state.cronyFavor,

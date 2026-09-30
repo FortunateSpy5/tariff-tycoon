@@ -62,6 +62,29 @@ export interface ChannelSliceContract {
   setActiveRightTab: (tab: RightChannelTab) => void;
 }
 
+/**
+ * The desk's OUTGOING verbs: every action that takes treasury cash or a meter
+ * away from the player. Split from `DeskSliceContract` so `deskSlice` owns the
+ * slam and the tick, and this owns the spending. See `slices/deskEconomySlice`.
+ */
+export interface DeskEconomySliceContract {
+  /**
+   * Buy a crony upgrade with treasury cash.
+   *
+   * INVARIANT: the FIRST purchase of any kind also sets `hasTariffAccess`, which
+   * is what makes the lobby the key to the bilateral dials. See `unlockEngine`.
+   */
+  buyUpgrade: (upgradeId: string) => boolean;
+  /** Refill the ink tank at the shared charged price. See `calculateInkRefillTotal`. */
+  refillInk: () => boolean;
+  /**
+   * VENT THE TANTRUM: burn all accumulated tantrum for a burst of VEX relief.
+   * Never optimal (see TANTRUM_VENT_CONSUME_RATIO) - it is a panic button for
+   * calm options pricing, and the Tantrum meter's counterpart to Ink's refill.
+   */
+  ventTantrum: () => boolean;
+}
+
 /** The clicker economy, ink stamina and tantrum. */
 export interface DeskSliceContract extends DeskState {
   treasuryCash: number;
@@ -71,7 +94,6 @@ export interface DeskSliceContract extends DeskState {
   lifetimeCashEarned: number;
 
   activeUpgrades: string[];
-  buyUpgrade: (upgradeId: string) => boolean;
 
   /** Advance the onboarding chain. Clamped at the end; never wraps. */
   advanceTutorial: () => void;
@@ -82,13 +104,6 @@ export interface DeskSliceContract extends DeskState {
   setTariffRate: (nationId: string, rate: number) => void;
 
   clickDesk: () => boolean;
-  refillInk: () => boolean;
-  /**
-   * VENT THE TANTRUM: burn all accumulated tantrum for a burst of VEX relief.
-   * Never optimal (see TANTRUM_VENT_CONSUME_RATIO) — it is a panic button for
-   * calm options pricing, and the Tantrum meter's counterpart to Ink's refill.
-   */
-  ventTantrum: () => boolean;
   tickDesk: (deltaSeconds: number) => void;
   creditOfflineEarnings: (elapsedSeconds: number) => number;
 }

@@ -21,13 +21,19 @@ import { captureRunSnapshot, type RunSnapshot } from '../../share/runSummary';
 import { Card } from '../../ui/Card';
 import { hint } from '../../ui/hint';
 import { DossierHeader } from '../DossierHeader';
+import { PerkConstellation } from '../PerkConstellation';
+import { PrestigeProgressCard } from '../PrestigeProgressCard';
+import { hasPerk } from '../../../engine/systems/perkEngine';
+import { SHELL_COMPANY_TAP_MULTIPLIER, PRESTIGE_PERKS, TOTAL_PERK_COST } from '../../../constants/perks';
 
 export const CaymansPrestigeTab: React.FC = () => {
   const activeTrades = useGameStore((s) => s.activeTrades);
   const lifetimeCashEarned = useGameStore((s) => s.lifetimeCashEarned);
   const lifetimeOptionsProfit = useGameStore((s) => s.lifetimeOptionsProfit);
   const sovereignImmunitySlips = useGameStore((s) => s.sovereignImmunitySlips);
+  const unlockedPerks = useGameStore((s) => s.unlockedPerks);
   const executeFlightToCaymans = useGameStore((s) => s.executeFlightToCaymans);
+  const ownedPerkCount = PRESTIGE_PERKS.filter((p) => hasPerk(unlockedPerks, p.id)).length;
   const [feedback, setFeedback] = useState<string | null>(null);
   // INVARIANT: captured BEFORE the reset. executeFlightToCaymans zeroes every
   // field in the snapshot, so reading it afterwards would render an empty card
@@ -109,6 +115,27 @@ export const CaymansPrestigeTab: React.FC = () => {
             <span className="t-micro text-emerald-700 font-mono block">
               +{(sovereignImmunitySlips || 0) * 10}% Click Yield Multiplier
             </span>
+            {/* INVARIANT: [A Spent Slip Is Not A Click Multiplier]
+                This line sat directly under a balance the player can now spend
+                down, so somebody with six Slips and five perks bought read
+                "+60% Click Yield" on a balance worth one. Only unspent Slips
+                yield, and the line beneath says what the spent ones became. */}
+            {ownedPerkCount > 0 && (
+              <span
+                {...hint(
+                  `${ownedPerkCount} of ${PRESTIGE_PERKS.length} perks filed; the whole constellation costs ${TOTAL_PERK_COST} Slips. ` +
+                    `Your ${sovereignImmunitySlips} unspent Slip${
+                      sovereignImmunitySlips === 1 ? '' : 's'
+                    } are worth +${(sovereignImmunitySlips || 0) * 10}% click yield and a $${(
+                      (sovereignImmunitySlips || 0) * 1000
+                    ).toLocaleString()}-per-slip floor on every slam. The seed cash of the NEXT run is $1M x (unspent + earned)^1.2, so every Slip you spend on a perk is a slightly smaller company on the way back in — filing first is usually worth more than banking.`
+                )}
+                className="t-caption text-gold-700 font-mono block"
+              >
+                {ownedPerkCount}/{PRESTIGE_PERKS.length} FILED
+                {hasPerk(unlockedPerks, 'shell_company_inception') && ` · ${SHELL_COMPANY_TAP_MULTIPLIER}x TAP`}
+              </span>
+            )}
           </div>
         </Card>
 
@@ -121,7 +148,8 @@ export const CaymansPrestigeTab: React.FC = () => {
             Dissolve the Republic into an offshore shell and start again. Treasury cash, every agency liquidation,
             every tariff dial, every crony upgrade and all S.L.O.P. heat return to zero, and any open 0DTE
             position is closed out rather than settled. You keep your Sovereign Immunity Slips: each is a permanent
-            +10% on manual click yield and a $1,000-per-slip floor on every click, so a run can never begin soft-locked.
+            +10% on manual click yield and a $1,000-per-slip floor on every click, so a run can never begin
+            soft-locked, and you keep every perk you have filed for.
           </p>
 
           <div className="p-2 rounded bg-newsprint-200/70 border border-newsprint-300 font-mono text-xs flex justify-between items-center">
@@ -155,6 +183,13 @@ export const CaymansPrestigeTab: React.FC = () => {
             </span>
           </button>
         </div>
+
+        {/* Phase 1.2: the two things that fill the stretch between "the Caymans
+            opened" and "the gate is open". Both are real content rather than
+            decoration — the projection reads the same sums `executeFlightToCaymans`
+            charges, and the constellation is the only place Slips can be spent. */}
+        <PrestigeProgressCard />
+        <PerkConstellation />
       </div>
 
       {feedback && (

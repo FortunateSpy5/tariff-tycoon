@@ -9,6 +9,7 @@ import { useGameStore } from '../../../store/useGameStore';
 import { Card } from '../../ui/Card';
 import { hint } from '../../ui/hint';
 import { RAID_BRIBE_COST, SLOP_DECAY_PER_SECOND } from '../../../engine/systems/slopEngine';
+import { hasPerk } from '../../../engine/systems/perkEngine';
 import { CRONY_FAVOR_PASSIVE_PER_SECOND, CRONY_FAVOR_PER_YAP } from '../../../constants/balance';
 
 /** Crony Favor burned per shred. Mirrors `SHRED_FAVOR_COST` in `deskPropsSlice`. */
@@ -36,6 +37,7 @@ export const SlopRadarTab: React.FC = () => {
   const lastShredTimestamp = useGameStore((s) => s.lastShredTimestamp);
   const bribeSlopAuditors = useGameStore((s) => s.bribeSlopAuditors);
   const shredSubpoenas = useGameStore((s) => s.shredSubpoenas);
+  const pardoned = useGameStore((s) => hasPerk(s.unlockedPerks, 'pardon_assembly_line'));
 
   const isCritical = slopSuspicion >= 75;
   const isDangerous = slopSuspicion >= 50;
@@ -219,8 +221,17 @@ export const SlopRadarTab: React.FC = () => {
           </div>
         )}
 
+        {/* INVARIANT: [The Raid Warning Must Follow The Engine]
+            This read, unconditionally, "Special Counsel audits trigger full asset
+            freezes at 100% heat unless averted via bribes or document shredding."
+            The Pardon Assembly Line perk abolishes raids outright, so for a player
+            holding it the strip became a flat lie at the exact moment they were
+            deciding whether to spend 50 favor on a bribe. A decorative quote is
+            still a claim, and this repo treats an inaccurate one as a defect. */}
         <div className="p-2 surface-terminal-well rounded t-micro text-phosphor-600 italic">
-          "Special Counsel audits trigger full asset freezes at 100% heat unless averted via bribes or document shredding."
+          {pardoned
+            ? 'The Pardon Assembly Line is in force. Heat still accrues and still decays, and the meter is still the readout you manage — but at 100% nothing comes through the door, so there is no bribe to consider.'
+            : 'Special Counsel audits trigger full asset freezes at 100% heat unless averted via bribes or document shredding.'}
         </div>
       </div>
     </div>

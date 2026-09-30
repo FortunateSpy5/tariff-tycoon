@@ -41,6 +41,7 @@ export const TelemetryConsolePane: React.FC = () => {
   const hasPrestigeAccess = useGameStore((s) => s.hasPrestigeAccess);
   const activeLeftTab = useGameStore((s) => s.activeLeftTab);
   const setActiveLeftTab = useGameStore((s) => s.setActiveLeftTab);
+  const lastAutoMatchNotice = useGameStore((s) => s.lastAutoMatchNotice);
 
   /* Assembled from primitive subscriptions rather than returned from a single
      selector — a fresh object from a selector re-renders on every store write. */
@@ -80,13 +81,14 @@ export const TelemetryConsolePane: React.FC = () => {
         />
       }
       footer={
-        /* PRUNED [0.1]: this hand-rolled its own footer instead of using the
+        <>
+        {/* PRUNED [0.1]: this hand-rolled its own footer instead of using the
            shared <StatusStrip>, and it carried two labels. `CITADULL HFT FEED`
            was pure decoration — it never changed and described nothing the
            player could act on. `0ms LATENCY` is kept because it is LIVE: it
            flips to CHANNEL SEALED, so it is actually reporting the pane's state.
            One honest readout beats two, and routing it through StatusStrip
-           removes the last fork of the pane-footer markup. */
+           removes the last fork of the pane-footer markup. */}
         <StatusStrip
           accent="phosphor"
           icon={<Activity className="w-3 h-3 text-gold-400" aria-hidden />}
@@ -106,6 +108,29 @@ export const TelemetryConsolePane: React.FC = () => {
             </>
           }
         />
+
+        {/* INVARIANT: [A Faucet That Pays Silently Is Filler]
+            The Insider Exemption 401(k) credits cash every 60 seconds. With the
+            notice written and never rendered, the player banked $1,500 with no
+            idea a perk existed — precisely the "number with a unit and no
+            referent" the Chekhov audit exists to eliminate, and the reason the
+            perk's own card says it pays for holding risk.
+
+            It sits in the FOOTER, not the body: the body hosts a `h-full` tab,
+            so a sibling there would overflow a `flex-1` pane. And it lives on
+            the left wing rather than in the market tab because the player
+            watching a position move is usually on the desk. `role="status"`
+            means a screen reader hears the payout too. */}
+        {lastAutoMatchNotice && (
+          <div
+            role="status"
+            aria-live="polite"
+            className="shrink-0 px-2 py-1 border-t border-gold-600/50 bg-gold-500/15 text-center font-mono t-micro font-bold text-gold-300"
+          >
+            {lastAutoMatchNotice}
+          </div>
+        )}
+        </>
       }
     >
       {isSealed ? (

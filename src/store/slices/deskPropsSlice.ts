@@ -21,6 +21,7 @@
 import type { StateCreator } from 'zustand';
 import type { GameStore } from '../useGameStore';
 import { canShredSubpoenas } from '../../engine/systems/unlockEngine';
+import { hasPerk, type PerkSet } from '../../engine/systems/perkEngine';
 import { sound } from '../../audio/soundEngine';
 
 /** Only callable when the treasury is below this — it is a rescue, not a faucet. */
@@ -37,6 +38,31 @@ const SECRET_SALE_BROKE_THRESHOLD = 50;
 
 const SECRET_SALE_PAYOUT = 500;
 const SECRET_SALE_HEAT = 8;
+
+/**
+ * INVARIANT: [A Rescue Must Not Become A Faucet]
+ * Every "you are broke, so this is free" waiver in the game — the Red Phone
+ * bailout, the Gold Box emergency sale — was self-limiting for one reason only:
+ * each payout was large enough to push the treasury back ABOVE the broke
+ * threshold, which re-armed the cooldown on the very next frame. A player at $5
+ * could therefore take exactly one bailout and one emergency sale.
+ *
+ * QE As A Service breaks that assumption completely. A player at -$50B is below
+ * every broke threshold and no payout will ever lift them above it, so each
+ * waiver stops being self-limiting and becomes an unlimited click. Measured with
+ * the perk owned: the bailout fired **200 times in 200 clicks** for $25,000 a
+ * click, and the Gold Box fired **300 times in 300 clicks** for $500 a click —
+ * both with no cooldown and no upper bound. A $50 loan was the most profitable
+ * thing in the game.
+ *
+ * The fix is the gate, not a cooldown: a rescue is available to a player who is
+ * *low*, never to one who is *in debt*, because a debt is repaid by the click
+ * floor (`debtReliefFloor`) and does not need rescuing. `isBrokeNotInDebt` is the
+ * single definition, so the two waivers cannot drift apart on this again.
+ */
+export function isBrokeNotInDebt(treasuryCash: number, perks: PerkSet | undefined, threshold: number): boolean {
+  return treasuryCash < threshold && !hasPerk(perks, 'qe_as_a_service');
+}
 
 /** Crony Favor consumed to shred a subpoena. */
 const SHRED_FAVOR_COST = 10;
@@ -98,7 +124,14 @@ export const createDeskPropsSlice: StateCreator<GameStore, [], [], DeskPropsSlic
 
   triggerRedPhoneBailout: () => {
     const state = get();
-    if (state.treasuryCash >= BAILOUT_BROKE_THRESHOLD) return false;
+    // INVARIANT: [A Rescue Must Not Become A Faucet] — see the full note above.
+    // This action has NO cooldown and never had one; the only thing stopping a
+    // spam was that $25,000 lifted the treasury over the $10 threshold. With
+    // QE As A Service that lift never happens, and the button became an
+    // unlimited $25,000-per-click faucet (measured: 200/200).
+    if (!isBrokeNotInDebt(state.treasuryCash, state.unlockedPerks, BAILOUT_BROKE_THRESHOLD)) {
+      return false;
+    }
 
     sound.playChaChing();
     set({ treasuryCash: state.treasuryCash + BAILOUT_BASE_AMOUNT * (1 + state.phase) });
@@ -111,8 +144,11 @@ export const createDeskPropsSlice: StateCreator<GameStore, [], [], DeskPropsSlic
     const elapsed = now - (state.lastSecretSaleTimestamp || 0);
 
     // INVARIANT: the cooldown is waived only as a true emergency sale, so a
-    // broke player can always act but a wealthy one cannot spam the box.
-    if (elapsed < SECRET_SALE_COOLDOWN_MS && state.treasuryCash >= SECRET_SALE_BROKE_THRESHOLD) {
+    // broke player can always act but a wealthy one cannot spam the box. And
+    // never for a player in QE As A Service debt — see [A Rescue Must Not
+    // Become A Faucet] above, which is where the measurement lives.
+    const isBroke = isBrokeNotInDebt(state.treasuryCash, state.unlockedPerks, SECRET_SALE_BROKE_THRESHOLD);
+    if (elapsed < SECRET_SALE_COOLDOWN_MS && !isBroke) {
       return false;
     }
 

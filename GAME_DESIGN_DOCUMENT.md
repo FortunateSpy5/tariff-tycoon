@@ -221,13 +221,45 @@ graph TD
 ### Tier 1 Prestige: "Flight to the Caymans"
 * **Currency:** **Sovereign Immunity Slips (SIS)**
   $$\text{SIS} = \left\lfloor \left(\frac{\text{Lifetime Treasury Cash}}{10^{10}}\right)^{0.32} + 3 \times \left(\frac{\text{Options Profit}}{10^9}\right)^{0.38} \right\rfloor$$
-* **Perk Constellation:**
-  1. *Shell Company Inception:* +100% base tap; start with $\$1\text{M} \times \text{SIS}^{1.2}$ seed cash.
-  2. *280-Character Macro Wreck:* 4% tap chance to trigger a "Flash Dip" (+500% options valuation for 8s).
-  3. *QE as a Service (QEaaS):* Treasury negative cash buffer extended to $-\$50\text{B}$.
-  4. *Insider Exemption 401(k):* Auto-trades 0DTE straddles, yielding 1.5% of peak trade every 60s.
-  5. *The Pardon Assembly Line:* Department costs reduced by 65%; S.L.O.P. raids abolished.
-  6. *Golden Parachute Super-PAC:* Retain 15% of all department levels across resets.
+* **Perk Constellation** — costs are 1, 2, 3, 5, 8, 13 Slips (32 total) and live in
+  `src/constants/perks.ts`; the rules live in `src/engine/systems/perkEngine.ts`.
+  1. *Shell Company Inception (1):* **+100% base tap.** *Shipped split:* the
+     $\$1\text{M} \times \text{SIS}^{1.2}$ seed cash is **not** part of this perk — it
+     has been granted unconditionally to every flight since the store was
+     written, because it is the floor that stops a returning player beginning
+     soft-locked and the Caymans hover copy promises it. Making it purchasable
+     would be a nerf wearing a feature's clothes. The perk's contribution is the
+     second doubling, which compounds with the Heavy Tungsten Nib.
+  2. *280-Character Macro Wreck (2):* 4% chance per slam to fire a **Flash Dip** —
+     ×6 options valuation for 8s. Applied to the **signed** return, so a losing
+     CALL is marked down as fast as a winning PUT pays (clamped at −100% of
+     collateral). *Resolved as specified.*
+  3. *QE as a Service (3):* treasury may be driven to **−$50B**. Purchases,
+     refills and collateral locks all use one `canAfford` predicate.
+     *Invariant added at implementation:* the manual-click bankruptcy floor gains
+     a debt term of `min(deficit, $50B / 1200)`, so the buffer is exactly
+     self-liquidating in 1200 slams — one minute at the 20/s rate limit, and
+     unchanged by a dry or jammed nib. Without it, a player at −$50B with no
+     Slips would click at the $1.00 floor forever.
+  4. *Insider Exemption 401(k) (5):* pays **1.5% of the PEAK value of the open
+     0DTE book** every 60s, then resets the peak to the current book value.
+     **Deviation, deliberate:** the GDD line also says "auto-trades 0DTE
+     straddles". The auto-order-placement half is **not implemented, and is
+     roadmap.** `calculateOptionReturn` is linear in the signed move, so a long
+     straddle is structurally unprofitable — every outcome where only one leg
+     pays requires a move larger than 1/leverage, and the flat side pays nothing.
+     Shipping it would mean charging a player permanent currency for a
+     guaranteed loss. The *yield* clause, which is the part with a number in it,
+     is implemented literally, and it pays only for holding leveraged risk.
+  5. *The Pardon Assembly Line (8):* agency liquidation prices cut 65% (the
+     committee kickback is charged on the discounted price, so the saving is
+     real), and S.L.O.P. **raids** abolished. Heat still accrues and still
+     decays; only the enforcement is pardoned.
+  6. *Golden Parachute Super-PAC (13):* carries **15% of the passive income rate**
+     across a filing. *Wording fixed:* the GDD said "retain 15% of all department
+     levels", and the agency roster has no levels — an agency is liquidated or it
+     is not. The only quantity a liquidation produces is the passive multiplier,
+     so that is what carries.
 
 ### Tier 2 Prestige: "Constitutional Dissolution / America LLC"
 * **Currency:** **Executive Decrees (ED)**

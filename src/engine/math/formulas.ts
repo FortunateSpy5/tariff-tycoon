@@ -21,14 +21,21 @@ import {
 
 /**
  * Computes manual click cash yield.
- * KaTeX: V_{\text{click}} = \max\left(V_{\text{floor}}, B \times M_{\text{phase}} \times M_{\text{frenzy}} \times M_{\text{dry}}\right)
+ * KaTeX: V_{\text{click}} = \max\left(V_{\text{floor}}, B \times M_{\text{phase}} \times M_{\text{frenzy}} \times M_{\text{dry}} \times M_{\text{shell}}\right)
  * 
  * INVARIANT: [Bankruptcy Floor]
  * Ensures the player can never be permanently soft-locked after 100% options loss.
- * Cash floor is guaranteed: max($1.00, SIS * $1,000).
+ * Cash floor is guaranteed: max($1.00, SIS * $1,000, debt relief).
  *
  * @param isJammed When the nib has jammed after DRY_CLICK_JAM_THRESHOLD consecutive dry
  *   clicks, dry yield collapses further (but never below the bankruptcy floor).
+ * @param debtReliefFloor Extra floor owed while the treasury is in deficit, from
+ *   `debtReliefFloor` in `perkEngine`. The QE As A Service perk lets a player
+ *   spend down to -$50B, and without a floor that scales with the hole the
+ *   bankruptcy guarantee would be worthless exactly when it is needed most.
+ * @param shellCompanyMultiplier Perk 1's contribution to the base tap. Applied
+ *   inside the formula rather than at the call site so the stamp's "+X / tap"
+ *   tag and the slam that charges it cannot disagree.
  */
 export function calculateClickValue(
   phase: GamePhase,
@@ -36,9 +43,11 @@ export function calculateClickValue(
   inkLevel: number,
   isCapsFrenzy: boolean,
   sisCount: number,
-  isJammed: boolean = false
+  isJammed: boolean = false,
+  debtReliefFloor: number = 0,
+  shellCompanyMultiplier: number = 1
 ): number {
-  const cashFloor = Math.max(1.0, sisCount * 1000);
+  const cashFloor = Math.max(1.0, sisCount * 1000, debtReliefFloor);
 
   // Phase progression scaling: Phase 1: 1x, Phase 2: 10x, Phase 3: 100x, Phase 4: 1000x
   const phaseMultipliers: Record<GamePhase, number> = {
@@ -57,7 +66,10 @@ export function calculateClickValue(
     // Uses FRENZY_CLICK_MULTIPLIER rather than a literal: the constant was
     // declared in balance.ts but this site had it hardcoded, so the GDD's
     // stated 10x existed in two places and changing one silently desynced it.
-    return Math.max(cashFloor, baseValue * phaseMultiplier * FRENZY_CLICK_MULTIPLIER * sisMultiplier);
+    return Math.max(
+      cashFloor,
+      baseValue * phaseMultiplier * FRENZY_CLICK_MULTIPLIER * sisMultiplier * shellCompanyMultiplier
+    );
   }
 
   // Dry clicks retain a token yield (2% when jammed) so the player is never
@@ -65,7 +77,8 @@ export function calculateClickValue(
   // INVARIANT: [Ink Fuels Frenzy] a dry nib is a safety net, never the optimum.
   const inkMultiplier =
     inkLevel <= 0 ? (isJammed ? DRY_CLICK_JAM_YIELD_MULTIPLIER : DRY_CLICK_YIELD_MULTIPLIER) : 1.0;
-  const calculatedYield = baseValue * phaseMultiplier * inkMultiplier * sisMultiplier;
+  const calculatedYield =
+    baseValue * phaseMultiplier * inkMultiplier * sisMultiplier * shellCompanyMultiplier;
 
   return Math.max(cashFloor, calculatedYield);
 }
@@ -105,6 +118,15 @@ export const INK_REFILL_HARD_CAP_MULTIPLE = 4;
  *
  * The cap is exactly why this needed saying out loud: the 2% is not always
  * "on top", and copy implying it always is, is wrong.
+ *
+ * INVARIANT: [A Tax On A Negative Balance Is A Rebate]
+ * The treasury term is clamped at zero. QE As A Service lets a player drive the
+ * treasury to -$50B, and `2% x -$50B` is **-$1B** — so an un-clamped tax made
+ * the next refill FREE and credited a billion dollars, turning the perk's loan
+ * into the fastest faucet in the game. Found by driving the live store, not by
+ * reading this: a player sitting at exactly -$50B bought a $25 refill and was
+ * paid $999,999,966. A tax scales with what you have; it does not pay out what
+ * you have not.
  */
 export function calculateInkRefillTotal(
   refillCount: number,
@@ -112,13 +134,22 @@ export function calculateInkRefillTotal(
   baseCost: number = 25
 ): number {
   const base = calculateInkRefillCost(refillCount, baseCost);
-  return Math.min(base + treasuryCash * INK_REFILL_TREASURY_RATIO, base * INK_REFILL_HARD_CAP_MULTIPLE);
+  const taxableTreasury = Math.max(0, treasuryCash);
+  return Math.min(
+    base + taxableTreasury * INK_REFILL_TREASURY_RATIO,
+    base * INK_REFILL_HARD_CAP_MULTIPLE
+  );
 }
 
 /**
  * Computes the net profit or loss for an active leveraged option contract.
- * KaTeX: \text{Return} = \Delta_{\text{price}} \times \text{leverage} \times \left(1 + \frac{\Delta VEX}{100}\right)
+ * KaTeX: \text{Return} = \Delta_{\text{price}} \times \text{leverage} \times \left(1 + \frac{\Delta VEX}{100}\right) \times M_{\text{dip}}
  * KaTeX: \text{Profit} = \text{collateral} \times \max(-1.0, \text{Return})
+ *
+ * @param valuationMultiplier An external multiplier on the SIGNED return. The
+ *   280-Character Flash Dip supplies one; it is passed in rather than read from
+ *   a module-level timer so the pricing path stays a pure function of its
+ *   arguments, and so the live P&L readout and the settlement cannot diverge.
  */
 export function calculateOptionReturn(
   type: OptionType,
@@ -127,7 +158,8 @@ export function calculateOptionReturn(
   leverage: number,
   collateral: number,
   vexVolatility: number = 15.0,
-  hasDarkPoolFiber: boolean = false
+  hasDarkPoolFiber: boolean = false,
+  valuationMultiplier: number = 1
 ): number {
   if (entryPrice <= 0) return 0;
 
@@ -138,7 +170,7 @@ export function calculateOptionReturn(
 
   // Vega blowout expansion factor based on VEX index volatility
   const vegaMultiplier = 1.0 + Math.max(0, (vexVolatility - 15.0) / 100);
-  const leveragedDelta = rawDelta * leverage * vegaMultiplier;
+  const leveragedDelta = rawDelta * leverage * vegaMultiplier * valuationMultiplier;
 
   // Options cannot lose more than 100% of collateral locked
   const clampedReturn = Math.max(-1.0, leveragedDelta);

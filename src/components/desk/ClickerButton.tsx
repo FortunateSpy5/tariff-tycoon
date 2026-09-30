@@ -16,7 +16,9 @@ import React, { useState, useRef } from 'react';
 import { PenTool, Stamp, Sparkles } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { useGameStore } from '../../store/useGameStore';
-import { calculateClickValue, calculateInkRefillTotal } from '../../engine/math/formulas';
+import { calculateInkRefillTotal } from '../../engine/math/formulas';
+import { resolveClickPayout, TUNGSTEN_NIB_MULTIPLIER } from '../../engine/systems/clickPayout';
+import { hasPerk } from '../../engine/systems/perkEngine';
 import { formatCurrency } from '../../engine/math/bigNumber';
 import {
   INK_PER_CLICK,
@@ -27,6 +29,12 @@ import {
   DRY_CLICK_JAM_YIELD_MULTIPLIER,
   DRY_CLICK_JAM_THRESHOLD,
 } from '../../constants/balance';
+import {
+  FLASH_DIP_CHANCE,
+  FLASH_DIP_DURATION_SECONDS,
+  FLASH_DIP_VALUATION_MULTIPLIER,
+  SHELL_COMPANY_TAP_MULTIPLIER,
+} from '../../constants/perks';
 import { CUSTOMS_STAMP_NAME } from '../../constants/setting';
 import { hint } from '../ui/hint';
 
@@ -67,14 +75,27 @@ export const ClickerButton: React.FC = () => {
   const [slamNonce, setSlamNonce] = useState(0);
   const nextIdRef = useRef(0);
 
-  // Calculate current click cash value: base $5.00 * phaseMultiplier (1x at P1, 10x at P2)
-  const clickValue = calculateClickValue(
+  const dryClicksCount = useGameStore((s) => s.dryClicksCount || 0);
+  const activeUpgrades = useGameStore((s) => s.activeUpgrades);
+  const unlockedPerks = useGameStore((s) => s.unlockedPerks);
+  const flashDipSecondsRemaining = useGameStore((s) => s.flashDipSecondsRemaining);
+
+  // The CHARGED yield, from the same function `clickDesk` charges with. This used
+  // to call `calculateClickValue` directly and so silently omitted the Heavy
+  // Tungsten Nib's doubling — the hero number in the game was understated by
+  // 100% for anyone who owned the cheapest upgrade in the shop. See
+  // `engine/systems/clickPayout.ts`.
+  const { earnedCash: clickValue } = resolveClickPayout({
     phase,
-    5.0,
-    isCapsFrenzy ? 100 : inkLevel,
+    baseValue: 5.0,
+    inkLevel,
     isCapsFrenzy,
-    sovereignImmunitySlips || 0
-  );
+    sisCount: sovereignImmunitySlips || 0,
+    dryClicksCount,
+    hasTungstenNib: activeUpgrades.includes('heavy_tungsten_nib'),
+    perks: unlockedPerks,
+    treasuryCash,
+  });
 
   const isDry = inkLevel <= 0 && !isCapsFrenzy;
 
@@ -92,13 +113,29 @@ export const ClickerButton: React.FC = () => {
   // yield" is only true for the first 30 dry clicks; after that the nib jams and
   // the engine pays 2%. The player who has been dry long enough to read this
   // tooltip is the one reading a number that has already stopped being true.
+  // What is actually multiplying this slam. The stamp's `+X / tap` tag is the
+  // one number the player plans around, so the hover has to be able to account
+  // for it — and the multipliers are read from the engine's own inputs, never
+  // re-typed, because a figure in copy is a figure that rots.
+  const tapSources = [
+    activeUpgrades.includes('heavy_tungsten_nib')
+      ? ` Heavy Tungsten Nib x${TUNGSTEN_NIB_MULTIPLIER}.`
+      : '',
+    hasPerk(unlockedPerks, 'shell_company_inception')
+      ? ` Shell Company Inception x${SHELL_COMPANY_TAP_MULTIPLIER} on top of it.`
+      : '',
+  ].join('');
+  const flashDipClause = hasPerk(unlockedPerks, 'macro_wreck_280')
+    ? ` The 280-Character Macro Wreck rolls ${FLASH_DIP_CHANCE * 100}% on every slam: a Flash Dip multiplies options valuation by ${FLASH_DIP_VALUATION_MULTIPLIER} for ${FLASH_DIP_DURATION_SECONDS}s, signed — it burns a losing CALL as fast as it pays a winning PUT.`
+    : '';
+
   const clickerHint = isDry
     ? `DRY NIB. Empty tank: ${Math.round(DRY_CLICK_YIELD_MULTIPLIER * 100)}% yield, no tantrum — and after ${DRY_CLICK_JAM_THRESHOLD} consecutive dry clicks the nib JAMS and it drops to ${Math.round(
         DRY_CLICK_JAM_YIELD_MULTIPLIER * 100
       )}%. Refill at ${formatCurrency(calculateInkRefillTotal(0, treasuryCash))}, or wait out ${INK_REGEN_PER_SECOND}/s.`
     : isCapsFrenzy
     ? `${verb}. CAPS LOCK FRENZY — ${FRENZY_CLICK_MULTIPLIER}x for ${FRENZY_DURATION_SECONDS} more seconds. Ink is held, not topped up, so the tank you brought is the tank you get back.`
-    : `${verb}. Costs ${INK_PER_CLICK} ink and regains ${INK_REGEN_PER_SECOND}/s. Every inked slam builds Tantrum — 100% triggers CAPS LOCK FRENZY, ${FRENZY_CLICK_MULTIPLIER}x yield for ${FRENZY_DURATION_SECONDS}s.`;
+    : `${verb}. Costs ${INK_PER_CLICK} ink and regains ${INK_REGEN_PER_SECOND}/s. Every inked slam builds Tantrum — 100% triggers CAPS LOCK FRENZY, ${FRENZY_CLICK_MULTIPLIER}x yield for ${FRENZY_DURATION_SECONDS}s.${tapSources}${flashDipClause}`;
   const clickerName = isDry ? 'Dry stamp' : verb;
 
   // C1: the recoil used to fire on BOTH the stamp face and the directive card
@@ -274,6 +311,24 @@ export const ClickerButton: React.FC = () => {
           ? `CAPS LOCK FRENZY: ${FRENZY_CLICK_MULTIPLIER}x REVENUE // CLICK AS FAST AS POSSIBLE`
           : 'Slam Sherpie to issue executive orders & build tantrum'}
       </span>
+
+      {/* 280-Character Macro Wreck. It has to be visible or it is not a mechanic —
+          a perk that fires silently every 25 slams is indistinguishable from the
+          rounding error it actually is. The countdown, not a claim about the
+          odds, is what the player can act on: an eight-second window they can
+          open a PUT inside. */}
+      {flashDipSecondsRemaining > 0 && (
+        <div
+          role="status"
+          aria-live="polite"
+          {...hint(
+            `FLASH DIP — ${Math.ceil(flashDipSecondsRemaining)}s of ${FLASH_DIP_VALUATION_MULTIPLIER}x options valuation left. It is applied to the SIGNED return, so a PUT you opened before it fired is paying enormously and a CALL is dying six times as fast. It expires on a timer whether or not you use it.`
+          )}
+          className="mt-1 px-2 py-0.5 rounded bg-wax-500/20 border border-wax-600/70 text-center font-mono t-caption font-black text-wax-600 animate-calm-glow"
+        >
+          FLASH DIP {Math.ceil(flashDipSecondsRemaining)}s · {FLASH_DIP_VALUATION_MULTIPLIER}x OPTIONS
+        </div>
+      )}
     </div>
   );
 };

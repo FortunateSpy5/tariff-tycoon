@@ -4,15 +4,30 @@
 
 import type { StateCreator } from 'zustand';
 import type { DumpState } from '../../types/dump';
+import type { AgencyLiquidation } from '../../types/dump';
 import type { GameStore } from '../useGameStore';
 import { INITIAL_AGENCIES } from '../../constants/agencies';
 import { CRONY_FAVOR_LIQUIDATION_KICKBACK_RATIO } from '../../constants/balance';
+import { canAfford, liquidationFavorCost, type PerkSet } from '../../engine/systems/perkEngine';
 import { clampCronyFavor } from '../../engine/systems/slopEngine';
 import { sound } from '../../audio/soundEngine';
 
 export interface DumpSlice extends DumpState {
   liquidateAgency: (agencyId: string) => number;
   monetizeHazard: (revenue: number) => void;
+}
+
+/**
+ * The Crony Favor price of one liquidation, after the Pardon Assembly Line.
+ *
+ * INVARIANT: [The Quoted Price Is The Charged Price]
+ * `DumpAgenciesTab` renders this and `liquidateAgency` charges it, because the
+ * perk's whole value is a number the player reads on a card. A discount applied
+ * in the store and not in the render is the `calculateInkRefillTotal` defect
+ * again, and the plan records that one as having shipped a real overcharge.
+ */
+export function agencyFavorCost(agency: AgencyLiquidation, perks: PerkSet | undefined): number {
+  return liquidationFavorCost(agency.cronyFavorCost, perks);
 }
 
 export const createDumpSlice: StateCreator<GameStore, [], [], DumpSlice> = (set, get) => ({
@@ -30,11 +45,19 @@ export const createDumpSlice: StateCreator<GameStore, [], [], DumpSlice> = (set,
     const targetAgency = state.agencies[agencyIndex];
     if (targetAgency.isLiquidated) return 0;
 
-    // INVARIANT: Anti-Exploit Gate — Must have political capital (Crony Favor)
-    if (state.cronyFavor < targetAgency.cronyFavorCost) return 0;
+    // The Pardon Assembly Line discount, resolved through the same helper the
+    // D.U.M.P. tab prices its cards with. See `agencyFavorCost` above.
+    const favorCost = agencyFavorCost(targetAgency, state.unlockedPerks);
 
-    // INVARIANT: Progression Gate — Must meet minimum net worth
-    if (state.treasuryCash < targetAgency.minNetWorthRequired) return 0;
+    // INVARIANT: Anti-Exploit Gate — Must have political capital (Crony Favor)
+    if (state.cronyFavor < favorCost) return 0;
+
+    // INVARIANT: Progression Gate — Must meet minimum net worth. `canAfford` is
+    // the same predicate every other spend uses, so the QE As A Service buffer
+    // reaches the guillotine too.
+    if (!canAfford(state.treasuryCash, targetAgency.minNetWorthRequired, state.unlockedPerks)) {
+      return 0;
+    }
 
     const updatedAgencies = [...state.agencies];
     updatedAgencies[agencyIndex] = {
@@ -50,12 +73,13 @@ export const createDumpSlice: StateCreator<GameStore, [], [], DumpSlice> = (set,
     const newPassive = basePassive * targetAgency.passivePerkMultiplier;
 
     // Crony Favor faucet: disaster-capitalism kickback — liquidating an agency returns
-    // a fraction of its favor cost as fresh political capital.
-    const favorKickback = Math.floor(targetAgency.cronyFavorCost * CRONY_FAVOR_LIQUIDATION_KICKBACK_RATIO);
+    // a fraction of its favor cost as fresh political capital. Charged on the
+    // DISCOUNTED price, because that is what was actually paid.
+    const favorKickback = Math.floor(favorCost * CRONY_FAVOR_LIQUIDATION_KICKBACK_RATIO);
 
     set({
       treasuryCash: state.treasuryCash + targetAgency.liquidationCashYield,
-      cronyFavor: clampCronyFavor(state.cronyFavor - targetAgency.cronyFavorCost + favorKickback),
+      cronyFavor: clampCronyFavor(state.cronyFavor - favorCost + favorKickback),
       slopSuspicion: Math.min(100, state.slopSuspicion + 15),
       passiveCashPerSecond: newPassive,
       agencies: updatedAgencies,

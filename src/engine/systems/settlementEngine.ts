@@ -40,6 +40,13 @@ export interface SettleInput {
   vexVolatility: number;
   /** Whether the Darkpool Fiber upgrade is owned (tighter spreads). */
   hasDarkPoolFiber: boolean;
+  /**
+   * The 280-Character Flash Dip's multiplier on the SIGNED return, or 1.
+   * Threaded from the caller rather than read from a clock so that the manual
+   * settle and the auto-settle price a position identically — see
+   * [One Pricing Path] above.
+   */
+  valuationMultiplier: number;
   /** True when the 8-second walk-back window closed on this very tick. */
   walkBackWindowExpired: boolean;
   /** The symbol the last YAP targeted, for matching walk-back combos. */
@@ -94,7 +101,8 @@ function settleOne(trade: ActiveOptionTrade, input: SettleInput): TradeOutcome {
     trade.leverage,
     trade.collateralLocked,
     input.vexVolatility,
-    input.hasDarkPoolFiber
+    input.hasDarkPoolFiber,
+    input.valuationMultiplier
   );
 
   // INVARIANT: a losing paper trade is refunded IN FULL, allowance included.
@@ -274,6 +282,7 @@ export function resolveWalkBack(params: {
   comboCalls: ActiveOptionTrade[];
   vexVolatility: number;
   hasDarkPoolFiber: boolean;
+  valuationMultiplier: number;
   pumpMultiplier: number;
 }): WalkBackResult {
   if (!params.target || params.comboCalls.length === 0) {
@@ -298,7 +307,8 @@ export function resolveWalkBack(params: {
       trade.leverage,
       trade.collateralLocked,
       params.vexVolatility,
-      params.hasDarkPoolFiber
+      params.hasDarkPoolFiber,
+      params.valuationMultiplier
     );
     return total + Math.max(0, trade.collateralLocked + netProfit);
   }, 0);

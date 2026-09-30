@@ -16,6 +16,8 @@ import { PriceChart } from '../PriceChart';
 import { useExpiryClock } from './useExpiryClock';
 import { WatchlistLadder } from './WatchlistLadder';
 import { callHint, collateralHint, leverageHint, putHint, sectorLinkageHint, settleHint } from './stockHint';
+import { canAfford, flashDipValuationMultiplier } from '../../../engine/systems/perkEngine';
+import { FLASH_DIP_VALUATION_MULTIPLIER } from '../../../constants/perks';
 
 /** Leverage and collateral choices offered on the order slip. */
 const LEVERAGE_CHIPS = [10, 100, 1000];
@@ -46,8 +48,19 @@ export const StocksOptionsTab: React.FC = () => {
   const now = useExpiryClock(activeTrades.length);
   const treasuryCash = useGameStore((s) => s.treasuryCash);
   const [collateralAmount, setCollateralAmount] = useState<number>(1000);
-  const tooBroke = treasuryCash < collateralAmount;
+  const unlockedPerks = useGameStore((s) => s.unlockedPerks);
   const [tradeStatus, setTradeStatus] = useState<string | null>(null);
+  const flashDipSecondsRemaining = useGameStore((s) => s.flashDipSecondsRemaining);
+  // INVARIANT: [The Order Slip Prices The Live Valuation]
+  // `calculateOptionReturn` takes the Flash Dip as an argument rather than
+  // reading a clock, precisely so this readout and the settlement can be handed
+  // the same multiplier. A P&L that ignored the dip while the settle honoured it
+  // would be the plan's "A YAP visibly crashes a chart" promise, inverted.
+  const valuationMultiplier = flashDipValuationMultiplier(flashDipSecondsRemaining);
+  // INVARIANT: [One Affordability Test] — the same predicate `openTrade` gates
+  // on, and the only one that knows about the QE As A Service negative buffer.
+  const tooBroke = !canAfford(treasuryCash, collateralAmount, unlockedPerks);
+  const orderShortfall = Math.max(0, collateralAmount - treasuryCash);
 
   const activeStock = stocks[selectedStock] || stocks['DOOR'];
   const symbols = Object.keys(stocks) as StockSymbol[];
@@ -86,8 +99,8 @@ export const StocksOptionsTab: React.FC = () => {
 
   const handleTrade = (type: OptionType) => {
     const currentTreasury = useGameStore.getState().treasuryCash;
-    if (currentTreasury < collateralAmount) {
-      setTradeStatus('Insufficient cash for collateral!');
+    if (!canAfford(currentTreasury, collateralAmount, useGameStore.getState().unlockedPerks)) {
+      setTradeStatus(`Insufficient cash for collateral! Need ${formatCurrency(collateralAmount - currentTreasury)} more.`);
       setTimeout(() => setTradeStatus(null), 2000);
       return;
     }
@@ -142,7 +155,21 @@ export const StocksOptionsTab: React.FC = () => {
           <span className="t-micro font-mono text-phosphor-600 truncate min-w-0">
             {activeStock?.name} · {activeStock?.sector}
           </span>
-          <span className="t-micro font-mono text-phosphor-600 shrink-0">$VEX {vexVolatility.toFixed(0)}%</span>
+          <span className="flex items-center gap-1.5 shrink-0">
+            {flashDipSecondsRemaining > 0 && (
+              // The dip is priced into every P&L on this screen, so it has to be
+              // priced on the screen. See the INVARIANT on `valuationMultiplier`.
+              <span
+                {...hint(
+                  `FLASH DIP — ${Math.ceil(flashDipSecondsRemaining)}s of ${FLASH_DIP_VALUATION_MULTIPLIER}x options valuation. Every P&L on this tab and the settlement that follows it are computed at this multiplier, and it is applied to the SIGNED return, so a position that is down is marked down ${FLASH_DIP_VALUATION_MULTIPLIER}x as fast.`
+                )}
+                className="t-micro font-mono font-black text-wax-400 animate-calm-glow"
+              >
+                DIP {Math.ceil(flashDipSecondsRemaining)}s ×{FLASH_DIP_VALUATION_MULTIPLIER}
+              </span>
+            )}
+            <span className="t-micro font-mono text-phosphor-600">$VEX {vexVolatility.toFixed(0)}%</span>
+          </span>
         </div>
       </div>
 
@@ -174,7 +201,8 @@ export const StocksOptionsTab: React.FC = () => {
                 t.leverage,
                 t.collateralLocked,
                 vexVolatility,
-                activeUpgrades.includes('darkpool_fiber')
+                activeUpgrades.includes('darkpool_fiber'),
+                valuationMultiplier
               );
               const pnlLabel = `${currentPnl >= 0 ? '+' : '-'}${formatCurrency(Math.abs(currentPnl))}`;
               const secondsLeft = Math.max(0, Math.ceil((t.expiresAtTimestamp - now) / 1000));
@@ -267,7 +295,7 @@ export const StocksOptionsTab: React.FC = () => {
               tooBroke
                 ? `You hold ${formatCurrency(treasuryCash)} and this order locks ${formatCurrency(
                     collateralAmount
-                  )}. Drop to the $500 chip, sell a blueprint from the GOLD BOX on the desk, or go slam the stamp.`
+                  )} — short ${formatCurrency(orderShortfall)}. Drop to the $500 chip, sell a blueprint from the GOLD BOX on the desk, or go slam the stamp.`
                 : putHint(leverage, collateralAmount)
             )}
             className={`py-1.5 rounded font-mono uppercase tracking-wider t-micro active:scale-95 transition-all flex items-center justify-center gap-1 ${
@@ -286,7 +314,7 @@ export const StocksOptionsTab: React.FC = () => {
               tooBroke
                 ? `You hold ${formatCurrency(treasuryCash)} and this order locks ${formatCurrency(
                     collateralAmount
-                  )}. Drop to the $500 chip, sell a blueprint from the GOLD BOX on the desk, or go slam the stamp.`
+                  )} — short ${formatCurrency(orderShortfall)}. Drop to the $500 chip, sell a blueprint from the GOLD BOX on the desk, or go slam the stamp.`
                 : callHint({
                     leverage,
                     collateralAmount,

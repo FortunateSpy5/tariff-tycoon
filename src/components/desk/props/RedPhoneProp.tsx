@@ -20,6 +20,7 @@ import { Phone, PhoneCall, PhoneOff } from 'lucide-react';
 import { useGameStore } from '../../../store/useGameStore';
 import { formatCurrency } from '../../../engine/math/bigNumber';
 import { RAID_BRIBE_COST } from '../../../engine/systems/slopEngine';
+import { isBrokeNotInDebt } from '../../../store/slices/deskPropsSlice';
 import { FRENZY_CLICK_MULTIPLIER } from '../../../constants/balance';
 import { CRISIS_HEAT_PER_TIER } from '../../../constants/crisis';
 import { hint } from '../../ui/hint';
@@ -47,8 +48,13 @@ export const RedPhoneProp: React.FC = () => {
   const swearInCrisis = useGameStore((s) => s.swearInCrisis);
   const suppressCrisis = useGameStore((s) => s.suppressCrisis);
   const triggerRedPhoneBailout = useGameStore((s) => s.triggerRedPhoneBailout);
+  const unlockedPerks = useGameStore((s) => s.unlockedPerks);
 
-  const isBroke = treasuryCash < 10;
+  // INVARIANT: [The Bailout Face Must Match The Bailout Gate]
+  // `isBrokeNotInDebt`, not a local `treasuryCash < 10`. A player in QE As A
+  // Service debt is below $10 but is explicitly NOT eligible — the action has no
+  // cooldown, and a face that offered it would be offering an infinite faucet.
+  const isBroke = isBrokeNotInDebt(treasuryCash, unlockedPerks, 10);
 
   // --- Standby: the phone is quiet ---
   //
@@ -123,7 +129,16 @@ export const RedPhoneProp: React.FC = () => {
         {...hint(
           `EMERGENCY BAILOUT: bill the Sovereign Detail for golf cart rentals. Unlocked only below $10 — you hold ${formatCurrency(
             treasuryCash
-          )}. This is the bankruptcy floor, not a faucet, and it pays nothing in S.L.O.P. heat.`
+          )}. It pays nothing in S.L.O.P. heat, and the clicker's own floor guarantees you can always work your way back, so this is a rescue rather than a plan.` +
+            /* INVARIANT: [Do Not Claim Self-Limiting The Gate Does Not Enforce]
+               This used to say "not a faucet", which was never enforced by a
+               cooldown — it was true only by accident, because the payout always
+               lifted the treasury back over the $10 threshold. QE As A Service
+               removed the accident. The honest statement is what the gate really
+               does, which is why the copy no longer rests on a coincidence. */
+            (isBrokeNotInDebt(treasuryCash, unlockedPerks, 10)
+              ? ''
+              : ' Not available while you are in debt — a loan is repaid by the slam floor, not by the phone.')
         )}
         className={`${shell} cursor-pointer group hover:border-red-400`}
       >

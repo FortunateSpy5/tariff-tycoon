@@ -1,5 +1,6 @@
 /**
- * Prestige Slice: Manages Sovereign Immunity Slips (SIS), America LLC, and Ontological Tariffs.
+ * Prestige Slice: Manages Sovereign Immunity Slips (SIS), the perk constellation,
+ * America LLC, and Ontological Tariffs.
  */
 
 import type { StateCreator } from 'zustand';
@@ -9,11 +10,22 @@ import { calculatePrestigeSIS } from '../../engine/math/formulas';
 import { INITIAL_AGENCIES } from '../../constants/agencies';
 import { INITIAL_STOCKS } from '../../constants/stocks';
 import { TUTORIAL_CHAIN } from '../../constants/onboarding';
+import { PERK_BY_ID, type PerkId } from '../../constants/perks';
+import { retainedPassiveRate } from '../../engine/systems/perkEngine';
 import { sound } from '../../audio/soundEngine';
 
 export interface PrestigeSlice extends PrestigeState {
   executeFlightToCaymans: () => number;
-  unlockPerk: (perkId: string, cost: number) => boolean;
+  /**
+   * Buy one perk with Sovereign Immunity Slips.
+   *
+   * INVARIANT: [The Price Comes From The Catalogue, Not The Caller]
+   * This used to take `(perkId, cost)`, so the price was whatever the button
+   * chose to pass. That is the `calculateInkRefillTotal` bug in its purest
+   * form: a card that quoted 1 and a handler that charged 0 would be a bug with
+   * no type error and no test failure. The id is all a caller may supply.
+   */
+  unlockPerk: (perkId: PerkId) => boolean;
   incorporateAmericaLLC: () => void;
 }
 
@@ -27,6 +39,12 @@ export const createPrestigeSlice: StateCreator<GameStore, [], [], PrestigeSlice>
   americaLLCIncorporated: false,
   ontologicalTariffs: [],
   entropyDeficit: 0,
+  flashDipSecondsRemaining: 0,
+  totalFlashDipsTriggered: 0,
+  peakBookValue: 0,
+  lastAutoMatchTimestamp: 0,
+  totalAutoMatchPaid: 0,
+  lastAutoMatchNotice: undefined,
 
   executeFlightToCaymans: () => {
     const state = get();
@@ -39,16 +57,28 @@ export const createPrestigeSlice: StateCreator<GameStore, [], [], PrestigeSlice>
 
     sound.playChaChing();
 
-    // Shell Company Inception seed cash: $1M x SIS^1.2 (GDD §5 perk 1)
+    // Shell Company Inception seed cash: $1M x SIS^1.2.
+    //
+    // INVARIANT: [The Seed Cash Is Baseline, Not A Perk]
+    // GDD §5 files this under perk 1, but `executeFlightToCaymans` has always
+    // granted it to every flight and the Caymans hover copy promises it. It is
+    // the floor that stops a returning player beginning a run soft-locked, so
+    // making it purchasable would be a nerf wearing a feature's clothes. The
+    // perk's own contribution is the +100% base tap, resolved in `clickPayout`.
     const totalSIS = state.sovereignImmunitySlips + earnedSIS;
     const seedCash = Math.max(100, 1_000_000 * Math.pow(totalSIS, 1.2));
+
+    // Golden Parachute Super-PAC: 15% of the liquidation-built passive rate
+    // survives the reset. `retainedPassiveRate` returns 0 without the perk, so
+    // the default reset behaviour is byte-for-byte unchanged.
+    const retainedPassive = retainedPassiveRate(state.passiveCashPerSecond, state.unlockedPerks);
 
     // Full run soft-reset (retaining lifetime SIS and permanent perks)
     set({
       treasuryCash: seedCash,
       lifetimeCashEarned: seedCash,
       lifetimeOptionsProfit: 0,
-      passiveCashPerSecond: 0,
+      passiveCashPerSecond: retainedPassive,
       tariffRevenuePerSecond: 0,
       phase: 1,
       hasMarketAccess: false,
@@ -101,6 +131,14 @@ export const createPrestigeSlice: StateCreator<GameStore, [], [], PrestigeSlice>
       lastYapPost: undefined,
       lastYapTimestamp: 0,
       lastRaidMessage: undefined,
+      // The 280-Character Flash Dip and the 401(k) match are RUN state, not
+      // lifetime state: both are timers or accumulators that would otherwise
+      // survive a filing and pay out against positions from a run that no longer
+      // exists. Total lifetime counts are kept — they are the perk's readout.
+      flashDipSecondsRemaining: 0,
+      peakBookValue: 0,
+      lastAutoMatchTimestamp: 0,
+      lastAutoMatchNotice: undefined,
       agencies: INITIAL_AGENCIES.map((a) => ({ ...a, isLiquidated: false })),
       sovereignImmunitySlips: state.sovereignImmunitySlips + earnedSIS,
       totalSISLifetime: state.totalSISLifetime + earnedSIS,
@@ -110,16 +148,20 @@ export const createPrestigeSlice: StateCreator<GameStore, [], [], PrestigeSlice>
     return earnedSIS;
   },
 
-  unlockPerk: (perkId, cost) => {
+  unlockPerk: (perkId) => {
     const state = get();
-    if (!state.hasPrestigeAccess || state.sovereignImmunitySlips < cost) return false;
+    // INVARIANT: [The Price Comes From The Catalogue, Not The Caller]
+    // This used to accept `(perkId, cost)`, so a card could quote 1 while the
+    // handler charged 0 — a lie with no type error and no test to catch it.
+    const perk = PERK_BY_ID[perkId];
+    if (!perk) return false;
+    if (!state.hasPrestigeAccess) return false;
+    if (state.unlockedPerks[perkId]) return false;
+    if (state.sovereignImmunitySlips < perk.cost) return false;
 
     set({
-      sovereignImmunitySlips: state.sovereignImmunitySlips - cost,
-      unlockedPerks: {
-        ...state.unlockedPerks,
-        [perkId]: true,
-      },
+      sovereignImmunitySlips: state.sovereignImmunitySlips - perk.cost,
+      unlockedPerks: { ...state.unlockedPerks, [perkId]: true },
     });
     sound.playChaChing();
     return true;
