@@ -16,8 +16,9 @@
  */
 
 import { calculateClickValue } from '../math/formulas';
-import { DRY_CLICK_JAM_THRESHOLD } from '../../constants/balance';
+import { isDryClick, isJammedClick } from './inkFrenzyEngine';
 import { INITIAL_CRONY_UPGRADES } from '../../constants/unlocks';
+import { SHELL_COMPANY_TAP_MULTIPLIER } from '../../constants/perks';
 import { debtReliefFloor, shellCompanyTapMultiplier, type PerkSet } from './perkEngine';
 
 /**
@@ -68,8 +69,13 @@ export function resolveClickPayout(input: ClickPayoutInput): {
   isDry: boolean;
   isJammed: boolean;
 } {
-  const isDry = input.inkLevel <= 0 && !input.isCapsFrenzy;
-  const isJammed = isDry && input.dryClicksCount >= DRY_CLICK_JAM_THRESHOLD;
+  // INVARIANT: [The Jam Verdict Comes From The Engine, Not A Second Rule]
+  // This used to re-derive `isJammed` from the raw count, which disagreed with
+  // `clickInkFrenzy` on exactly one click — the 30th consecutive dry one, where
+  // the player was charged the full yield beside a gauge reading "−90%". It now
+  // asks the engine. See `isJammedClick`.
+  const isJammed = isJammedClick(input.inkLevel, input.isCapsFrenzy, input.dryClicksCount);
+  const isDry = isDryClick(input.inkLevel, input.isCapsFrenzy);
 
   const tapMultiplier =
     (input.hasTungstenNib ? TUNGSTEN_NIB_TAP_MULTIPLIER : 1) *
@@ -91,3 +97,35 @@ export function resolveClickPayout(input: ClickPayoutInput): {
 
 /** The Heavy Tungsten Nib's own multiplier, for copy that must quote the engine. */
 export const TUNGSTEN_NIB_MULTIPLIER = TUNGSTEN_NIB_TAP_MULTIPLIER;
+
+/**
+ * The number of Slips at which the `$1,000-per-Slip` bankruptcy floor overtakes
+ * the Shell Company doubling.
+ *
+ * WHY THIS EXISTS: `calculateClickValue` pays `max(floor, product)`, and the
+ * floor is `max($1, slips x $1,000)`. The doubling is applied to the PRODUCT, so
+ * past a crossover the floor is what the player is actually paid and the perk
+ * stops existing — measured: at 5 Slips the slam pays $5,000 with the perk and
+ * $5,000 without it, identically. The card advertised a benefit invisible to
+ * almost every player who owned it.
+ *
+ * The floor is correct behaviour, so this is a copy problem, not a balance one.
+ * Exported so the perk card can state the real crossover rather than the
+ * reviewer quoting a number no engine produces.
+ *
+ * Solves `base x phase x (1 + 0.1n) x shell = 1000n` for `n`.
+ *
+ * @returns The lowest Slip count at which the floor binds, or 0 when the
+ *   doubling can never be outrun at this phase (Phase 4, where the base product
+ *   is large enough to stay ahead indefinitely).
+ */
+export function shellCompanyCrossoverSlipCount(phase: number, baseValue: number = 5): number {
+  const phaseMultiplier = { 1: 1, 2: 10, 3: 100, 4: 1000 }[phase] ?? 1;
+  const shell = SHELL_COMPANY_TAP_MULTIPLIER;
+  // base*phase*shell*(1 + 0.1n) = 1000n  ->  n = k / (1000*shell - 10*k)
+  const k = baseValue * phaseMultiplier * shell;
+  const denominator = 1000 * shell - 10 * k;
+  if (denominator <= 0) return 0; // the product always wins; no crossover exists
+  const n = k / denominator;
+  return n <= 0 ? 0 : Math.ceil(n);
+}

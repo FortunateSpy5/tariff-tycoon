@@ -9,12 +9,13 @@
  * numbers that make each one do what its name says.
  *
  * COST LADDER
- * Fibonacci (1, 2, 3, 5, 8, 13), because the SIS formula is a 0.32 exponent:
- * one whole Slip is $10^10 of lifetime cash, two is ~$10^11, three ~$3.7e11.
- * A linear ladder would make the last two perks unreachable and the first three
- * bought in a single flight; a geometric one would make the first free. See
- * `nextLifetimeCashMilestone` in `engine/systems/perkEngine.ts`, which shows the
- * player the real distance to the next whole Slip.
+ * Fibonacci (2, 2, 3, 5, 8, 13 — the two 2s being the Shell Company floor
+ * adjustment recorded on that entry), because the SIS formula is a 0.32
+ * exponent: one whole Slip is $10^10 of lifetime cash, two is ~$10^11, three
+ * ~$3.7e11. A linear ladder would make the last two perks unreachable and the
+ * first three bought in a single flight; a geometric one would make the first
+ * free. See `nextLifetimeCashMilestone` in `engine/systems/perkEngine.ts`, which
+ * shows the player the real distance to the next whole Slip.
  *
  * INVARIANT: [The Seed Cash Is Not This Perk]
  * GDD §5 perk 1 reads "start with $1M x SIS^1.2 seed cash", but
@@ -112,7 +113,20 @@ export const PRESTIGE_PERKS: readonly PerkDefinition[] = [
   {
     id: 'shell_company_inception',
     name: 'Shell Company Inception',
-    cost: 1,
+    // INVARIANT: [Cost 2, Not 1 — The Doubling Must Be Spendable While Visible]
+    // At 1 Slip this perk is worth nothing to anyone who has one: the click
+    // floor is `slips x $1,000`, so the floor is $1,000 the moment the purchase
+    // lands, and it swamps a $5 x phase tap indefinitely in Phases 1-2. Measured
+    // across the ladder: at 5 Slips the slam pays $5,000 with the perk and
+    // $5,000 without it, identically, in both early phases — a 1-Slip purchase
+    // that silently does nothing.
+    //
+    // At 2 Slips the player holds 0, the floor drops to $1.00, and the x2 is
+    // fully felt for the whole of the run they bought it for. It decays as they
+    // bank Slips, which is the correct shape for a "spend it now" perk: the
+    // cheapest thing on the tree is the one you cash while it's still live.
+    // The card states the crossover so the decay is never a surprise.
+    cost: 2,
     summary: 'Incorporate the stamp. Every jurisdiction on earth bills you for the privilege of pressing it.',
     effectLabel: `${SHELL_COMPANY_TAP_MULTIPLIER}x BASE TAP`,
   },
@@ -121,7 +135,16 @@ export const PRESTIGE_PERKS: readonly PerkDefinition[] = [
     name: '280-Character Macro Wreck',
     cost: 2,
     summary: 'A 280-character screed that the compliance desk cannot process in time. Sometimes the tape moves first.',
-    effectLabel: `${FLASH_DIP_CHANCE * 100}% CHANCE / ${FLASH_DIP_DURATION_SECONDS}s DUMP`,
+    // INVARIANT: [This Is A Standing Condition, Not A Roll]
+    // The 4% is per SLAM and the 8s window is only ticked by `tickDesk`, so at
+    // the 45ms click cap the dip is up ~99.9% of the time — in practice a
+    // permanent x6, not a rare windfall. The effect label therefore says
+    // "~ALWAYS UP" rather than quoting a chance the player will essentially
+    // never fail to get. Whether a near-permanent multiplier is the right perk
+    // is a balance question this pass deliberately did not answer; the number
+    // the player sees is now the number they get. See `perkHint` for the
+    // derived uptime.
+    effectLabel: `x${FLASH_DIP_VALUATION_MULTIPLIER} OPTIONS, ~ALWAYS UP`,
   },
   {
     id: 'qe_as_a_service',

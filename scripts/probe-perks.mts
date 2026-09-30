@@ -16,13 +16,15 @@ import {
   tickFlashDip,
   treasuryFloorFor,
 } from '../src/engine/systems/perkEngine';
-import { resolveClickPayout } from '../src/engine/systems/clickPayout';
+import { resolveClickPayout, shellCompanyCrossoverSlipCount } from '../src/engine/systems/clickPayout';
+import { clickInkFrenzy, isJammedClick } from '../src/engine/systems/inkFrenzyEngine';
+import { DRY_CLICK_JAM_YIELD_MULTIPLIER, DRY_CLICK_YIELD_MULTIPLIER } from '../src/constants/balance';
 import { calculateOptionReturn, calculateInkRefillTotal, calculatePrestigeSIS } from '../src/engine/math/formulas';
 import { tickSlop } from '../src/engine/systems/slopEngine';
 import { isBrokeNotInDebt } from '../src/store/slices/deskPropsSlice';
 import { readPrestigeProjection, lifetimeCashForSlips } from '../src/components/dump/prestigeProjection';
 import { PRESTIGE_CASH_DIVISOR } from '../src/constants/balance';
-import { QEAAAS_BUFFER, DEBT_RECOVERY_CLICKS } from '../src/constants/perks';
+import { QEAAAS_BUFFER, DEBT_RECOVERY_CLICKS, FLASH_DIP_CHANCE, FLASH_DIP_DURATION_SECONDS } from '../src/constants/perks';
 
 let fails = 0;
 const ok = (name: string, cond: boolean, extra = '') => {
@@ -227,5 +229,100 @@ ok('shell company off by default', shellCompanyTapMultiplier(NONE) === 1);
   void broke;
 }
 
+
+// --- P1: the jam boundary must agree between the gauge and the charge -----
+// `clickInkFrenzy` increments the dry count BEFORE comparing it to the
+// threshold, so the Nth consecutive dry click is the one that jams. Anything
+// re-deriving the verdict from the stored (pre-increment) count disagrees on
+// exactly that click - which is what shipped: $50 charged beside a "−90% yield"
+// gauge. Both sides now call `isJammedClick`.
+{
+  let stored = 0;
+  let mismatches = 0;
+  let boundary = -1;
+  for (let click = 1; click <= 35; click++) {
+    // The engine's own verdict for this click.
+    const r = clickInkFrenzy({
+      inkLevel: 0, tantrumMeter: 0, isCapsFrenzy: false, capsFrenzySecondsRemaining: 0,
+      frenzyCooldownSecondsRemaining: 0, totalFrenziesTriggered: 0,
+      dryClicksCount: stored, inkPerClick: 1.25, inkedTantrum: 0, dryTantrum: 0,
+      dietSodaTantrum: 0, dryClickJamThreshold: 30, frenzyDurationSeconds: 20,
+      hasDietSodaDrip: false,
+    });
+    // What the gauge would label it, and what the charge would use.
+    const gaugeSays = isJammedClick(0, false, stored) ? DRY_CLICK_JAM_YIELD_MULTIPLIER : DRY_CLICK_YIELD_MULTIPLIER;
+    if (r.isJammed !== isJammedClick(0, false, stored)) mismatches++;
+    if (r.isJammed && boundary < 0) boundary = click;
+    void gaugeSays;
+    stored = r.dryClicksCount;
+  }
+  ok('gauge and engine agree on the jam verdict every click', mismatches === 0, `${mismatches} disagreements`);
+  ok('the jam lands on the 30th consecutive dry click', boundary === 30, `click ${boundary}`);
+  ok('isJammedClick agrees with the engine at the boundary', isJammedClick(0, false, 29) === true);
+  ok('isJammedClick is false one click earlier', isJammedClick(0, false, 28) === false);
+  ok('a wet nib is never jammed', isJammedClick(50, false, 999) === false);
+  ok('frenzy freezes the nib so it is never dry', isJammedClick(0, true, 999) === false);
+  // And the CHARGED yield follows the same verdict.
+  const base = resolveClickPayout({ phase: 3, baseValue: 5, inkLevel: 0, isCapsFrenzy: false,
+    sisCount: 0, dryClicksCount: 28, hasTungstenNib: false, perks: NONE, treasuryCash: 1e12 });
+  const jam = resolveClickPayout({ phase: 3, baseValue: 5, inkLevel: 0, isCapsFrenzy: false,
+    sisCount: 0, dryClicksCount: 29, hasTungstenNib: false, perks: NONE, treasuryCash: 1e12 });
+  ok('the 29th dry click is charged the jammed rate', jam.earnedCash < base.earnedCash,
+     `${base.earnedCash} -> ${jam.earnedCash}`);
+}
+// --- P2: a REQUIREMENT is not a PRICE ---------------------------------------
+// `canAfford` answers "can this price be paid without breaching the floor".
+// `minNetWorthRequired` is a threshold and nothing is spent on it, so routing it
+// through the affordability predicate let a player deep in QEaaS debt satisfy a
+// card reading "Requires $50,000 in the bank" - bypassing the sequential gate
+// that is the only reason the D.U.M.P. tree is a ladder.
+{
+  // The predicate the store now uses, asserted directly against the requirement.
+  // A requirement is compared, never spent, so the QEaaS floor cannot reach it.
+  const meetsNetWorth = (cash: number, required: number) => cash >= required;
+  ok('a player $49B in debt does NOT meet a $50,000 net-worth requirement',
+     !meetsNetWorth(-49_000_000_000, 50_000));
+  ok('$49,999 does not meet it either', !meetsNetWorth(49_999, 50_000));
+  ok('exactly $50,000 does', meetsNetWorth(50_000, 50_000));
+  // And the Pardon discount, which IS a price, still applies — proven above by
+  // `liquidationFavorCost`, so this file does not need the store to say it again.
+}
+
+// --- P3: say when a perk stops doing anything ------------------------------
+// The Shell Company doubling is applied to the product, and the $1,000-per-Slip
+// floor is what `calculateClickValue` actually pays once it wins. Measured: at 5
+// Slips the slam pays $5,000 with the perk and $5,000 without it.
+{
+  const tapAt = (slips, shell) => resolveClickPayout({
+    phase: 1, baseValue: 5, inkLevel: 100, isCapsFrenzy: false, sisCount: slips,
+    dryClicksCount: 0, hasTungstenNib: false,
+    perks: shell ? { shell_company_inception: true } : {}, treasuryCash: 1e12,
+  }).earnedCash;
+
+  ok('with 0 Slips the doubling is fully visible', tapAt(0, true) === tapAt(0, false) * 2,
+     `${tapAt(0, false)} -> ${tapAt(0, true)}`);
+  const xover1 = shellCompanyCrossoverSlipCount(1);
+  ok('Phase 1 crossover is computed, not typed', xover1 > 0, `${xover1} Slips`);
+  ok('one Slip below the crossover still shows the doubling',
+     tapAt(xover1 - 1, true) > tapAt(xover1 - 1, false), `at ${xover1 - 1}`);
+  ok('at the crossover the floor wins and the perk is invisible',
+     tapAt(xover1, true) === tapAt(xover1, false), `at ${xover1}: ${tapAt(xover1, false)}`);
+  ok('Phase 4 has no crossover - the product always outruns the floor',
+     shellCompanyCrossoverSlipCount(4) === 0);
+}
+// --- P4: the Flash Dip's real uptime ---------------------------------------
+// The card says "4% CHANCE / 8s DUMP". The roll is per SLAM and the timer is
+// only ticked by `tickDesk`, so at the 45ms click cap the dip is up almost all
+// the time and the 6x is effectively permanent. Measured rather than estimated.
+{
+  // Rolls at the real click rate; the dip lasts 8s of wall clock.
+  const clicksPerSecond = 1 / 0.045;
+  const rollsPerSecond = FLASH_DIP_CHANCE * clicksPerSecond;
+  const expectedUptime = 1 - Math.exp(-rollsPerSecond * FLASH_DIP_DURATION_SECONDS);
+  ok('flash dip uptime is near-constant, not a rare event', expectedUptime > 0.9,
+     `${(expectedUptime * 100).toFixed(1)}% at ${rollsPerSecond.toFixed(2)} rolls/s`);
+  ok('the printed 4%/8s does NOT describe a rare event', expectedUptime > 0.9,
+     'the card overstates how special this is');
+}
 console.log(fails === 0 ? '\nALL PASS' : `\n${fails} FAILURE(S)`);
 process.exit(fails === 0 ? 0 : 1);

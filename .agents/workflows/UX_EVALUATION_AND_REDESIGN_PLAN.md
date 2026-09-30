@@ -651,6 +651,59 @@ accident rather than by construction.**
    and always in the player's disfavour. Both sides now come from
    `calculatePrestigeSIS` itself, and the probe asserts the equality directly.
 
+### The review round — four more, two of them regressions I introduced
+
+An independent adversarial review was run over the whole diff. It found four
+defects; **two were regressions this change created while claiming to fix
+exactly that class of bug**, which is the part worth recording.
+
+6. **The clicker overcharged on the 30th dry click.** `clickInkFrenzy` increments
+   `dryClicksCount` *before* comparing it to the threshold, so the 30th
+   consecutive dry click is the one that jams. `resolveClickPayout` re-derived the
+   verdict from the stored (pre-increment) count and so disagreed on exactly that
+   click: the player was charged the **full** yield beside a gauge reading
+   "−90% yield". This was a regression — the old `clickDesk` passed the engine's
+   own `isJammed` straight through, and the refactor re-derived it. The threshold
+   and the verdict now live in `inkFrenzyEngine` as `isJammedClick`, and the
+   charge, the gauge label and the clicker hint all call it. The probe walks 35
+   consecutive dry clicks asserting zero disagreements.
+7. **`canAfford` was used on a REQUIREMENT.** `minNetWorthRequired` is a
+   threshold, not a price — nothing is spent on it — but it had been routed
+   through the affordability predicate, which answers a different question. The
+   QEaaS buffer therefore let a player **$49 billion in debt** satisfy a card
+   reading *"Requires $50,000 in the bank"*, bypassing the sequential progression
+   gate that is the only reason the D.U.M.P. tree is a ladder. The store and the
+   card now both compare directly, and both were changed together because a
+   requirement the button ignores and the store enforces is still a lie.
+8. **The Shell Company perk did nothing, and said it did.** `calculateClickValue`
+   pays `max(floor, product)` where the floor is `slips × $1,000`. The ×2 is
+   applied to the *product*, so the floor wins from the very first Slip onward:
+   measured at 5 Slips, **$5,000 with the perk and $5,000 without it,
+   identically** — through Phases 1 and 2. A 1-Slip purchase that silently does
+   nothing is the same defect class as every other number this pass removed.
+   *Ruled on rather than guessed:* **recost to 2 Slips.** At 2 the player holds
+   0, the floor drops to $1.00 and the ×2 is fully felt for the run it was bought
+   for, decaying as they bank — the correct shape for a "spend it now" perk. The
+   floor itself is correct behaviour and was left alone, and the crossover is now
+   **computed** by `shellCompanyCrossoverSlipCount` and printed on the card
+   (`DIES AT 1 SLIPS`) and in the hover, so the decay is never a surprise.
+9. **The Flash Dip is a permanent multiplier wearing a chance's clothing.** The
+   4% is per *slam* and the 8s window is only ticked by `tickDesk`, never by the
+   click, so at the 45ms click cap the dip is active **99.9%** of the time — in
+   practice a standing ×6 on signed options return. The card read
+   *"4% CHANCE / 8s DUMP"*, which describes a rare windfall. It now reads
+   *"×6 OPTIONS, ~ALWAYS UP"* and the hover states the derived uptime. **This is a
+   balance question, not a copy one, and was deliberately not retuned** — the
+   number the player reads is now the number they get, and the tuning call is
+   flagged rather than made silently.
+
+One finding was **checked and dismissed**: a reported mojibake in the
+`Certified:` separator. The codepoint is `U+00B7` and the live DOM renders
+`Certified: First CAPS LOCK FRENZY · Answer The Red Phone` — the `�` was the
+reviewer's console encoding, not the file. The same artifact appeared twice more
+in this session on box-drawing characters, so it is worth knowing this repo's
+files are fine and PowerShell's output is not.
+
 ### Two honest behaviours worth knowing
 
 - **The Flash Dip accelerates losses.** It multiplies the *signed* return, like
@@ -665,7 +718,7 @@ accident rather than by construction.**
   became.
 
 **Verified:** `npm run build` clean · `oxlint` clean · no file over 400 lines ·
-**73 assertions** in `scripts/probe-perks.mts` green, plus a live-store pass that
+**90 assertions** in `scripts/probe-perks.mts` green, plus a live-store pass that
 bought all six perks (14 → 3 Slips, Pardon and Parachute correctly refused at
 3 with nothing charged, double-buys and unknown ids refused and free), measured
 the stamp at four multiplier states, drove the treasury to −$50B and confirmed

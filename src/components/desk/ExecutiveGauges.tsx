@@ -28,7 +28,6 @@ import {
   INK_PER_CLICK,
   INK_REGEN_PER_SECOND,
   INK_REFILL_COST_GROWTH,
-  DRY_CLICK_JAM_THRESHOLD,
   DRY_CLICK_JAM_YIELD_MULTIPLIER,
   DRY_CLICK_YIELD_MULTIPLIER,
   INKED_TANTRUM_PER_CLICK,
@@ -42,6 +41,7 @@ import {
 import { Card } from '../ui/Card';
 import { hint } from '../ui/hint';
 import { canAfford } from '../../engine/systems/perkEngine';
+import { isJammedClick } from '../../engine/systems/inkFrenzyEngine';
 import {
   calculateInkRefillCost,
   calculateInkRefillTotal,
@@ -83,7 +83,13 @@ export const ExecutiveGauges: React.FC = () => {
   // to get right rather than describe as "on top".
   const dryClicksCount = useGameStore((s) => s.dryClicksCount || 0);
   const unlockedPerks = useGameStore((s) => s.unlockedPerks);
-  const jamYield = dryClicksCount >= DRY_CLICK_JAM_THRESHOLD
+  // INVARIANT: [The Gauge And The Charge Must Agree On The Boundary Click]
+  // This re-derived the jam verdict from the raw count and was therefore a THIRD
+  // copy of a rule the engine already owns — and it disagreed on exactly one
+  // click, the one where it read "−90% yield" while the slam was charged in
+  // full. It now asks `isJammedClick`, the same function `resolveClickPayout`
+  // asks, so the label and the money cannot part company.
+  const jamYield = isJammedClick(inkLevel, isCapsFrenzy, dryClicksCount)
     ? DRY_CLICK_JAM_YIELD_MULTIPLIER
     : DRY_CLICK_YIELD_MULTIPLIER;
 

@@ -8,7 +8,7 @@ import type { AgencyLiquidation } from '../../types/dump';
 import type { GameStore } from '../useGameStore';
 import { INITIAL_AGENCIES } from '../../constants/agencies';
 import { CRONY_FAVOR_LIQUIDATION_KICKBACK_RATIO } from '../../constants/balance';
-import { canAfford, liquidationFavorCost, type PerkSet } from '../../engine/systems/perkEngine';
+import { liquidationFavorCost, type PerkSet } from '../../engine/systems/perkEngine';
 import { clampCronyFavor } from '../../engine/systems/slopEngine';
 import { sound } from '../../audio/soundEngine';
 
@@ -52,12 +52,16 @@ export const createDumpSlice: StateCreator<GameStore, [], [], DumpSlice> = (set,
     // INVARIANT: Anti-Exploit Gate — Must have political capital (Crony Favor)
     if (state.cronyFavor < favorCost) return 0;
 
-    // INVARIANT: Progression Gate — Must meet minimum net worth. `canAfford` is
-    // the same predicate every other spend uses, so the QE As A Service buffer
-    // reaches the guillotine too.
-    if (!canAfford(state.treasuryCash, targetAgency.minNetWorthRequired, state.unlockedPerks)) {
-      return 0;
-    }
+    // INVARIANT: [A Requirement Is Not A Price]
+    // `minNetWorthRequired` is a THRESHOLD, not something being spent, so it
+    // must NOT go through `canAfford` — that predicate answers "can this price be
+    // paid without breaching the treasury floor", which is a different question.
+    // Substituting one for the other let a player $49 billion in debt satisfy a
+    // card that reads "Requires $50,000 in the bank", bypassing the sequential
+    // progression gate that is the only reason the D.U.M.P. tree is a ladder.
+    // QE As A Service is what made the negative balance reachable; the buffer
+    // belongs to purchases, not to qualifications.
+    if (state.treasuryCash < targetAgency.minNetWorthRequired) return 0;
 
     const updatedAgencies = [...state.agencies];
     updatedAgencies[agencyIndex] = {

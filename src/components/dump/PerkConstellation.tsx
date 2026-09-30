@@ -22,6 +22,7 @@ import { Lock, Sparkles } from 'lucide-react';
 import { useGameStore } from '../../store/useGameStore';
 import { PRESTIGE_PERKS, TOTAL_PERK_COST, type PerkId } from '../../constants/perks';
 import { hasPerk } from '../../engine/systems/perkEngine';
+import { shellCompanyCrossoverSlipCount } from '../../engine/systems/clickPayout';
 import { formatCurrency } from '../../engine/math/bigNumber';
 import { Card, CardHeader } from '../ui/Card';
 import { hint } from '../ui/hint';
@@ -32,10 +33,14 @@ export const PerkConstellation: React.FC = () => {
   const slipsHeld = useGameStore((s) => s.sovereignImmunitySlips);
   const unlockedPerks = useGameStore((s) => s.unlockedPerks);
   const hasPrestigeAccess = useGameStore((s) => s.hasPrestigeAccess);
+  const phase = useGameStore((s) => s.phase);
   const unlockPerk = useGameStore((s) => s.unlockPerk);
   const [refusal, setRefusal] = useState<string | null>(null);
 
   const ownedCount = PRESTIGE_PERKS.filter((p) => hasPerk(unlockedPerks, p.id)).length;
+  // Where the Shell Company doubling stops being observable. Printed on the card
+  // so a player is told BEFORE spending, not after wondering why nothing changed.
+  const shellCrossover = shellCompanyCrossoverSlipCount(phase);
   const sayNo = (message: string) => {
     setRefusal(message);
     window.setTimeout(() => setRefusal(null), 2600);
@@ -103,7 +108,7 @@ export const PerkConstellation: React.FC = () => {
                     onClick={() => handleBuy(perk.id, perk.cost)}
                     aria-disabled={!canAffordIt || !hasPrestigeAccess}
                     {...hint(
-                      perkHint(perk, owned, slipsHeld),
+                      perkHint(perk, owned, slipsHeld, phase),
                       canAffordIt && hasPrestigeAccess
                         ? `Buy ${perk.name} for ${perk.cost} Sovereign Immunity Slip${perk.cost === 1 ? '' : 's'}`
                         : undefined
@@ -123,6 +128,17 @@ export const PerkConstellation: React.FC = () => {
               <div className="t-caption font-mono font-bold text-gold-700 leading-tight mt-0.5">
                 {perk.effectLabel}
               </div>
+              {/* INVARIANT: [The Card Must Warn Before The Purchase]
+                  A perk that stops doing anything after one filing cannot be
+                  discovered from the card — the player buys it, sees no change,
+                  and concludes the game is broken. The Shell Company doubling is
+                  swamped by the $1,000-per-Slip floor from the very next Slip
+                  onward, so the crossover is printed on the card itself. */}
+              {perk.id === 'shell_company_inception' && shellCrossover > 0 && (
+                <p className="t-caption text-wax-600 font-mono leading-snug mt-0.5">
+                  DIES AT {shellCrossover} SLIPS
+                </p>
+              )}
               <p className="t-caption text-newsprint-800/90 leading-snug mt-0.5">{perk.summary}</p>
             </div>
           );

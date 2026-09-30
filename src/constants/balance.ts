@@ -125,8 +125,16 @@ export const INK_REFILL_COST_CAP = 25000;
  */
 export const INK_REFILL_TREASURY_RATIO = 0.02;
 
-/** Consecutive dry clicks before the nib jams and dry yield collapses further. */
-export const DRY_CLICK_JAM_THRESHOLD = 30;
+/**
+ * Consecutive dry clicks before the nib jams and dry yield collapses further.
+ *
+ * INVARIANT: [The Threshold Lives With The Rule That Uses It]
+ * This now lives in `inkFrenzyEngine`, which owns the jam state machine, and is
+ * re-exported here so `balance.ts` stays the one import surface for tuning. It
+ * was declared in BOTH files, and the two call sites that re-derived the jam
+ * verdict disagreed on the boundary click — see `isJammedClick`.
+ */
+export { DRY_CLICK_JAM_THRESHOLD } from '../engine/systems/inkFrenzyEngine';
 
 /** Dry-click yield multiplier once the nib is jammed (still above the bankruptcy floor). */
 export const DRY_CLICK_JAM_YIELD_MULTIPLIER = 0.02;

@@ -18,7 +18,6 @@ import { CRONY_FAVOR_LIQUIDATION_KICKBACK_RATIO } from '../../../constants/balan
 import { DossierHeader } from '../DossierHeader';
 import { hint } from '../../ui/hint';
 import { agencyFavorCost } from '../../../store/slices/dumpSlice';
-import { canAfford } from '../../../engine/systems/perkEngine';
 import { PARDON_COST_REDUCTION } from '../../../constants/perks';
 import type { AgencyLiquidation } from '../../../types/dump';
 
@@ -167,7 +166,12 @@ export const DumpAgenciesTab: React.FC = () => {
             // others.
             const favorCost = agencyFavorCost(agency, unlockedPerks);
             const hasFavor = cronyFavor >= favorCost;
-            const hasCash = canAfford(treasuryCash, agency.minNetWorthRequired, unlockedPerks);
+            // The net-worth line is a REQUIREMENT, not a price, so it is
+            // deliberately NOT `canAfford` — the QE As A Service buffer applies
+            // to purchases, and letting it apply here would green-light a card
+            // reading "Requires $50,000 in the bank" for a player in debt. Must
+            // match `liquidateAgency` exactly, or the button lies.
+            const hasCash = treasuryCash >= agency.minNetWorthRequired;
             const canAffordIt = hasFavor && hasCash;
 
             return (

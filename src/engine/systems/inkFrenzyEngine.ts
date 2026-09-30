@@ -21,6 +21,16 @@
 /** Tantrum meter threshold that triggers CAPS LOCK FRENZY. */
 export const FRENZY_THRESHOLD = 100;
 
+/**
+ * Consecutive dry clicks after which the nib jams and the dry yield collapses.
+ *
+ * Lives HERE, not in `balance.ts`, because the rule it belongs to is the jam
+ * state machine below and `balance.ts` already imports the engine's other
+ * thresholds through its call sites. Re-declaring it in a third file is how the
+ * off-by-one arrived.
+ */
+export const DRY_CLICK_JAM_THRESHOLD = 30;
+
 export interface InkFrenzyInput {
   /** Current ink (0..maxInk). */
   inkLevel: number;
@@ -71,6 +81,30 @@ export interface InkFrenzyResult {
 /** True when this click is a dry scratch (no ink available, no frenzy freeze). */
 export function isDryClick(inkLevel: number, isCapsFrenzy: boolean): boolean {
   return inkLevel <= 0 && !isCapsFrenzy;
+}
+
+/**
+ * True when THIS click pushes the nib into the jammed state.
+ *
+ * INVARIANT: [One Jam Rule, Re-Derived From The Same Two Inputs]
+ * `clickInkFrenzy` increments `dryClicksCount` BEFORE comparing it to the
+ * threshold, so the comparison is against `count + 1`. Anything that needs to
+ * know the answer without advancing the state — the cash calculation in
+ * `clickPayout`, and the gauge's own "−90% yield" label — has to use the same
+ * `+ 1`, or it disagrees with the engine on exactly one click: the boundary one.
+ *
+ * That is not hypothetical. `clickPayout` re-derived the flag as
+ * `count >= threshold` and the player was charged the FULL yield on the 30th
+ * consecutive dry click while the gauge beside them read "−90%", because at
+ * 1.25 ink per click a dry run jams one click before the raw count says it has.
+ * Measured: $50 charged where $10 was owed.
+ */
+export function isJammedClick(
+  inkLevel: number,
+  isCapsFrenzy: boolean,
+  dryClicksCount: number
+): boolean {
+  return isDryClick(inkLevel, isCapsFrenzy) && dryClicksCount + 1 >= DRY_CLICK_JAM_THRESHOLD;
 }
 
 /**
